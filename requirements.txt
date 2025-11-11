@@ -1,0 +1,10 @@
+# Apache Airflow Requirements
+# This file contains additional Python packages for your Airflow environment
+
+# Uncomment and add packages as needed for your DAGs
+# pandas==2.1.0
+# requests==2.31.0
+# boto3==1.28.0
+# sqlalchemy==2.0.0
+# psycopg2-binary==2.9.7
+
