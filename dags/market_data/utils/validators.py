@@ -27,14 +27,14 @@ def validate_ticker_format(ticker: Any) -> str:
         >>> validate_ticker_format('GOOGL')
         'GOOGL'
     """
-    if not ticker or not isinstance(ticker, str):
+    if not isinstance(ticker, str):
         raise ValueError("Ticker must be a valid string")
     
     # Convert to uppercase
     ticker = ticker.strip().upper()
     
     # Basic validation
-    if len(ticker) == 0:
+    if not ticker or len(ticker) == 0:
         raise ValueError("Ticker cannot be empty")
     
     if len(ticker) > 10:

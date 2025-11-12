@@ -85,28 +85,28 @@ class TestYahooFinanceClient:
         assert result['metadata']['long_name'] == 'Apple Inc.'
     
     @patch('market_data.utils.api_client.requests.get')
-    def test_fetch_market_data_with_retries(self, mock_get, client, mock_success_response):
+    @patch('market_data.utils.api_client.time.sleep')
+    def test_fetch_market_data_with_retries(self, mock_sleep, mock_get, client, mock_success_response):
         """Test retry logic on failures"""
-        # Mock: first call fails, second succeeds
-        mock_fail_response = Mock()
-        mock_fail_response.status_code = 500
-        mock_fail_response.raise_for_status.side_effect = Exception("Server Error")
+        import requests
         
+        # Mock: first call fails with exception, second succeeds
         mock_success_response_obj = Mock()
         mock_success_response_obj.status_code = 200
         mock_success_response_obj.json.return_value = mock_success_response
         
+        # First call raises exception, second call succeeds
         mock_get.side_effect = [
-            mock_fail_response,
+            requests.exceptions.RequestException("Connection error"),
             mock_success_response_obj
         ]
         
         # Should succeed on second attempt
-        with patch('market_data.utils.api_client.time.sleep'):  # Skip actual sleep
-            result = client.fetch_market_data('AAPL', '2023-11-09', max_retries=3)
+        result = client.fetch_market_data('AAPL', '2023-11-09', max_retries=3)
         
         assert result['ticker'] == 'AAPL'
         assert mock_get.call_count == 2
+        assert mock_sleep.call_count >= 1  # Should have slept before retry
     
     @patch('market_data.utils.api_client.requests.get')
     def test_fetch_market_data_rate_limit_429(self, mock_get, client, mock_success_response):
