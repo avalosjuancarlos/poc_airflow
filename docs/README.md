@@ -12,11 +12,11 @@ This documentation is organized by audience and use case to help you quickly fin
 
 Perfect for new users and first-time setup.
 
-| Document | Description | Audience |
-|----------|-------------|----------|
-| **[Installation Guide](getting-started/installation.md)** | Complete installation and setup instructions | Everyone |
-| **[Quick Start Tutorial](getting-started/quick-start.md)** | Get your first DAG running in 5 minutes | New Users |
-| **[Configuration Guide](getting-started/configuration.md)** | Environment and configuration setup | Administrators |
+| Document | Description | Status |
+|----------|-------------|--------|
+| **[Installation Guide](getting-started/installation.md)** | Complete installation and setup instructions | ✅ Available |
+| **Quick Start Tutorial** | Get your first DAG running in 5 minutes | 🔜 Coming Soon |
+| **Configuration** → See [User Guide](user-guide/configuration.md) | Environment and configuration setup | ✅ Available |
 
 ---
 
@@ -24,12 +24,12 @@ Perfect for new users and first-time setup.
 
 For DAG users and data engineers working with the pipelines.
 
-| Document | Description | Topics |
+| Document | Description | Status |
 |----------|-------------|--------|
-| **[Market Data DAG](user-guide/market-data-dag.md)** | Complete guide to the Yahoo Finance DAG | Usage, Parameters, Examples |
-| **[Configuration Options](user-guide/configuration.md)** | All configurable parameters and variables | Settings, Variables |
-| **[Airflow Variables Guide](user-guide/airflow-variables.md)** | Working with Airflow Variables | Dynamic Config |
-| **[Logging Guide](user-guide/logging.md)** | Understanding and using the logging system | Logs, Debugging |
+| **[Market Data DAG](user-guide/market-data-dag.md)** | Complete guide to the Yahoo Finance DAG | ✅ Available |
+| **[Configuration Options](user-guide/configuration.md)** | All configurable parameters and variables | ✅ Available |
+| **[Airflow Variables Guide](user-guide/airflow-variables.md)** | Working with Airflow Variables | ✅ Available |
+| **[Logging Guide](user-guide/logging.md)** | Understanding and using the logging system | ✅ Available |
 
 ---
 
@@ -37,13 +37,13 @@ For DAG users and data engineers working with the pipelines.
 
 For developers contributing to or extending the codebase.
 
-| Document | Description | Topics |
+| Document | Description | Status |
 |----------|-------------|--------|
-| **[Architecture Overview](developer-guide/architecture.md)** | System design and component overview | Design, Components |
-| **[Testing Guide](developer-guide/testing.md)** | Running and writing tests | Unit Tests, Integration Tests |
-| **[Code Style Guide](developer-guide/code-style.md)** | Coding standards and conventions | Standards, Best Practices |
-| **[Contributing Guide](developer-guide/contributing.md)** | How to contribute to the project | Git Workflow, PRs |
-| **[API Reference](developer-guide/api-reference.md)** | Module and function documentation | APIs, Interfaces |
+| **[Testing Guide](developer-guide/testing.md)** | Running and writing tests | ✅ Available |
+| **Architecture Overview** | System design and component overview | 🔜 Coming Soon |
+| **Code Style Guide** | Coding standards and conventions | 🔜 Coming Soon |
+| **Contributing Guide** | How to contribute to the project | 🔜 Coming Soon |
+| **API Reference** | Module and function documentation | 🔜 Coming Soon |
 
 ---
 
@@ -51,13 +51,13 @@ For developers contributing to or extending the codebase.
 
 For DevOps engineers and system administrators.
 
-| Document | Description | Topics |
+| Document | Description | Status |
 |----------|-------------|--------|
-| **[Deployment Guide](operations/deployment.md)** | Deploying to production environments | Production, CI/CD |
-| **[Monitoring Guide](operations/monitoring.md)** | Setting up observability and alerts | Metrics, Alerts |
-| **[Troubleshooting Guide](operations/troubleshooting.md)** | Common issues and solutions | Debugging, Fixes |
-| **[Backup & Recovery](operations/backup-recovery.md)** | Data backup and disaster recovery | Backup, DR |
-| **[Security Guide](operations/security.md)** | Security best practices | Auth, Secrets |
+| **Deployment Guide** | Deploying to production environments | 🔜 Coming Soon |
+| **Monitoring Guide** | Setting up observability and alerts | 🔜 Coming Soon |
+| **Troubleshooting** → See main [README](../README.md#-troubleshooting) | Common issues and solutions | ✅ Available |
+| **Backup & Recovery** | Data backup and disaster recovery | 🔜 Coming Soon |
+| **Security Guide** | Security best practices | 🔜 Coming Soon |
 
 ---
 
@@ -65,12 +65,12 @@ For DevOps engineers and system administrators.
 
 Quick reference materials and cheat sheets.
 
-| Document | Description |
-|----------|-------------|
-| **[Environment Variables](reference/environment-variables.md)** | Complete list of all environment variables |
-| **[CLI Commands](reference/cli-commands.md)** | Useful Airflow CLI commands |
-| **[Docker Compose Reference](reference/docker-compose.md)** | Service configurations and details |
-| **[FAQs](reference/faq.md)** | Frequently asked questions |
+| Document | Description | Status |
+|----------|-------------|--------|
+| **Environment Variables** → See [Configuration](user-guide/configuration.md) | Complete list of all environment variables | ✅ Available |
+| **CLI Commands** → See main [README](../README.md#-useful-commands) | Useful Airflow CLI commands | ✅ Available |
+| **Docker Compose** → See main [README](../README.md#-architecture) | Service configurations and details | ✅ Available |
+| **FAQs** | Frequently asked questions | 🔜 Coming Soon |
 
 ---
 
@@ -96,38 +96,39 @@ Documentation from previous versions or being phased out.
 
 | I want to... | Go to... |
 |-------------|----------|
-| Install Airflow for the first time | [Installation Guide](getting-started/installation.md) |
-| Run my first DAG | [Quick Start Tutorial](getting-started/quick-start.md) |
-| Configure market data parameters | [Configuration Guide](user-guide/configuration.md) |
-| Understand the logging system | [Logging Guide](user-guide/logging.md) |
-| Write tests for my DAG | [Testing Guide](developer-guide/testing.md) |
-| Deploy to production | [Deployment Guide](operations/deployment.md) |
-| Fix a problem | [Troubleshooting Guide](operations/troubleshooting.md) |
-| Set up monitoring | [Monitoring Guide](operations/monitoring.md) |
+| Install Airflow for the first time | [Installation Guide](getting-started/installation.md) ✅ |
+| Run my first DAG | [Market Data DAG Guide](user-guide/market-data-dag.md) ✅ |
+| Configure market data parameters | [Configuration Guide](user-guide/configuration.md) ✅ |
+| Understand the logging system | [Logging Guide](user-guide/logging.md) ✅ |
+| Write tests for my DAG | [Testing Guide](developer-guide/testing.md) ✅ |
+| Fix a problem | [Main README Troubleshooting](../README.md#-troubleshooting) ✅ |
+| Use Airflow Variables | [Airflow Variables Guide](user-guide/airflow-variables.md) ✅ |
 
 ### By Role
 
 | Role | Recommended Reading |
 |------|-------------------|
-| **New User** | Installation → Quick Start → Market Data DAG |
-| **Data Engineer** | Configuration → Market Data DAG → Airflow Variables |
-| **Developer** | Architecture → Code Style → Testing → Contributing |
-| **DevOps/SRE** | Deployment → Monitoring → Backup & Recovery → Security |
-| **Manager/Lead** | Architecture → Deployment → Monitoring |
+| **New User** | [Installation](getting-started/installation.md) → [Market Data DAG](user-guide/market-data-dag.md) ✅ |
+| **Data Engineer** | [Configuration](user-guide/configuration.md) → [Airflow Variables](user-guide/airflow-variables.md) → [Logging](user-guide/logging.md) ✅ |
+| **Developer** | [Testing](developer-guide/testing.md) → Main README ✅ |
+| **DevOps/SRE** | [Installation](getting-started/installation.md) → [Testing](developer-guide/testing.md) ✅ |
 
 ---
 
 ## 📊 Documentation Status
 
-| Category | Files | Status |
-|----------|-------|--------|
-| Getting Started | 3 | ✅ Complete |
-| User Guide | 4 | ✅ Complete |
-| Developer Guide | 5 | 🔄 In Progress |
-| Operations | 5 | 🔄 In Progress |
-| Reference | 4 | 🔄 In Progress |
+| Category | Available | Coming Soon | Total |
+|----------|-----------|-------------|-------|
+| Getting Started | 1 | 2 | 3 |
+| User Guide | 4 | 0 | 4 |
+| Developer Guide | 1 | 4 | 5 |
+| Operations | 0 | 5 | 5 |
+| Reference | 0 | 4 | 4 |
+| **Total** | **6** | **15** | **21** |
 
-**Legend**: ✅ Complete | 🔄 In Progress | ❌ Not Started
+**Current Completion**: 29% (6/21 planned documents)
+
+**Legend**: ✅ Available | 🔜 Coming Soon
 
 ---
 
@@ -136,11 +137,11 @@ Documentation from previous versions or being phased out.
 Found a typo or want to improve the docs?
 
 1. Documentation is written in Markdown
-2. Follow the [Documentation Style Guide](developer-guide/documentation-style.md)
+2. Keep style consistent with existing docs
 3. Submit a Pull Request with your changes
 4. All documentation goes through review
 
-**See**: [Contributing Guide](developer-guide/contributing.md)
+See the main [README](../README.md#-contributing) for contribution guidelines.
 
 ---
 

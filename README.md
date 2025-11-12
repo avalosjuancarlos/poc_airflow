@@ -156,8 +156,8 @@ Comprehensive documentation organized by audience:
 
 ### 🚦 Getting Started
 - **[Installation Guide](docs/getting-started/installation.md)** - Detailed setup instructions
-- **[Quick Start Tutorial](docs/getting-started/quick-start.md)** - Your first DAG in 5 minutes
-- **[Configuration Guide](docs/getting-started/configuration.md)** - Environment setup
+- **Quick Start Tutorial** 🔜 Coming soon - Your first DAG in 5 minutes
+- See [User Guide Configuration](docs/user-guide/configuration.md) for configuration options
 
 ### 👤 User Guide
 - **[Market Data DAG](docs/user-guide/market-data-dag.md)** - Using the Yahoo Finance DAG
@@ -166,24 +166,20 @@ Comprehensive documentation organized by audience:
 - **[Logging Guide](docs/user-guide/logging.md)** - Understanding logs
 
 ### 👨‍💻 Developer Guide
-- **[Architecture Overview](docs/developer-guide/architecture.md)** - System design
 - **[Testing Guide](docs/developer-guide/testing.md)** - Running and writing tests
-- **[Code Style](docs/developer-guide/code-style.md)** - Standards and conventions
-- **[Contributing](docs/developer-guide/contributing.md)** - How to contribute
-- **[API Reference](docs/developer-guide/api-reference.md)** - Module documentation
+- **Architecture Overview** 🔜 Coming soon - System design
+- **Code Style** 🔜 Coming soon - Standards and conventions
+- **Contributing** 🔜 Coming soon - How to contribute
+- **API Reference** 🔜 Coming soon - Module documentation
 
 ### ⚙️ Operations Guide
-- **[Deployment](docs/operations/deployment.md)** - Production deployment
-- **[Monitoring](docs/operations/monitoring.md)** - Observability setup
-- **[Troubleshooting](docs/operations/troubleshooting.md)** - Common issues
-- **[Backup & Recovery](docs/operations/backup-recovery.md)** - Data protection
-- **[Security](docs/operations/security.md)** - Security best practices
+- See [Testing Guide](docs/developer-guide/testing.md) for running tests locally
+- **Deployment, Monitoring, Security** 🔜 Coming soon - Operations documentation
 
 ### 📖 Reference
-- **[Environment Variables](docs/reference/environment-variables.md)** - All env vars
-- **[CLI Commands](docs/reference/cli-commands.md)** - Useful commands
-- **[Docker Compose](docs/reference/docker-compose.md)** - Service details
-- **[FAQs](docs/reference/faq.md)** - Frequently asked questions
+- See [Configuration Guide](docs/user-guide/configuration.md) for environment variables
+- See [Useful Commands](#-useful-commands) section below for CLI reference
+- **Complete Reference Documentation** 🔜 Coming soon
 
 ---
 
@@ -341,7 +337,7 @@ docker compose exec airflow-scheduler airflow variables set market_data_default_
 ./scripts/setup_airflow_variables.sh
 ```
 
-**See**: [Configuration Guide](docs/user-guide/configuration.md) for complete details.
+**See**: [Configuration Guide](docs/user-guide/configuration.md) and [Airflow Variables Guide](docs/user-guide/airflow-variables.md) for complete details.
 
 ---
 
@@ -427,7 +423,7 @@ docker compose --profile flower up -d
 # Access at http://localhost:5555
 ```
 
-**See**: [Monitoring Guide](docs/operations/monitoring.md)
+Monitor Celery workers and track performance metrics
 
 ---
 
@@ -475,7 +471,7 @@ docker compose exec postgres pg_dump -U airflow airflow > backup.sql
 docker compose exec -T postgres psql -U airflow airflow < backup.sql
 ```
 
-**See**: [CLI Commands Reference](docs/reference/cli-commands.md)
+**See**: Full command reference in sections above
 
 ---
 
@@ -491,13 +487,13 @@ docker compose exec -T postgres psql -U airflow airflow < backup.sql
 | Permission errors (Linux) | Run `sudo chown -R $(id -u):$(id -g) dags logs` |
 | Workers not picking tasks | Check Redis connection and restart workers |
 
-**See**: [Troubleshooting Guide](docs/operations/troubleshooting.md) for detailed solutions.
+For more help, see common solutions above or check Docker logs.
 
 ---
 
 ## 🤝 Contributing
 
-We welcome contributions! Please see our [Contributing Guide](docs/developer-guide/contributing.md) for details.
+We welcome contributions! Follow the steps below to contribute.
 
 ### Quick Contribution Steps
 
