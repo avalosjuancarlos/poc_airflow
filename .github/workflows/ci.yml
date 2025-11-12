@@ -38,17 +38,24 @@ jobs:
         pip install apache-airflow==2.11.0
         pip install -r requirements.txt
     
+    - name: Initialize Airflow database
+      run: |
+        export AIRFLOW_HOME=${PWD}
+        export AIRFLOW__CORE__LOAD_EXAMPLES=False
+        export AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=sqlite:///${PWD}/airflow.db
+        airflow db init
+    
     - name: Run unit tests
       run: |
-        export PYTHONPATH="${PYTHONPATH}:${PWD}/dags"
+        export PYTHONPATH="${PWD}/dags:${PYTHONPATH}"
         pytest tests/unit -v --cov=dags/market_data --cov-report=xml --cov-report=term-missing -m "not integration"
     
     - name: Run integration tests
       run: |
         export PYTHONPATH="${PWD}/dags:${PYTHONPATH}"
-        export AIRFLOW__CORE__UNIT_TEST_MODE=True
-        export AIRFLOW__CORE__LOAD_EXAMPLES=False
         export AIRFLOW_HOME=${PWD}
+        export AIRFLOW__CORE__LOAD_EXAMPLES=False
+        export AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=sqlite:///${PWD}/airflow.db
         pytest tests/integration -v -m "integration" || pytest tests/integration -v
     
     - name: Upload coverage to Codecov
