@@ -11,9 +11,11 @@ import pytest
 # Add dags directory to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../dags"))
 
-from market_data.operators.market_data_operators import (fetch_market_data,
-                                                         process_market_data,
-                                                         validate_ticker)
+from market_data.operators.market_data_operators import (
+    fetch_market_data,
+    process_market_data,
+    validate_ticker,
+)
 
 
 class TestValidateTickerOperator:

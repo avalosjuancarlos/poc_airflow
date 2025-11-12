@@ -10,8 +10,7 @@ import pytest
 # Add dags directory to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../dags"))
 
-from market_data.utils.validators import (validate_date_format,
-                                          validate_ticker_format)
+from market_data.utils.validators import validate_date_format, validate_ticker_format
 
 
 class TestValidateTickerFormat:
