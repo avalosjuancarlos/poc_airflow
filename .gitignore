@@ -153,6 +153,10 @@ airflow.db-wal
 logs/
 airflow-webserver.pid
 
+# Market data storage
+data/
+*.parquet
+
 # Airflow configuration (uncomment if you want to ignore local config)
 # airflow.cfg
 # webserver_config.py

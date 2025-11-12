@@ -31,6 +31,11 @@ from market_data.operators import (
     fetch_market_data,
     process_market_data
 )
+from market_data.operators.transform_operators import (
+    check_and_determine_dates,
+    fetch_multiple_dates,
+    transform_and_save
+)
 from market_data.sensors import check_api_availability
 
 # Log configuration on DAG load (skip in test mode)
@@ -57,63 +62,69 @@ default_args = {
 with DAG(
     dag_id='get_market_data',
     default_args=default_args,
-    description='Obtiene datos de mercado desde Yahoo Finance API para un ticker específico',
-    schedule_interval=None,  # Manual execution
+    description='Obtiene y transforma datos de mercado con indicadores técnicos - Yahoo Finance API',
+    schedule_interval='@daily',  # Run daily
     catchup=False,
-    tags=['finance', 'market-data', 'yahoo-finance', 'api'],
+    tags=['finance', 'market-data', 'yahoo-finance', 'api', 'etl', 'parquet'],
     params={
         'ticker': DEFAULT_TICKER,
         'date': datetime.now().strftime('%Y-%m-%d')
     },
     doc_md="""
-    # Get Market Data DAG
+    # Get Market Data DAG - ETL Pipeline
     
-    Este DAG obtiene datos históricos de mercado desde Yahoo Finance API.
+    DAG diario que obtiene datos de mercado, calcula indicadores técnicos y almacena en Parquet.
     
-    ## Arquitectura Modular
+    ## 🎯 Funcionalidad
     
-    - **config**: Configuración centralizada
-    - **utils**: API client y validadores
-    - **operators**: Funciones de tareas
-    - **sensors**: Sensores personalizados
+    ### Ejecución Diaria (Schedule: @daily)
+    - Obtiene datos del día actual
+    - Calcula indicadores técnicos
+    - Almacena en formato Parquet
     
-    ## Parámetros de Configuración
+    ### Backfill Automático (Primera Ejecución)
+    - Si no existe archivo Parquet → Backfill de 20 días
+    - Si existe archivo Parquet → Solo día actual
     
-    Al ejecutar el DAG, puedes proporcionar:
-    - **ticker**: Símbolo del ticker (ej: AAPL, GOOGL, MSFT, TSLA)
-    - **date**: Fecha en formato YYYY-MM-DD
+    ## 📊 Indicadores Técnicos Calculados
     
-    ## Ejemplo de Configuración JSON
+    - **Moving Averages**: SMA 7, 14, 20 días
+    - **RSI**: Relative Strength Index (14 días)
+    - **MACD**: Moving Average Convergence Divergence
+    - **Bollinger Bands**: Upper, Middle, Lower
+    - **Returns**: Daily return percentage
+    - **Volatility**: 20-day rolling volatility
+    
+    ## 💾 Almacenamiento
+    
+    - **Formato**: Apache Parquet (compresión Snappy)
+    - **Ubicación**: `/opt/airflow/data/{TICKER}_market_data.parquet`
+    - **Modo**: Append (deduplica por fecha)
+    
+    ## 🔄 Flujo de Ejecución
+    
+    1. **Validate Ticker**: Valida el ticker symbol
+    2. **Check API**: Verifica disponibilidad de Yahoo Finance API
+    3. **Determine Dates**: Decide backfill (20 días) o single date
+    4. **Fetch Data**: Obtiene datos de Yahoo Finance API
+    5. **Transform & Save**: Calcula indicadores y guarda en Parquet
+    
+    ## 🎛️ Parámetros
     
     ```json
     {
-        "ticker": "AAPL",
-        "date": "2023-11-09"
+        "ticker": "AAPL"
     }
     ```
     
-    ## Configuración Avanzada
+    ## ⚙️ Variables de Entorno
     
-    Puedes configurar el comportamiento del DAG usando Airflow Variables:
+    - `MARKET_DATA_DEFAULT_TICKER`: Ticker por defecto (default: AAPL)
+    - `MARKET_DATA_STORAGE_DIR`: Directorio de almacenamiento (default: /opt/airflow/data)
     
-    - `market_data.default_ticker`: Ticker por defecto
-    - `market_data.max_retries`: Número de reintentos
-    - `market_data.retry_delay`: Delay entre reintentos
-    - `market_data.sensor_poke_interval`: Intervalo del sensor
-    - `market_data.sensor_timeout`: Timeout del sensor
+    ## 📖 Documentación
     
-    Ver `docs/AIRFLOW_VARIABLES_GUIDE.md` para más información.
-    
-    ## Fuente de Datos
-    
-    Yahoo Finance API: https://query2.finance.yahoo.com/v8/finance/chart/
-    
-    ## Notas
-    
-    - Los datos son de mercado público
-    - El DAG realiza reintentos automáticos en caso de fallo
-    - Los datos se almacenan en XCom para uso posterior
-    - Incluye sensor de disponibilidad de API
+    Ver `docs/user-guide/market-data-dag.md` para guía completa.
     """
 ) as dag:
     
@@ -124,7 +135,14 @@ with DAG(
         provide_context=True,
     )
     
-    # Task 2: Sensor - Check API availability
+    # Task 2: Check if parquet exists and determine dates to fetch
+    determine_dates_task = PythonOperator(
+        task_id='determine_dates',
+        python_callable=check_and_determine_dates,
+        provide_context=True,
+    )
+    
+    # Task 3: Sensor - Check API availability
     api_sensor = PythonSensor(
         task_id='check_api_availability',
         python_callable=check_api_availability,
@@ -137,23 +155,21 @@ with DAG(
         exponential_backoff=SENSOR_EXPONENTIAL_BACKOFF,
     )
     
-    # Task 3: Fetch market data
+    # Task 4: Fetch market data for all determined dates
     fetch_data_task = PythonOperator(
-        task_id='fetch_market_data',
-        python_callable=fetch_market_data,
-        op_kwargs={
-            'ticker': '{{ dag_run.conf.get("ticker", params.ticker) }}',
-            'date': '{{ dag_run.conf.get("date", params.date) }}',
-        },
+        task_id='fetch_multiple_dates',
+        python_callable=fetch_multiple_dates,
         provide_context=True,
+        execution_timeout=timedelta(minutes=15),  # Longer timeout for backfill
     )
     
-    # Task 4: Process market data
-    process_data_task = PythonOperator(
-        task_id='process_market_data',
-        python_callable=process_market_data,
+    # Task 5: Transform data (calculate indicators) and save to Parquet
+    transform_and_save_task = PythonOperator(
+        task_id='transform_and_save',
+        python_callable=transform_and_save,
         provide_context=True,
     )
     
     # Define task dependencies
-    validate_ticker_task >> api_sensor >> fetch_data_task >> process_data_task
+    # validate → determine dates → check API → fetch data → transform & save
+    validate_ticker_task >> determine_dates_task >> api_sensor >> fetch_data_task >> transform_and_save_task

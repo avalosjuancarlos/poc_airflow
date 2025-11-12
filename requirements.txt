@@ -4,6 +4,7 @@
 # Packages for market data feature
 requests==2.31.0
 pandas==2.1.4
+pyarrow==14.0.1  # For Parquet file format
 
 # Testing dependencies
 pytest==7.4.3
