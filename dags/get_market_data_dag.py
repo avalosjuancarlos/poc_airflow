@@ -11,10 +11,12 @@ Estructura modular:
 - market_data.sensors: Sensores personalizados
 """
 
+import os
+from datetime import datetime, timedelta
+
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 from airflow.sensors.python import PythonSensor
-from datetime import datetime, timedelta
 
 # Import from modular structure
 from market_data.config import (
@@ -32,7 +34,6 @@ from market_data.operators import (
 from market_data.sensors import check_api_availability
 
 # Log configuration on DAG load (skip in test mode)
-import os
 if not os.environ.get('AIRFLOW__CORE__UNIT_TEST_MODE'):
     log_configuration()
 

@@ -7,8 +7,9 @@ This module handles configuration with a triple fallback system:
 3. Default values (lowest priority)
 """
 
-import os
 import logging
+import os
+
 from airflow.models import Variable
 
 logger = logging.getLogger(__name__)
@@ -119,7 +120,11 @@ SENSOR_EXPONENTIAL_BACKOFF = os.environ.get(
 
 # Headers para evitar bloqueos de la API
 HEADERS = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+    'User-Agent': (
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
+        'AppleWebKit/537.36 (KHTML, like Gecko) '
+        'Chrome/91.0.4472.124 Safari/537.36'
+    ),
     'Accept': 'application/json',
     'Accept-Language': 'en-US,en;q=0.9',
 }
@@ -142,4 +147,3 @@ def log_configuration():
         logger.info("=" * 60)
     except Exception as e:
         logger.debug(f"Could not log configuration (likely in test mode): {e}")
-

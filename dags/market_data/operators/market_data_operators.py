@@ -5,7 +5,7 @@ Contains all the callable functions used by PythonOperators
 """
 
 import logging
-from market_data.utils import YahooFinanceClient, validate_ticker_format
+
 from market_data.config import (
     YAHOO_FINANCE_API_BASE_URL,
     HEADERS,
@@ -14,6 +14,7 @@ from market_data.config import (
     RETRY_DELAY,
     DEFAULT_TICKER
 )
+from market_data.utils import YahooFinanceClient, validate_ticker_format
 
 logger = logging.getLogger(__name__)
 

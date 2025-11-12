@@ -7,9 +7,10 @@ error handling, retries, and rate limiting.
 
 import logging
 import time
-import requests
 from datetime import datetime, timedelta
-from typing import Dict, Any, Optional
+from typing import Any, Dict
+
+import requests
 
 logger = logging.getLogger(__name__)
 
