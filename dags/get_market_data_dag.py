@@ -14,9 +14,132 @@ import requests
 import json
 import logging
 import time
+import os
 
 # Configuración del logger
 logger = logging.getLogger(__name__)
+
+# ============================================================================
+# Helper Functions para Configuración
+# ============================================================================
+
+def get_config_value(airflow_key, env_key, default_value, value_type=str):
+    """
+    Obtiene valor de configuración con prioridad de fallback:
+    1. Airflow Variable (puede cambiarse desde UI sin reiniciar)
+    2. Variable de Entorno (configurada en .env)
+    3. Valor por defecto (hardcoded)
+    
+    Args:
+        airflow_key: Nombre de la variable en Airflow (ej: 'market_data.default_ticker')
+        env_key: Nombre de la variable de entorno (ej: 'MARKET_DATA_DEFAULT_TICKER')
+        default_value: Valor por defecto si no existe en ningún lado
+        value_type: Tipo de dato a retornar (str, int, bool, float)
+        
+    Returns:
+        Valor configurado del tipo especificado
+        
+    Example:
+        >>> ticker = get_config_value('market_data.default_ticker', 'MARKET_DATA_DEFAULT_TICKER', 'AAPL')
+        >>> # Busca en: Airflow Variable → ENV → Default
+    """
+    try:
+        # Prioridad 1: Airflow Variable
+        value = Variable.get(airflow_key, default_var=None)
+        if value is not None:
+            logger.debug(f"Config '{airflow_key}' obtenida de Airflow Variable: {value}")
+            # Manejo especial para booleanos
+            if value_type == bool:
+                return value.lower() in ('true', '1', 'yes', 'on')
+            return value_type(value)
+    except Exception as e:
+        logger.debug(f"No se pudo obtener Airflow Variable '{airflow_key}': {e}")
+    
+    # Prioridad 2: Variable de Entorno
+    env_value = os.environ.get(env_key)
+    if env_value is not None:
+        logger.debug(f"Config '{airflow_key}' obtenida de ENV '{env_key}': {env_value}")
+        # Manejo especial para booleanos
+        if value_type == bool:
+            return env_value.lower() in ('true', '1', 'yes', 'on')
+        return value_type(env_value)
+    
+    # Prioridad 3: Valor por defecto
+    logger.debug(f"Config '{airflow_key}' usando valor por defecto: {default_value}")
+    return value_type(default_value)
+
+
+# ============================================================================
+# Configuración desde Variables de Entorno y Airflow Variables
+# ============================================================================
+
+# API Configuration - Mantener como ENV (infraestructura)
+YAHOO_FINANCE_API_BASE_URL = os.environ.get(
+    'YAHOO_FINANCE_API_BASE_URL',
+    'https://query2.finance.yahoo.com/v8/finance/chart'
+)
+
+# API Timeout - Mantener como ENV (configuración global)
+API_TIMEOUT = int(os.environ.get('MARKET_DATA_API_TIMEOUT', '30'))
+
+# Default Ticker - Migrado a Airflow Variable con fallback
+# Prioridad: Airflow Var → ENV → Default
+DEFAULT_TICKER = get_config_value(
+    airflow_key='market_data.default_ticker',
+    env_key='MARKET_DATA_DEFAULT_TICKER',
+    default_value='AAPL',
+    value_type=str
+)
+
+# Retry Configuration - Migrado a Airflow Variables con fallback
+MAX_RETRIES = get_config_value(
+    airflow_key='market_data.max_retries',
+    env_key='MARKET_DATA_MAX_RETRIES',
+    default_value='3',
+    value_type=int
+)
+
+RETRY_DELAY = get_config_value(
+    airflow_key='market_data.retry_delay',
+    env_key='MARKET_DATA_RETRY_DELAY',
+    default_value='5',
+    value_type=int
+)
+
+# Sensor Configuration - Migrado a Airflow Variables con fallback
+SENSOR_POKE_INTERVAL = get_config_value(
+    airflow_key='market_data.sensor_poke_interval',
+    env_key='MARKET_DATA_SENSOR_POKE_INTERVAL',
+    default_value='30',
+    value_type=int
+)
+
+SENSOR_TIMEOUT = get_config_value(
+    airflow_key='market_data.sensor_timeout',
+    env_key='MARKET_DATA_SENSOR_TIMEOUT',
+    default_value='600',
+    value_type=int
+)
+
+# Exponential Backoff - Mantener como ENV (feature flag)
+SENSOR_EXPONENTIAL_BACKOFF = os.environ.get(
+    'MARKET_DATA_SENSOR_EXPONENTIAL_BACKOFF', 
+    'true'
+).lower() == 'true'
+
+# Log de configuración activa al cargar el DAG
+logger.info("="*60)
+logger.info("CONFIGURACIÓN DEL DAG DE MARKET DATA")
+logger.info("="*60)
+logger.info(f"API Base URL: {YAHOO_FINANCE_API_BASE_URL}")
+logger.info(f"Default Ticker: {DEFAULT_TICKER}")
+logger.info(f"API Timeout: {API_TIMEOUT}s")
+logger.info(f"Max Retries: {MAX_RETRIES}")
+logger.info(f"Retry Delay: {RETRY_DELAY}s")
+logger.info(f"Sensor Poke Interval: {SENSOR_POKE_INTERVAL}s")
+logger.info(f"Sensor Timeout: {SENSOR_TIMEOUT}s")
+logger.info(f"Sensor Exponential Backoff: {SENSOR_EXPONENTIAL_BACKOFF}")
+logger.info("="*60)
 
 # Headers para evitar bloqueos de la API
 HEADERS = {
@@ -43,7 +166,7 @@ def get_market_data(ticker: str, date: str, **context):
         timestamp = int(target_date.timestamp())
         
         # Construir URL de la API
-        url = f"https://query2.finance.yahoo.com/v8/finance/chart/{ticker}"
+        url = f"{YAHOO_FINANCE_API_BASE_URL}/{ticker}"
         params = {
             'period1': timestamp,
             'period2': timestamp,
@@ -53,10 +176,11 @@ def get_market_data(ticker: str, date: str, **context):
         logger.info(f"Obteniendo datos de mercado para {ticker} en fecha {date}")
         logger.info(f"URL: {url}")
         logger.info(f"Parámetros: {params}")
+        logger.info(f"Configuración - Timeout: {API_TIMEOUT}s, Max Retries: {MAX_RETRIES}, Retry Delay: {RETRY_DELAY}s")
         
         # Hacer request a la API con headers y retry logic
-        max_retries = 3
-        retry_delay = 5  # segundos
+        max_retries = MAX_RETRIES
+        retry_delay = RETRY_DELAY  # segundos
         
         for attempt in range(max_retries):
             try:
@@ -67,7 +191,7 @@ def get_market_data(ticker: str, date: str, **context):
                     time.sleep(wait_time)
                 
                 logger.info(f"Intento {attempt + 1} de {max_retries}")
-                response = requests.get(url, params=params, headers=HEADERS, timeout=30)
+                response = requests.get(url, params=params, headers=HEADERS, timeout=API_TIMEOUT)
                 
                 # Si es 429, esperar y reintentar
                 if response.status_code == 429:
@@ -220,7 +344,7 @@ def check_api_availability(ticker: str, **context):
         test_date = datetime.now() - timedelta(days=7)
         timestamp = int(test_date.timestamp())
         
-        url = f"https://query2.finance.yahoo.com/v8/finance/chart/{ticker}"
+        url = f"{YAHOO_FINANCE_API_BASE_URL}/{ticker}"
         params = {
             'period1': timestamp,
             'period2': timestamp,
@@ -231,7 +355,7 @@ def check_api_availability(ticker: str, **context):
         logger.info(f"URL de prueba: {url}")
         
         # Hacer request de prueba con timeout corto
-        response = requests.get(url, params=params, headers=HEADERS, timeout=10)
+        response = requests.get(url, params=params, headers=HEADERS, timeout=API_TIMEOUT)
         
         # Si la API responde con 429, retornar False para reintentar
         if response.status_code == 429:
@@ -294,9 +418,10 @@ def validate_ticker(**context):
     Valida que el ticker esté configurado correctamente
     """
     dag_run = context['dag_run']
-    ticker = dag_run.conf.get('ticker', 'AAPL')
+    ticker = dag_run.conf.get('ticker', DEFAULT_TICKER)
     
     logger.info(f"Validando ticker: {ticker}")
+    logger.info(f"Ticker por defecto configurado: {DEFAULT_TICKER}")
     
     # Validaciones básicas
     if not ticker or not isinstance(ticker, str):
@@ -335,7 +460,7 @@ with DAG(
     catchup=False,
     tags=['finance', 'market-data', 'yahoo-finance', 'api'],
     params={
-        'ticker': 'AAPL',
+        'ticker': DEFAULT_TICKER,
         'date': datetime.now().strftime('%Y-%m-%d')
     },
     doc_md="""
@@ -384,10 +509,10 @@ with DAG(
         op_kwargs={
             'ticker': '{{ dag_run.conf.get("ticker", params.ticker) }}',
         },
-        poke_interval=30,  # Verificar cada 30 segundos
-        timeout=600,  # Timeout de 10 minutos
+        poke_interval=SENSOR_POKE_INTERVAL,  # Configurado desde variable de entorno
+        timeout=SENSOR_TIMEOUT,  # Configurado desde variable de entorno
         mode='poke',  # Modo poke: verifica periódicamente
-        exponential_backoff=True,  # Incrementar el intervalo exponencialmente
+        exponential_backoff=SENSOR_EXPONENTIAL_BACKOFF,  # Configurado desde variable de entorno
     )
     
     # Tarea 3: Obtener datos de mercado
