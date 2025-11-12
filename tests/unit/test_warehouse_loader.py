@@ -8,7 +8,6 @@ from unittest.mock import MagicMock, Mock, call, patch
 
 import pandas as pd
 import pytest
-
 from market_data.warehouse.loader import WarehouseLoader
 
 
@@ -467,4 +466,3 @@ class TestLoadTruncateInsert:
         result = loader._load_truncate_insert(df)
 
         assert result == 2
-

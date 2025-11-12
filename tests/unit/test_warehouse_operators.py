@@ -5,7 +5,6 @@ Unit tests for warehouse operators
 from unittest.mock import MagicMock, patch
 
 import pytest
-
 from market_data.operators.warehouse_operators import load_to_warehouse
 
 
@@ -93,7 +92,9 @@ class TestLoadToWarehouse:
         """Test load_to_warehouse propagates exceptions from loader"""
         mock_loader = MagicMock()
         mock_loader_class.return_value = mock_loader
-        mock_loader.load_from_parquet.side_effect = Exception("Database connection failed")
+        mock_loader.load_from_parquet.side_effect = Exception(
+            "Database connection failed"
+        )
 
         mock_ti = MagicMock()
         mock_ti.xcom_pull.return_value = "AAPL"
@@ -161,4 +162,3 @@ class TestLoadToWarehouse:
 
         # Ticker should be passed as-is
         mock_loader.load_from_parquet.assert_called_once_with("tsla")
-

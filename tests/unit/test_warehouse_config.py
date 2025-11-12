@@ -6,13 +6,12 @@ import os
 from unittest.mock import patch
 
 import pytest
-
 from market_data.config.warehouse_config import (
     BATCH_SIZE,
-    CONNECTION_POOL_SIZE,
     ENVIRONMENT,
     LOAD_STRATEGY,
     MAX_OVERFLOW,
+    POOL_SIZE,
     POOL_TIMEOUT,
     TABLE_DATES,
     TABLE_MARKET_DATA,
@@ -47,7 +46,7 @@ class TestWarehouseConfigConstants:
 
     def test_connection_pool_defaults(self):
         """Test connection pool default values"""
-        assert CONNECTION_POOL_SIZE == 5
+        assert POOL_SIZE == 5
         assert MAX_OVERFLOW == 10
         assert POOL_TIMEOUT == 30
 
@@ -326,10 +325,7 @@ class TestLogWarehouseConfiguration:
         assert mock_logger.info.call_count > 0
 
         # Verify important information was logged
-        logged_messages = [
-            str(call[0][0]) for call in mock_logger.info.call_args_list
-        ]
+        logged_messages = [str(call[0][0]) for call in mock_logger.info.call_args_list]
         logged_str = " ".join(logged_messages)
 
         assert "WAREHOUSE" in logged_str or "warehouse" in logged_str.lower()
-

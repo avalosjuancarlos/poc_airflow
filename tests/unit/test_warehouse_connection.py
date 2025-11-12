@@ -5,10 +5,9 @@ Unit tests for warehouse connection management
 from unittest.mock import MagicMock, Mock, patch
 
 import pytest
+from market_data.warehouse.connection import WarehouseConnection
 from sqlalchemy import create_engine
 from sqlalchemy.pool import NullPool, QueuePool
-
-from market_data.warehouse.connection import WarehouseConnection
 
 
 class TestWarehouseConnection:
@@ -283,4 +282,3 @@ class TestWarehouseConnection:
         call_args = mock_create_engine.call_args
         conn_string = str(call_args[0][0])
         assert "redshift+redshift_connector://" in conn_string
-
