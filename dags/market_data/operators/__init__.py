@@ -12,6 +12,7 @@ from .transform_operators import (
     fetch_multiple_dates,
     transform_and_save,
 )
+from .warehouse_operators import load_to_warehouse
 
 __all__ = [
     "fetch_market_data",
@@ -20,4 +21,5 @@ __all__ = [
     "check_and_determine_dates",
     "fetch_multiple_dates",
     "transform_and_save",
+    "load_to_warehouse",
 ]

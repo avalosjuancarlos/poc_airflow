@@ -16,6 +16,14 @@ from .settings import (
     get_config_value,
     log_configuration,
 )
+from .warehouse_config import (
+    ENVIRONMENT,
+    LOAD_STRATEGY,
+    TABLE_MARKET_DATA,
+    get_connection_string,
+    get_warehouse_config,
+    log_warehouse_configuration,
+)
 
 __all__ = [
     "get_config_value",
@@ -31,4 +39,10 @@ __all__ = [
     "HEADERS",
     "LOGGING_CONFIG",
     "get_log_level",
+    "ENVIRONMENT",
+    "LOAD_STRATEGY",
+    "TABLE_MARKET_DATA",
+    "get_warehouse_config",
+    "get_connection_string",
+    "log_warehouse_configuration",
 ]

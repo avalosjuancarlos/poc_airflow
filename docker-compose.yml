@@ -42,6 +42,26 @@ services:
       start_period: 5s
     restart: always
 
+  warehouse-postgres:
+    image: postgres:13
+    user: "999:999"  # Run as postgres user (UID 999)
+    environment:
+      POSTGRES_USER: warehouse_user
+      POSTGRES_PASSWORD: warehouse_pass
+      POSTGRES_DB: market_data_warehouse
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - warehouse-db-volume:/var/lib/postgresql/data
+      - ./scripts/init_warehouse_schema.sql:/docker-entrypoint-initdb.d/init_warehouse.sql
+    ports:
+      - "5433:5432"  # Expose on different port to avoid conflict
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "warehouse_user"]
+      interval: 10s
+      retries: 5
+      start_period: 5s
+    restart: always
+
   redis:
     image: redis:7.2-bookworm
     expose:
@@ -212,4 +232,5 @@ services:
 
 volumes:
   postgres-db-volume:
+  warehouse-db-volume:
 

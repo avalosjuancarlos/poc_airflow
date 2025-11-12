@@ -36,6 +36,7 @@ from market_data.operators.transform_operators import (
     fetch_multiple_dates,
     transform_and_save,
 )
+from market_data.operators.warehouse_operators import load_to_warehouse
 from market_data.sensors import check_api_availability
 
 # Log configuration on DAG load (skip in test mode)
@@ -62,49 +63,72 @@ default_args = {
 with DAG(
     dag_id="get_market_data",
     default_args=default_args,
-    description="Obtiene y transforma datos de mercado con indicadores técnicos - Yahoo Finance API",
+    description="ETL Pipeline: Yahoo Finance → Indicadores Técnicos → Parquet → Data Warehouse",
     schedule_interval="@daily",  # Run daily
     catchup=False,
-    tags=["finance", "market-data", "yahoo-finance", "api", "etl", "parquet"],
+    tags=[
+        "finance",
+        "market-data",
+        "yahoo-finance",
+        "api",
+        "etl",
+        "parquet",
+        "warehouse",
+    ],
     params={"ticker": DEFAULT_TICKER, "date": datetime.now().strftime("%Y-%m-%d")},
     doc_md="""
     # Get Market Data DAG - ETL Pipeline
     
-    DAG diario que obtiene datos de mercado, calcula indicadores técnicos y almacena en Parquet.
+    Pipeline ETL completo que extrae, transforma y carga datos de mercado a un Data Warehouse.
     
     ## 🎯 Funcionalidad
     
     ### Ejecución Diaria (Schedule: @daily)
-    - Obtiene datos del día actual
-    - Calcula indicadores técnicos
-    - Almacena en formato Parquet
+    - Obtiene datos del día actual desde Yahoo Finance API
+    - Calcula 12 indicadores técnicos
+    - Almacena en Parquet (persistencia local)
+    - Carga a Data Warehouse (PostgreSQL dev / Redshift prod)
     
     ### Backfill Automático (Primera Ejecución)
     - Si no existe archivo Parquet → Backfill de 20 días
     - Si existe archivo Parquet → Solo día actual
     
-    ## 📊 Indicadores Técnicos Calculados
+    ## 📊 Indicadores Técnicos Calculados (12)
     
-    - **Moving Averages**: SMA 7, 14, 20 días
-    - **RSI**: Relative Strength Index (14 días)
-    - **MACD**: Moving Average Convergence Divergence
-    - **Bollinger Bands**: Upper, Middle, Lower
-    - **Returns**: Daily return percentage
-    - **Volatility**: 20-day rolling volatility
+    - **Trend**: SMA (7, 14, 20), EMA, MACD (line, signal, histogram)
+    - **Momentum**: RSI (14 días)
+    - **Volatility**: Bollinger Bands, Volatility 20d
+    - **Returns**: Daily return %
     
-    ## 💾 Almacenamiento
+    ## 💾 Almacenamiento Multi-Capa
     
+    ### Layer 1: Parquet (Local Cache)
     - **Formato**: Apache Parquet (compresión Snappy)
     - **Ubicación**: `/opt/airflow/data/{TICKER}_market_data.parquet`
-    - **Modo**: Append (deduplica por fecha)
+    - **Uso**: Cache local, recovery, análisis local
     
-    ## 🔄 Flujo de Ejecución
+    ### Layer 2: Data Warehouse
+    - **Development**: PostgreSQL (mismo servidor, schema separado)
+    - **Staging/Production**: Amazon Redshift (cluster dedicado)
+    - **Estrategia**: UPSERT (inserta nuevos, actualiza existentes)
+    - **Schema**: fact_market_data con 25+ columnas
     
-    1. **Validate Ticker**: Valida el ticker symbol
-    2. **Check API**: Verifica disponibilidad de Yahoo Finance API
-    3. **Determine Dates**: Decide backfill (20 días) o single date
-    4. **Fetch Data**: Obtiene datos de Yahoo Finance API
+    ## 🔄 Flujo de Ejecución (6 Tareas)
+    
+    1. **Validate Ticker**: Valida formato del ticker symbol
+    2. **Determine Dates**: Decide backfill (20 días) o incremental (1 día)
+    3. **Check API Availability**: Sensor verifica disponibilidad de API
+    4. **Fetch Multiple Dates**: Obtiene datos de Yahoo Finance (1-20 fechas)
     5. **Transform & Save**: Calcula indicadores y guarda en Parquet
+    6. **Load to Warehouse**: Carga desde Parquet a PostgreSQL/Redshift
+    
+    ## 🌍 Ambientes
+    
+    - **Development**: PostgreSQL en Docker (postgres:5432)
+    - **Staging**: Redshift cluster staging
+    - **Production**: Redshift cluster production
+    
+    Configurado via variable `ENVIRONMENT` (development/staging/production)
     
     ## 🎛️ Parámetros
     
@@ -114,10 +138,14 @@ with DAG(
     }
     ```
     
-    ## ⚙️ Variables de Entorno
+    ## ⚙️ Variables de Entorno Principales
     
+    - `ENVIRONMENT`: development | staging | production
     - `MARKET_DATA_DEFAULT_TICKER`: Ticker por defecto (default: AAPL)
-    - `MARKET_DATA_STORAGE_DIR`: Directorio de almacenamiento (default: /opt/airflow/data)
+    - `MARKET_DATA_STORAGE_DIR`: Directorio Parquet (default: /opt/airflow/data)
+    - `WAREHOUSE_LOAD_STRATEGY`: upsert | append | truncate_insert
+    - `DEV_WAREHOUSE_HOST`: Host PostgreSQL (development)
+    - `PROD_WAREHOUSE_HOST`: Host Redshift (production)
     
     ## 📖 Documentación
     
@@ -167,12 +195,20 @@ with DAG(
         provide_context=True,
     )
 
+    # Task 6: Load data to Data Warehouse (PostgreSQL dev / Redshift prod)
+    load_warehouse_task = PythonOperator(
+        task_id="load_to_warehouse",
+        python_callable=load_to_warehouse,
+        provide_context=True,
+    )
+
     # Define task dependencies
-    # validate → determine dates → check API → fetch data → transform & save
+    # validate → determine dates → check API → fetch data → transform & save → load warehouse
     (
         validate_ticker_task
         >> determine_dates_task
         >> api_sensor
         >> fetch_data_task
         >> transform_and_save_task
+        >> load_warehouse_task
     )
