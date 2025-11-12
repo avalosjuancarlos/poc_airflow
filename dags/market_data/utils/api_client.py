@@ -61,10 +61,14 @@ class YahooFinanceClient:
         url = f"{self.base_url}/{ticker}"
         params = {"period1": timestamp, "period2": timestamp, "interval": "1d"}
 
+        # Build full URL for logging
+        full_url = f"{url}?period1={timestamp}&period2={timestamp}&interval=1d"
+
         logger.info(
             f"Fetching market data for {ticker} on {date}",
-            extra={"ticker": ticker, "date": date, "url": url},
+            extra={"ticker": ticker, "date": date, "url": url, "timestamp": timestamp},
         )
+        logger.info(f"API URL: {full_url}")
 
         # Retry logic with exponential backoff
         for attempt in range(max_retries):
@@ -169,13 +173,39 @@ class YahooFinanceClient:
         # Debug: Log response structure
         if data.get("chart", {}).get("result"):
             result = data["chart"]["result"][0]
-            quote = result.get("indicators", {}).get("quote", [{}])[0]
-            logger.debug(
-                f"API response for {ticker} on {date}: "
-                f"has_quote={bool(quote)}, "
-                f"open_len={len(quote.get('open', []))}, "
-                f"close_len={len(quote.get('close', []))}"
+            indicators = result.get("indicators", {})
+            quote_list = indicators.get("quote", [])
+
+            logger.info(
+                f"API response structure for {ticker} on {date}: "
+                f"has_indicators={bool(indicators)}, "
+                f"quote_list_length={len(quote_list)}"
             )
+
+            if quote_list and len(quote_list) > 0:
+                quote = quote_list[0]
+                logger.info(
+                    f"Quote data arrays for {ticker} on {date}: "
+                    f"open_len={len(quote.get('open', []))}, "
+                    f"high_len={len(quote.get('high', []))}, "
+                    f"low_len={len(quote.get('low', []))}, "
+                    f"close_len={len(quote.get('close', []))}, "
+                    f"volume_len={len(quote.get('volume', []))}"
+                )
+
+                # Log actual values if arrays are not empty
+                if quote.get("close") and len(quote.get("close", [])) > 0:
+                    logger.info(
+                        f"First close value for {ticker} on {date}: {quote['close'][0]}"
+                    )
+                else:
+                    logger.warning(
+                        f"Empty close array for {ticker} on {date}. Full quote: {quote}"
+                    )
+            else:
+                logger.warning(
+                    f"No quote data in response for {ticker} on {date}. Indicators: {indicators}"
+                )
 
         # Extract market data
         return self._parse_market_data(data, ticker, date, timestamp)
