@@ -326,9 +326,9 @@ rm -rf poc_airflow
 
 ✅ Installation complete! Now:
 
-1. **[Quick Start Tutorial](quick-start.md)** - Run your first DAG
-2. **[Configuration Guide](configuration.md)** - Customize settings
-3. **[Market Data DAG Guide](../user-guide/market-data-dag.md)** - Use the market data pipeline
+1. **[Market Data DAG Guide](../user-guide/market-data-dag.md)** - Run your first DAG
+2. **[Configuration Guide](../user-guide/configuration.md)** - Customize settings
+3. **[Logging Guide](../user-guide/logging.md)** - Understand the logging system
 
 ---
 
