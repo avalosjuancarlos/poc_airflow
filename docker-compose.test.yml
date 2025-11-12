@@ -1,0 +1,132 @@
+# Docker Compose para ejecutar tests
+# Uso: docker compose -f docker-compose.test.yml up test
+
+services:
+  test:
+    image: apache/airflow:2.11.0-python3.10
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./tests:/opt/airflow/tests
+      - ./pytest.ini:/opt/airflow/pytest.ini
+      - ./requirements.txt:/opt/airflow/requirements.txt
+      - ./.github:/opt/airflow/.github
+    environment:
+      - PYTHONPATH=/opt/airflow/dags
+      - AIRFLOW__CORE__UNIT_TEST_MODE=True
+      - AIRFLOW__CORE__LOAD_EXAMPLES=False
+      - AIRFLOW_HOME=/opt/airflow
+    working_dir: /opt/airflow
+    command: >
+      bash -c "
+      echo '=================================================='
+      echo '  Installing test dependencies...'
+      echo '=================================================='
+      pip install --quiet --no-cache-dir -r requirements.txt &&
+      echo '' &&
+      echo '=================================================='
+      echo '  Running Unit Tests'
+      echo '=================================================='
+      pytest tests/unit -v --cov=dags/market_data --cov-report=term-missing &&
+      echo '' &&
+      echo '=================================================='
+      echo '  Running Integration Tests'
+      echo '=================================================='
+      pytest tests/integration -v &&
+      echo '' &&
+      echo '=================================================='
+      echo '  Test Summary'
+      echo '=================================================='
+      pytest tests/ --co -q &&
+      echo '' &&
+      echo '✅ All tests completed successfully!'
+      "
+
+  test-coverage:
+    image: apache/airflow:2.11.0-python3.10
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./tests:/opt/airflow/tests
+      - ./pytest.ini:/opt/airflow/pytest.ini
+      - ./requirements.txt:/opt/airflow/requirements.txt
+      - ./htmlcov:/opt/airflow/htmlcov
+    environment:
+      - PYTHONPATH=/opt/airflow/dags
+      - AIRFLOW__CORE__UNIT_TEST_MODE=True
+      - AIRFLOW__CORE__LOAD_EXAMPLES=False
+      - AIRFLOW_HOME=/opt/airflow
+    working_dir: /opt/airflow
+    command: >
+      bash -c "
+      pip install --quiet --no-cache-dir -r requirements.txt &&
+      echo '=================================================='
+      echo '  Running Tests with Coverage Report'
+      echo '=================================================='
+      pytest tests/ -v --cov=dags/market_data --cov-report=html --cov-report=term-missing &&
+      echo '' &&
+      echo '✅ Coverage report generated in htmlcov/index.html'
+      "
+
+  test-unit-only:
+    image: apache/airflow:2.11.0-python3.10
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./tests:/opt/airflow/tests
+      - ./pytest.ini:/opt/airflow/pytest.ini
+      - ./requirements.txt:/opt/airflow/requirements.txt
+    environment:
+      - PYTHONPATH=/opt/airflow/dags
+      - AIRFLOW__CORE__UNIT_TEST_MODE=True
+      - AIRFLOW__CORE__LOAD_EXAMPLES=False
+    working_dir: /opt/airflow
+    command: >
+      bash -c "
+      pip install --quiet --no-cache-dir -r requirements.txt &&
+      pytest tests/unit -v --cov=dags/market_data --cov-report=term-missing
+      "
+
+  test-integration-only:
+    image: apache/airflow:2.11.0-python3.10
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./tests:/opt/airflow/tests
+      - ./pytest.ini:/opt/airflow/pytest.ini
+      - ./requirements.txt:/opt/airflow/requirements.txt
+    environment:
+      - PYTHONPATH=/opt/airflow/dags
+      - AIRFLOW__CORE__UNIT_TEST_MODE=True
+      - AIRFLOW__CORE__LOAD_EXAMPLES=False
+      - AIRFLOW_HOME=/opt/airflow
+    working_dir: /opt/airflow
+    command: >
+      bash -c "
+      pip install --quiet --no-cache-dir -r requirements.txt &&
+      pytest tests/integration -v
+      "
+
+  lint:
+    image: apache/airflow:2.11.0-python3.10
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./tests:/opt/airflow/tests
+    working_dir: /opt/airflow
+    command: >
+      bash -c "
+      pip install --quiet flake8 black isort pylint &&
+      echo '=================================================='
+      echo '  Running Flake8'
+      echo '=================================================='
+      flake8 dags/market_data --count --statistics &&
+      echo '' &&
+      echo '=================================================='
+      echo '  Checking Black Formatting'
+      echo '=================================================='
+      black --check dags/market_data tests/ &&
+      echo '' &&
+      echo '=================================================='
+      echo '  Checking Import Sorting'
+      echo '=================================================='
+      isort --check-only dags/market_data tests/ &&
+      echo '' &&
+      echo '✅ All linting checks passed!'
+      "
+

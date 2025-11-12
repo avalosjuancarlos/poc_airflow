@@ -62,15 +62,44 @@ open htmlcov/index.html
 
 ## 🐳 Ejecutar en Docker
 
+### Opción 1: Contenedor Existente
+
 ```bash
-# Opción 1: En contenedor existente
 docker compose exec airflow-scheduler bash
 cd /opt/airflow
 export PYTHONPATH="/opt/airflow/dags:${PYTHONPATH}"
 pytest
+```
 
-# Opción 2: Contenedor dedicado (crear docker-compose.test.yml)
+### Opción 2: Contenedor Dedicado para Tests
+
+```bash
+# Ejecutar todos los tests
 docker compose -f docker-compose.test.yml up test
+
+# Solo tests unitarios
+docker compose -f docker-compose.test.yml up test-unit-only
+
+# Solo tests de integración
+docker compose -f docker-compose.test.yml up test-integration-only
+
+# Con reporte de coverage
+docker compose -f docker-compose.test.yml up test-coverage
+
+# Linting
+docker compose -f docker-compose.test.yml up lint
+```
+
+### Opción 3: Shell Interactivo en Contenedor de Tests
+
+```bash
+# Ejecutar shell en contenedor de tests
+docker compose -f docker-compose.test.yml run --rm test bash
+
+# Dentro del contenedor:
+pytest -v
+pytest tests/unit/test_validators.py -v
+pytest --cov=dags/market_data
 ```
 
 ## 🔧 Opciones Útiles
