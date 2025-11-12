@@ -2,11 +2,12 @@
 Pytest configuration and shared fixtures
 """
 
-import pytest
-import sys
 import os
-from unittest.mock import Mock
+import sys
 from datetime import datetime
+from unittest.mock import Mock
+
+import pytest
 
 # Add dags directory to Python path
 DAGS_DIR = os.path.join(os.path.dirname(__file__), "../dags")

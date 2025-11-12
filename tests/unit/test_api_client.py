@@ -2,11 +2,12 @@
 Unit tests for Yahoo Finance API Client
 """
 
-import pytest
-import sys
 import os
-from unittest.mock import Mock, patch
+import sys
 from datetime import datetime
+from unittest.mock import Mock, patch
+
+import pytest
 
 # Add dags directory to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../dags"))

@@ -6,14 +6,9 @@ Contains all the callable functions used by PythonOperators
 
 import logging
 
-from market_data.config import (
-    YAHOO_FINANCE_API_BASE_URL,
-    HEADERS,
-    API_TIMEOUT,
-    MAX_RETRIES,
-    RETRY_DELAY,
-    DEFAULT_TICKER,
-)
+from market_data.config import (API_TIMEOUT, DEFAULT_TICKER, HEADERS,
+                                MAX_RETRIES, RETRY_DELAY,
+                                YAHOO_FINANCE_API_BASE_URL)
 from market_data.utils import YahooFinanceClient, validate_ticker_format
 
 logger = logging.getLogger(__name__)
