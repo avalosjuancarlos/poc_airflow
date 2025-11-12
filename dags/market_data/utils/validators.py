@@ -41,7 +41,7 @@ def validate_ticker_format(ticker: Any) -> str:
         raise ValueError(f"Ticker too long: {ticker} (max 10 characters)")
 
     # Check for valid characters (alphanumeric and some special chars)
-    if not all(c.isalnum() or c in ['.', '-', '^'] for c in ticker):
+    if not all(c.isalnum() or c in [".", "-", "^"] for c in ticker):
         raise ValueError(f"Invalid characters in ticker: {ticker}")
 
     logger.info(f"Ticker validated: {ticker}")
@@ -68,7 +68,9 @@ def validate_date_format(date_str: str) -> str:
     from datetime import datetime
 
     try:
-        datetime.strptime(date_str, '%Y-%m-%d')
+        datetime.strptime(date_str, "%Y-%m-%d")
         return date_str
     except ValueError as e:
-        raise ValueError(f"Invalid date format '{date_str}'. Use YYYY-MM-DD format") from e
+        raise ValueError(
+            f"Invalid date format '{date_str}'. Use YYYY-MM-DD format"
+        ) from e

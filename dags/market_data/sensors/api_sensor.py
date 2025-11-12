@@ -6,11 +6,7 @@ Checks if Yahoo Finance API is available before fetching data
 
 import logging
 
-from market_data.config import (
-    YAHOO_FINANCE_API_BASE_URL,
-    HEADERS,
-    API_TIMEOUT
-)
+from market_data.config import YAHOO_FINANCE_API_BASE_URL, HEADERS, API_TIMEOUT
 from market_data.utils import YahooFinanceClient
 
 logger = logging.getLogger(__name__)
@@ -32,9 +28,7 @@ def check_api_availability(ticker: str, **context):
     """
     # Initialize API client
     client = YahooFinanceClient(
-        base_url=YAHOO_FINANCE_API_BASE_URL,
-        headers=HEADERS,
-        timeout=API_TIMEOUT
+        base_url=YAHOO_FINANCE_API_BASE_URL, headers=HEADERS, timeout=API_TIMEOUT
     )
 
     # Check availability

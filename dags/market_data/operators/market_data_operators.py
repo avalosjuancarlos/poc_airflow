@@ -12,7 +12,7 @@ from market_data.config import (
     API_TIMEOUT,
     MAX_RETRIES,
     RETRY_DELAY,
-    DEFAULT_TICKER
+    DEFAULT_TICKER,
 )
 from market_data.utils import YahooFinanceClient, validate_ticker_format
 
@@ -32,8 +32,8 @@ def validate_ticker(**context):
     Raises:
         ValueError: If ticker is invalid
     """
-    dag_run = context['dag_run']
-    ticker = dag_run.conf.get('ticker', DEFAULT_TICKER)
+    dag_run = context["dag_run"]
+    ticker = dag_run.conf.get("ticker", DEFAULT_TICKER)
 
     logger.info(f"Validating ticker: {ticker}")
     logger.info(f"Default ticker configured: {DEFAULT_TICKER}")
@@ -44,7 +44,7 @@ def validate_ticker(**context):
     logger.info(f"Ticker validated: {validated_ticker}")
 
     # Save to XCom for downstream tasks
-    context['task_instance'].xcom_push(key='validated_ticker', value=validated_ticker)
+    context["task_instance"].xcom_push(key="validated_ticker", value=validated_ticker)
 
     return validated_ticker
 
@@ -63,21 +63,16 @@ def fetch_market_data(ticker: str, date: str, **context):
     """
     # Initialize API client
     client = YahooFinanceClient(
-        base_url=YAHOO_FINANCE_API_BASE_URL,
-        headers=HEADERS,
-        timeout=API_TIMEOUT
+        base_url=YAHOO_FINANCE_API_BASE_URL, headers=HEADERS, timeout=API_TIMEOUT
     )
 
     # Fetch data
     market_data = client.fetch_market_data(
-        ticker=ticker,
-        date=date,
-        max_retries=MAX_RETRIES,
-        retry_delay=RETRY_DELAY
+        ticker=ticker, date=date, max_retries=MAX_RETRIES, retry_delay=RETRY_DELAY
     )
 
     # Save to XCom
-    context['task_instance'].xcom_push(key='market_data', value=market_data)
+    context["task_instance"].xcom_push(key="market_data", value=market_data)
 
     return market_data
 
@@ -93,9 +88,8 @@ def process_market_data(**context):
         Processed market data
     """
     # Get data from XCom
-    market_data = context['task_instance'].xcom_pull(
-        task_ids='fetch_market_data',
-        key='market_data'
+    market_data = context["task_instance"].xcom_pull(
+        task_ids="fetch_market_data", key="market_data"
     )
 
     if not market_data:
@@ -118,7 +112,7 @@ def process_market_data(**context):
     logger.info(f"  Low:    ${market_data['quote'].get('low')}")
     logger.info(f"  Close:  ${market_data['quote'].get('close')}")
 
-    volume = market_data['quote'].get('volume')
+    volume = market_data["quote"].get("volume")
     if volume:
         logger.info(f"  Volume: {volume:,}")
 

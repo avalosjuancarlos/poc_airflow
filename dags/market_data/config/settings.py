@@ -39,10 +39,12 @@ def get_config_value(airflow_key, env_key, default_value, value_type=str):
         # Prioridad 1: Airflow Variable
         value = Variable.get(airflow_key, default_var=None)
         if value is not None:
-            logger.debug(f"Config '{airflow_key}' obtenida de Airflow Variable: {value}")
+            logger.debug(
+                f"Config '{airflow_key}' obtenida de Airflow Variable: {value}"
+            )
             # Manejo especial para booleanos
             if value_type == bool:
-                return value.lower() in ('true', '1', 'yes', 'on')
+                return value.lower() in ("true", "1", "yes", "on")
             return value_type(value)
     except Exception as e:
         logger.debug(f"No se pudo obtener Airflow Variable '{airflow_key}': {e}")
@@ -53,7 +55,7 @@ def get_config_value(airflow_key, env_key, default_value, value_type=str):
         logger.debug(f"Config '{airflow_key}' obtenida de ENV '{env_key}': {env_value}")
         # Manejo especial para booleanos
         if value_type == bool:
-            return env_value.lower() in ('true', '1', 'yes', 'on')
+            return env_value.lower() in ("true", "1", "yes", "on")
         return value_type(env_value)
 
     # Prioridad 3: Valor por defecto
@@ -69,66 +71,67 @@ def get_config_value(airflow_key, env_key, default_value, value_type=str):
 # Lazy Configuration Loading
 # ============================================================================
 
+
 def _get_yahoo_api_url():
     """Get Yahoo Finance API base URL"""
     return os.environ.get(
-        'YAHOO_FINANCE_API_BASE_URL',
-        'https://query2.finance.yahoo.com/v8/finance/chart'
+        "YAHOO_FINANCE_API_BASE_URL",
+        "https://query2.finance.yahoo.com/v8/finance/chart",
     )
 
 
 def _get_api_timeout():
     """Get API timeout value"""
-    return int(os.environ.get('MARKET_DATA_API_TIMEOUT', '30'))
+    return int(os.environ.get("MARKET_DATA_API_TIMEOUT", "30"))
 
 
 def _get_default_ticker():
     """Get default ticker with fallback"""
     return get_config_value(
-        airflow_key='market_data.default_ticker',
-        env_key='MARKET_DATA_DEFAULT_TICKER',
-        default_value='AAPL',
-        value_type=str
+        airflow_key="market_data.default_ticker",
+        env_key="MARKET_DATA_DEFAULT_TICKER",
+        default_value="AAPL",
+        value_type=str,
     )
 
 
 def _get_max_retries():
     """Get max retries with fallback"""
     return get_config_value(
-        airflow_key='market_data.max_retries',
-        env_key='MARKET_DATA_MAX_RETRIES',
-        default_value='3',
-        value_type=int
+        airflow_key="market_data.max_retries",
+        env_key="MARKET_DATA_MAX_RETRIES",
+        default_value="3",
+        value_type=int,
     )
 
 
 def _get_retry_delay():
     """Get retry delay with fallback"""
     return get_config_value(
-        airflow_key='market_data.retry_delay',
-        env_key='MARKET_DATA_RETRY_DELAY',
-        default_value='5',
-        value_type=int
+        airflow_key="market_data.retry_delay",
+        env_key="MARKET_DATA_RETRY_DELAY",
+        default_value="5",
+        value_type=int,
     )
 
 
 def _get_sensor_poke_interval():
     """Get sensor poke interval with fallback"""
     return get_config_value(
-        airflow_key='market_data.sensor_poke_interval',
-        env_key='MARKET_DATA_SENSOR_POKE_INTERVAL',
-        default_value='30',
-        value_type=int
+        airflow_key="market_data.sensor_poke_interval",
+        env_key="MARKET_DATA_SENSOR_POKE_INTERVAL",
+        default_value="30",
+        value_type=int,
     )
 
 
 def _get_sensor_timeout():
     """Get sensor timeout with fallback"""
     return get_config_value(
-        airflow_key='market_data.sensor_timeout',
-        env_key='MARKET_DATA_SENSOR_TIMEOUT',
-        default_value='600',
-        value_type=int
+        airflow_key="market_data.sensor_timeout",
+        env_key="MARKET_DATA_SENSOR_TIMEOUT",
+        default_value="600",
+        value_type=int,
     )
 
 
@@ -146,27 +149,26 @@ try:
 except Exception as e:
     logger.debug(f"Could not load Airflow Variables, using ENV/defaults: {e}")
     # Fallback to ENV only
-    DEFAULT_TICKER = os.environ.get('MARKET_DATA_DEFAULT_TICKER', 'AAPL')
-    MAX_RETRIES = int(os.environ.get('MARKET_DATA_MAX_RETRIES', '3'))
-    RETRY_DELAY = int(os.environ.get('MARKET_DATA_RETRY_DELAY', '5'))
-    SENSOR_POKE_INTERVAL = int(os.environ.get('MARKET_DATA_SENSOR_POKE_INTERVAL', '30'))
-    SENSOR_TIMEOUT = int(os.environ.get('MARKET_DATA_SENSOR_TIMEOUT', '600'))
+    DEFAULT_TICKER = os.environ.get("MARKET_DATA_DEFAULT_TICKER", "AAPL")
+    MAX_RETRIES = int(os.environ.get("MARKET_DATA_MAX_RETRIES", "3"))
+    RETRY_DELAY = int(os.environ.get("MARKET_DATA_RETRY_DELAY", "5"))
+    SENSOR_POKE_INTERVAL = int(os.environ.get("MARKET_DATA_SENSOR_POKE_INTERVAL", "30"))
+    SENSOR_TIMEOUT = int(os.environ.get("MARKET_DATA_SENSOR_TIMEOUT", "600"))
 
 # Exponential Backoff - Mantener como ENV (feature flag)
-SENSOR_EXPONENTIAL_BACKOFF = os.environ.get(
-    'MARKET_DATA_SENSOR_EXPONENTIAL_BACKOFF',
-    'true'
-).lower() == 'true'
+SENSOR_EXPONENTIAL_BACKOFF = (
+    os.environ.get("MARKET_DATA_SENSOR_EXPONENTIAL_BACKOFF", "true").lower() == "true"
+)
 
 # Headers para evitar bloqueos de la API
 HEADERS = {
-    'User-Agent': (
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
-        'AppleWebKit/537.36 (KHTML, like Gecko) '
-        'Chrome/91.0.4472.124 Safari/537.36'
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/91.0.4472.124 Safari/537.36"
     ),
-    'Accept': 'application/json',
-    'Accept-Language': 'en-US,en;q=0.9',
+    "Accept": "application/json",
+    "Accept-Language": "en-US,en;q=0.9",
 }
 
 
