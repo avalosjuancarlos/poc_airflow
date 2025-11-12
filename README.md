@@ -5,14 +5,112 @@
 [![Airflow](https://img.shields.io/badge/Airflow-2.11.0-017CEE?style=for-the-badge&logo=apache-airflow&logoColor=white)](https://airflow.apache.org/)
 [![Python](https://img.shields.io/badge/Python-3.10-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 [![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
-[![Tests](https://img.shields.io/badge/Tests-82%20Passing-success?style=for-the-badge&logo=pytest)](#-testing)
-[![Coverage](https://img.shields.io/badge/Coverage-84%25-success?style=for-the-badge&logo=codecov)](#-testing)
+[![Tests](https://img.shields.io/badge/Tests-142%20Passing-success?style=for-the-badge&logo=pytest)](#-testing)
+[![Coverage](https://img.shields.io/badge/Coverage-78%25-success?style=for-the-badge&logo=codecov)](#-testing)
 
-**Production-ready Apache Airflow setup with CeleryExecutor, comprehensive testing, and enterprise-grade logging.**
+**Pipeline ETL automatizado para obtener, transformar y almacenar datos de mercado con Apache Airflow.**
 
 [Features](#-key-features) • [Quick Start](#-quick-start) • [Documentation](#-documentation) • [Architecture](#-architecture) • [Contributing](#-contributing)
 
 </div>
+
+---
+
+## 📖 ¿Qué es este proyecto?
+
+Este proyecto es un **pipeline ETL (Extract, Transform, Load)** completo y listo para producción que automatiza la obtención y procesamiento de datos financieros del mercado de valores.
+
+### 🎯 ¿Qué hace?
+
+El pipeline realiza las siguientes operaciones **automáticamente** todos los días a las 6:00 PM ET (post-cierre del mercado):
+
+1. **📊 Extrae** datos de mercado desde Yahoo Finance API
+   - Precios (Open, High, Low, Close)
+   - Volumen de transacciones
+   - Metadata del ticker (52-week high/low, market cap, etc.)
+
+2. **🔄 Transforma** los datos calculando 12 indicadores técnicos
+   - **Tendencia**: SMA (7, 14, 30 días), MACD
+   - **Momentum**: RSI (Relative Strength Index)
+   - **Volatilidad**: Bollinger Bands, desviación estándar 20 días
+   - **Retornos**: Cambio porcentual diario
+
+3. **💾 Almacena** los datos enriquecidos en dos capas
+   - **Parquet**: Almacenamiento local eficiente (formato columnar comprimido)
+   - **Data Warehouse**: PostgreSQL (desarrollo) o Amazon Redshift (producción)
+
+### 🌟 ¿Para qué sirve?
+
+- **Análisis Técnico**: Todos los indicadores calculados y listos para usar
+- **Backtesting**: Datos históricos para probar estrategias de trading
+- **Dashboards**: Fuente de datos para visualizaciones (Tableau, Power BI, Grafana)
+- **Machine Learning**: Dataset limpio para modelos predictivos
+- **Reportes**: Datos consolidados para reportes financieros
+
+### ⚡ ¿Por qué usar este proyecto?
+
+- ✅ **Cero configuración manual**: Todo automatizado con Airflow
+- ✅ **Datos limpios y validados**: Sin preocuparte por errores de API
+- ✅ **Indicadores pre-calculados**: No necesitas calcularlos tú mismo
+- ✅ **Multi-ambiente**: Desarrollo local, staging, y producción
+- ✅ **Escalable**: Desde 1 ticker hasta cientos con solo cambiar configuración
+- ✅ **Listo para producción**: Testing, logging, monitoreo incluidos
+
+### 🔧 ¿Cómo funciona?
+
+```
+┌─────────────┐
+│ Yahoo       │
+│ Finance API │ ────► Obtiene datos OHLCV
+└─────────────┘
+       │
+       ▼
+┌─────────────┐
+│ Airflow DAG │ ────► Orquesta el flujo ETL
+└─────────────┘
+       │
+       ▼
+┌─────────────┐
+│ Pandas      │ ────► Calcula 12 indicadores técnicos
+└─────────────┘
+       │
+       ├────► Parquet (.parquet files)
+       │      • Rápido
+       │      • Comprimido
+       │      • Versionado
+       │
+       └────► Data Warehouse (PostgreSQL/Redshift)
+              • Queries SQL
+              • Analytics
+              • BI Tools
+```
+
+### 📅 Ejemplo de Flujo Diario
+
+```
+6:00 PM ET (Lunes a Viernes):
+├─ Valida ticker (AAPL)
+├─ Determina qué fechas obtener
+│  └─ Primera vez: últimos 20 días
+│  └─ Diario: solo hoy
+├─ Verifica que API esté disponible
+├─ Obtiene datos de Yahoo Finance
+│  └─ Open: $259.45
+│  └─ High: $260.61
+│  └─ Low: $258.32
+│  └─ Close: $259.57
+│  └─ Volume: 54,123,456
+├─ Calcula indicadores
+│  └─ SMA(7): $258.23
+│  └─ RSI: 68.42
+│  └─ MACD: 1.23
+│  └─ Bollinger Upper: $262.15
+│  └─ Volatility: 0.0156 (1.56%)
+├─ Guarda en Parquet
+│  └─ /opt/airflow/data/AAPL_market_data.parquet
+└─ Carga a Data Warehouse
+   └─ PostgreSQL: 15 registros insertados ✅
+```
 
 ---
 
