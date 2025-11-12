@@ -223,11 +223,26 @@ def calculate_technical_indicators(
             lambda x: x.get("volume") if isinstance(x, dict) else None
         )
 
+    # Convert OHLCV columns to numeric (handle None/invalid values)
+    numeric_columns = ["open", "high", "low", "close", "volume"]
+    for col in numeric_columns:
+        if col in df.columns:
+            df[col] = pd.to_numeric(df[col], errors="coerce")
+
     # Basic data validation
     required_columns = ["date", "close"]
     missing_columns = [col for col in required_columns if col not in df.columns]
     if missing_columns:
         raise ValueError(f"Missing required columns: {missing_columns}")
+
+    # Check for valid close prices
+    valid_close_count = df["close"].notna().sum()
+    if valid_close_count == 0:
+        raise ValueError("No valid 'close' prices found in data")
+
+    logger.info(
+        f"Data validation: {valid_close_count}/{len(df)} records with valid close prices"
+    )
 
     # Calculate indicators
     logger.info("Calculating moving averages...")
