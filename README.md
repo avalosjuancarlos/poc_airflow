@@ -8,7 +8,7 @@
 [![Tests](https://img.shields.io/badge/Tests-142%20Passing-success?style=for-the-badge&logo=pytest)](#-testing)
 [![Coverage](https://img.shields.io/badge/Coverage-78%25-success?style=for-the-badge&logo=codecov)](#-testing)
 
-**Pipeline ETL automatizado para obtener, transformar y almacenar datos de mercado con Apache Airflow.**
+**Automated ETL pipeline to fetch, transform, and store market data using Apache Airflow.**
 
 [Features](#-key-features) • [Quick Start](#-quick-start) • [Documentation](#-documentation) • [Architecture](#-architecture) • [Contributing](#-contributing)
 
@@ -16,100 +16,100 @@
 
 ---
 
-## 📖 ¿Qué es este proyecto?
+## 📖 What is this project?
 
-Este proyecto es un **pipeline ETL (Extract, Transform, Load)** completo y listo para producción que automatiza la obtención y procesamiento de datos financieros del mercado de valores.
+This project is a **complete, production-ready ETL (Extract, Transform, Load) pipeline** that automates the extraction and processing of financial market data from stock markets.
 
-### 🎯 ¿Qué hace?
+### 🎯 What does it do?
 
-El pipeline realiza las siguientes operaciones **automáticamente** todos los días a las 6:00 PM ET (post-cierre del mercado):
+The pipeline performs the following operations **automatically** every day at 6:00 PM ET (post market close):
 
-1. **📊 Extrae** datos de mercado desde Yahoo Finance API
-   - Precios (Open, High, Low, Close)
-   - Volumen de transacciones
-   - Metadata del ticker (52-week high/low, market cap, etc.)
+1. **📊 Extracts** market data from Yahoo Finance API
+   - Prices (Open, High, Low, Close)
+   - Trading volume
+   - Ticker metadata (52-week high/low, market cap, etc.)
 
-2. **🔄 Transforma** los datos calculando 12 indicadores técnicos
-   - **Tendencia**: SMA (7, 14, 30 días), MACD
+2. **🔄 Transforms** data by calculating 12 technical indicators
+   - **Trend**: SMA (7, 14, 30 days), MACD
    - **Momentum**: RSI (Relative Strength Index)
-   - **Volatilidad**: Bollinger Bands, desviación estándar 20 días
-   - **Retornos**: Cambio porcentual diario
+   - **Volatility**: Bollinger Bands, 20-day standard deviation
+   - **Returns**: Daily percentage change
 
-3. **💾 Almacena** los datos enriquecidos en dos capas
-   - **Parquet**: Almacenamiento local eficiente (formato columnar comprimido)
-   - **Data Warehouse**: PostgreSQL (desarrollo) o Amazon Redshift (producción)
+3. **💾 Stores** enriched data in two layers
+   - **Parquet**: Efficient local storage (compressed columnar format)
+   - **Data Warehouse**: PostgreSQL (development) or Amazon Redshift (production)
 
-### 🌟 ¿Para qué sirve?
+### 🌟 What is it useful for?
 
-- **Análisis Técnico**: Todos los indicadores calculados y listos para usar
-- **Backtesting**: Datos históricos para probar estrategias de trading
-- **Dashboards**: Fuente de datos para visualizaciones (Tableau, Power BI, Grafana)
-- **Machine Learning**: Dataset limpio para modelos predictivos
-- **Reportes**: Datos consolidados para reportes financieros
+- **Technical Analysis**: All indicators calculated and ready to use
+- **Backtesting**: Historical data to test trading strategies
+- **Dashboards**: Data source for visualizations (Tableau, Power BI, Grafana)
+- **Machine Learning**: Clean dataset for predictive models
+- **Reports**: Consolidated data for financial reporting
 
-### ⚡ ¿Por qué usar este proyecto?
+### ⚡ Why use this project?
 
-- ✅ **Cero configuración manual**: Todo automatizado con Airflow
-- ✅ **Datos limpios y validados**: Sin preocuparte por errores de API
-- ✅ **Indicadores pre-calculados**: No necesitas calcularlos tú mismo
-- ✅ **Multi-ambiente**: Desarrollo local, staging, y producción
-- ✅ **Escalable**: Desde 1 ticker hasta cientos con solo cambiar configuración
-- ✅ **Listo para producción**: Testing, logging, monitoreo incluidos
+- ✅ **Zero manual configuration**: Everything automated with Airflow
+- ✅ **Clean and validated data**: No worries about API errors
+- ✅ **Pre-calculated indicators**: No need to calculate them yourself
+- ✅ **Multi-environment**: Local development, staging, and production
+- ✅ **Scalable**: From 1 ticker to hundreds with simple configuration
+- ✅ **Production-ready**: Testing, logging, monitoring included
 
-### 🔧 ¿Cómo funciona?
+### 🔧 How does it work?
 
 ```
 ┌─────────────┐
 │ Yahoo       │
-│ Finance API │ ────► Obtiene datos OHLCV
+│ Finance API │ ────► Fetches OHLCV data
 └─────────────┘
        │
        ▼
 ┌─────────────┐
-│ Airflow DAG │ ────► Orquesta el flujo ETL
+│ Airflow DAG │ ────► Orchestrates ETL flow
 └─────────────┘
        │
        ▼
 ┌─────────────┐
-│ Pandas      │ ────► Calcula 12 indicadores técnicos
+│ Pandas      │ ────► Calculates 12 technical indicators
 └─────────────┘
        │
        ├────► Parquet (.parquet files)
-       │      • Rápido
-       │      • Comprimido
-       │      • Versionado
+       │      • Fast
+       │      • Compressed
+       │      • Versioned
        │
        └────► Data Warehouse (PostgreSQL/Redshift)
-              • Queries SQL
+              • SQL queries
               • Analytics
               • BI Tools
 ```
 
-### 📅 Ejemplo de Flujo Diario
+### 📅 Daily Execution Example
 
 ```
-6:00 PM ET (Lunes a Viernes):
-├─ Valida ticker (AAPL)
-├─ Determina qué fechas obtener
-│  └─ Primera vez: últimos 20 días
-│  └─ Diario: solo hoy
-├─ Verifica que API esté disponible
-├─ Obtiene datos de Yahoo Finance
+6:00 PM ET (Monday-Friday):
+├─ Validates ticker (AAPL)
+├─ Determines which dates to fetch
+│  └─ First time: last 20 days
+│  └─ Daily: today only
+├─ Checks if API is available
+├─ Fetches data from Yahoo Finance
 │  └─ Open: $259.45
 │  └─ High: $260.61
 │  └─ Low: $258.32
 │  └─ Close: $259.57
 │  └─ Volume: 54,123,456
-├─ Calcula indicadores
+├─ Calculates indicators
 │  └─ SMA(7): $258.23
 │  └─ RSI: 68.42
 │  └─ MACD: 1.23
 │  └─ Bollinger Upper: $262.15
 │  └─ Volatility: 0.0156 (1.56%)
-├─ Guarda en Parquet
+├─ Saves to Parquet
 │  └─ /opt/airflow/data/AAPL_market_data.parquet
-└─ Carga a Data Warehouse
-   └─ PostgreSQL: 15 registros insertados ✅
+└─ Loads to Data Warehouse
+   └─ PostgreSQL: 15 records inserted ✅
 ```
 
 ---
