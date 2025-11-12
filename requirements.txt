@@ -6,6 +6,11 @@ requests==2.31.0
 pandas==2.1.4
 pyarrow==14.0.1  # For Parquet file format
 
+# Data Warehouse dependencies
+sqlalchemy==2.0.23
+psycopg2-binary==2.9.9  # PostgreSQL driver (dev environment)
+redshift-connector==2.0.918  # Redshift driver (staging/production)
+
 # Testing dependencies
 pytest==7.4.3
 pytest-cov==4.1.0
