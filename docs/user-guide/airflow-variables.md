@@ -437,8 +437,8 @@ docker compose exec airflow-scheduler \
 
 ## 🔗 Referencias
 
-- [Documentación de Configuración](./CONFIGURATION.md)
-- [Análisis de Variables](./VARIABLES_ANALYSIS.md)
+- [Documentación de Configuración](./configuration.md)
+- [Análisis de Variables](../archive/variables-analysis.md)
 - [Airflow Variables Documentation](https://airflow.apache.org/docs/apache-airflow/stable/howto/variable.html)
 
 ---
