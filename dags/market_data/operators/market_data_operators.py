@@ -4,8 +4,6 @@ Operators for Market Data DAG
 Contains all the callable functions used by PythonOperators
 """
 
-import logging
-
 from market_data.config import (
     API_TIMEOUT,
     DEFAULT_TICKER,
@@ -14,11 +12,17 @@ from market_data.config import (
     RETRY_DELAY,
     YAHOO_FINANCE_API_BASE_URL,
 )
-from market_data.utils import YahooFinanceClient, validate_ticker_format
+from market_data.utils import (
+    YahooFinanceClient,
+    get_logger,
+    log_execution,
+    validate_ticker_format,
+)
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
+@log_execution()
 def validate_ticker(**context):
     """
     Validate ticker configuration
@@ -49,6 +53,7 @@ def validate_ticker(**context):
     return validated_ticker
 
 
+@log_execution()
 def fetch_market_data(ticker: str, date: str, **context):
     """
     Fetch market data from Yahoo Finance API
@@ -77,6 +82,7 @@ def fetch_market_data(ticker: str, date: str, **context):
     return market_data
 
 
+@log_execution()
 def process_market_data(**context):
     """
     Process and display market data

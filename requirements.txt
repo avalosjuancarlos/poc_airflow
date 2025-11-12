@@ -12,6 +12,13 @@ pytest-mock==3.12.0
 requests-mock==1.11.0
 freezegun==1.4.0
 
+# Optional: Monitoring and Error Tracking (uncomment to enable)
+# Sentry integration for error tracking and monitoring
+# sentry-sdk==1.40.0
+
+# Datadog APM integration for metrics and tracing
+# ddtrace==2.3.0
+
 # Uncomment and add packages as needed for your DAGs
 # boto3==1.28.0
 # sqlalchemy==2.0.0

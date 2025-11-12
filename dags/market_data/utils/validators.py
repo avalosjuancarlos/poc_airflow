@@ -2,12 +2,14 @@
 Validation utilities for Market Data
 """
 
-import logging
 from typing import Any
 
-logger = logging.getLogger(__name__)
+from .logger import get_logger, log_execution
+
+logger = get_logger(__name__)
 
 
+@log_execution()
 def validate_ticker_format(ticker: Any) -> str:
     """
     Validate and normalize ticker symbol
@@ -44,10 +46,12 @@ def validate_ticker_format(ticker: Any) -> str:
     if not all(c.isalnum() or c in [".", "-", "^"] for c in ticker):
         raise ValueError(f"Invalid characters in ticker: {ticker}")
 
-    logger.info(f"Ticker validated: {ticker}")
+    logger.info(f"Ticker validated: {ticker}", extra={"ticker": ticker})
+    logger.audit("ticker_validated", {"ticker": ticker})
     return ticker
 
 
+@log_execution()
 def validate_date_format(date_str: str) -> str:
     """
     Validate date format (YYYY-MM-DD)
@@ -69,8 +73,14 @@ def validate_date_format(date_str: str) -> str:
 
     try:
         datetime.strptime(date_str, "%Y-%m-%d")
+        logger.info(f"Date validated: {date_str}", extra={"date": date_str})
+        logger.audit("date_validated", {"date": date_str})
         return date_str
     except ValueError as e:
+        logger.error(
+            f"Invalid date format: {date_str}",
+            extra={"date": date_str, "error": str(e)},
+        )
         raise ValueError(
             f"Invalid date format '{date_str}'. Use YYYY-MM-DD format"
         ) from e

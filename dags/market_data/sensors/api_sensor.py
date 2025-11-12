@@ -4,14 +4,13 @@ API Availability Sensor
 Checks if Yahoo Finance API is available before fetching data
 """
 
-import logging
-
 from market_data.config import API_TIMEOUT, HEADERS, YAHOO_FINANCE_API_BASE_URL
-from market_data.utils import YahooFinanceClient
+from market_data.utils import YahooFinanceClient, get_logger, log_execution
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
+@log_execution()
 def check_api_availability(ticker: str, **context):
     """
     Sensor function to check API availability
