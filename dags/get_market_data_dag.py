@@ -7,6 +7,7 @@ usando la API pública de Yahoo Finance.
 
 from airflow import DAG
 from airflow.operators.python import PythonOperator
+from airflow.sensors.python import PythonSensor
 from airflow.models import Variable
 from datetime import datetime, timedelta
 import requests
@@ -204,6 +205,90 @@ def process_market_data(**context):
     return market_data
 
 
+def check_api_availability(ticker: str, **context):
+    """
+    Sensor que verifica si la API de Yahoo Finance está disponible y responde correctamente
+    
+    Args:
+        ticker: Símbolo del ticker para validar
+        
+    Returns:
+        bool: True si la API está disponible, False para reintentar
+    """
+    try:
+        # Usar una fecha reciente para probar la API
+        test_date = datetime.now() - timedelta(days=7)
+        timestamp = int(test_date.timestamp())
+        
+        url = f"https://query2.finance.yahoo.com/v8/finance/chart/{ticker}"
+        params = {
+            'period1': timestamp,
+            'period2': timestamp,
+            'interval': '1d'
+        }
+        
+        logger.info(f"Verificando disponibilidad de la API para ticker {ticker}...")
+        logger.info(f"URL de prueba: {url}")
+        
+        # Hacer request de prueba con timeout corto
+        response = requests.get(url, params=params, headers=HEADERS, timeout=10)
+        
+        # Si la API responde con 429, retornar False para reintentar
+        if response.status_code == 429:
+            logger.warning("API retornó 429 (Rate Limit). Esperando antes de reintentar...")
+            return False
+        
+        # Si hay error de servidor (5xx), retornar False para reintentar
+        if 500 <= response.status_code < 600:
+            logger.warning(f"API retornó error de servidor: {response.status_code}")
+            return False
+        
+        # Para otros errores HTTP, lanzar excepción
+        response.raise_for_status()
+        
+        # Validar que la respuesta sea JSON válido
+        data = response.json()
+        
+        # Verificar que tenga la estructura esperada
+        if not data.get('chart'):
+            logger.error("Respuesta de la API no tiene el formato esperado")
+            return False
+        
+        # Verificar si hay error en la respuesta
+        if data.get('chart', {}).get('error'):
+            error = data['chart']['error']
+            logger.error(f"API retornó error: {error}")
+            # Si es un error de ticker inválido, fallar inmediatamente
+            if 'not found' in str(error).lower() or 'invalid' in str(error).lower():
+                raise ValueError(f"Ticker '{ticker}' no es válido o no existe: {error}")
+            return False
+        
+        # Verificar que tenga resultados
+        if not data.get('chart', {}).get('result'):
+            logger.warning("API no retornó resultados")
+            return False
+        
+        logger.info(f"✅ API de Yahoo Finance está disponible y responde correctamente para {ticker}")
+        return True
+        
+    except requests.exceptions.Timeout:
+        logger.warning("Timeout al conectar con la API. Reintentando...")
+        return False
+    except requests.exceptions.ConnectionError:
+        logger.warning("Error de conexión con la API. Reintentando...")
+        return False
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Error al verificar disponibilidad de la API: {str(e)}")
+        return False
+    except ValueError as e:
+        # Errores de validación del ticker deben fallar inmediatamente
+        logger.error(str(e))
+        raise
+    except Exception as e:
+        logger.error(f"Error inesperado al verificar API: {str(e)}")
+        return False
+
+
 def validate_ticker(**context):
     """
     Valida que el ticker esté configurado correctamente
@@ -222,6 +307,10 @@ def validate_ticker(**context):
         ticker = ticker.upper()
     
     logger.info(f"Ticker validado: {ticker}")
+    
+    # Guardar ticker en XCom para el sensor
+    context['task_instance'].xcom_push(key='validated_ticker', value=ticker)
+    
     return ticker
 
 
@@ -288,7 +377,20 @@ with DAG(
         provide_context=True,
     )
     
-    # Tarea 2: Obtener datos de mercado
+    # Tarea 2: Sensor - Verificar disponibilidad de la API
+    api_sensor = PythonSensor(
+        task_id='check_api_availability',
+        python_callable=check_api_availability,
+        op_kwargs={
+            'ticker': '{{ dag_run.conf.get("ticker", params.ticker) }}',
+        },
+        poke_interval=30,  # Verificar cada 30 segundos
+        timeout=600,  # Timeout de 10 minutos
+        mode='poke',  # Modo poke: verifica periódicamente
+        exponential_backoff=True,  # Incrementar el intervalo exponencialmente
+    )
+    
+    # Tarea 3: Obtener datos de mercado
     fetch_data_task = PythonOperator(
         task_id='fetch_market_data',
         python_callable=get_market_data,
@@ -299,7 +401,7 @@ with DAG(
         provide_context=True,
     )
     
-    # Tarea 3: Procesar datos obtenidos
+    # Tarea 4: Procesar datos obtenidos
     process_data_task = PythonOperator(
         task_id='process_market_data',
         python_callable=process_market_data,
@@ -307,5 +409,5 @@ with DAG(
     )
     
     # Definir dependencias
-    validate_ticker_task >> fetch_data_task >> process_data_task
+    validate_ticker_task >> api_sensor >> fetch_data_task >> process_data_task
 

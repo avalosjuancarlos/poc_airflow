@@ -11,8 +11,9 @@ Este DAG obtiene datos históricos de precios de acciones desde la API pública 
 El DAG realiza las siguientes tareas:
 
 1. **Validar Ticker**: Valida que el ticker proporcionado sea válido
-2. **Obtener Datos**: Realiza petición HTTP a Yahoo Finance API
-3. **Procesar Datos**: Procesa y muestra los datos obtenidos
+2. **Verificar API (Sensor)**: Verifica que la API esté disponible antes de continuar
+3. **Obtener Datos**: Realiza petición HTTP a Yahoo Finance API
+4. **Procesar Datos**: Procesa y muestra los datos obtenidos
 
 ## 🔧 Configuración
 
@@ -117,14 +118,33 @@ docker compose exec airflow-scheduler airflow tasks test get_market_data fetch_m
 ## 📝 Estructura del DAG
 
 ```
-validate_ticker → fetch_market_data → process_market_data
+validate_ticker → check_api_availability → fetch_market_data → process_market_data
 ```
 
 ### Tareas
 
-1. **validate_ticker**: Valida el ticker proporcionado
-2. **fetch_market_data**: Obtiene los datos de Yahoo Finance API
-3. **process_market_data**: Procesa y muestra los datos
+1. **validate_ticker** (PythonOperator): Valida el ticker proporcionado
+2. **check_api_availability** (PythonSensor): Verifica que la API esté disponible y responda correctamente
+3. **fetch_market_data** (PythonOperator): Obtiene los datos de Yahoo Finance API
+4. **process_market_data** (PythonOperator): Procesa y muestra los datos
+
+### 🔍 Sensor de Disponibilidad de API
+
+El sensor `check_api_availability` realiza las siguientes verificaciones:
+
+- ✅ Hace un request de prueba a la API
+- ✅ Verifica que la respuesta sea válida (status code 2xx)
+- ✅ Valida la estructura JSON de la respuesta
+- ✅ Confirma que el ticker existe en Yahoo Finance
+- ✅ Maneja errores 429 (Rate Limit) esperando automáticamente
+- ✅ Maneja errores 5xx (Server Error) reintentando
+- ✅ Usa exponential backoff para reintentos
+
+**Configuración del Sensor**:
+- **Poke Interval**: 30 segundos (verifica cada 30s)
+- **Timeout**: 10 minutos (falla después de 10 min)
+- **Exponential Backoff**: Incrementa el intervalo progresivamente
+- **Modo**: Poke (verifica periódicamente sin ocupar un worker slot)
 
 ## 🔄 Reintentos y Rate Limiting
 
@@ -234,17 +254,48 @@ Este DAG puede ser extendido para:
 
 Si recibes un error de rate limiting:
 
-1. **El DAG maneja esto automáticamente** con exponential backoff
-2. Espera entre reintentos: 5s → 10s → 20s
-3. Respeta el header `Retry-After` de la API
-4. Si persiste, espera unos minutos antes de ejecutar nuevamente
+1. **El sensor maneja esto automáticamente**:
+   - Detecta el error 429
+   - Retorna `False` para reintentar
+   - Espera 30 segundos antes del siguiente intento
+   - Usa exponential backoff: 30s → 60s → 120s
+
+2. **La tarea de fetch también tiene protección**:
+   - 3 reintentos internos con espera: 5s → 10s → 20s
+   - Respeta el header `Retry-After` de la API
+
+3. **Si persiste**: El sensor tiene timeout de 10 minutos, después del cual la tarea falla
 
 **Recomendaciones**:
 - Evita ejecutar múltiples instancias del DAG simultáneamente
 - Si necesitas obtener datos de múltiples tickers, espacía las ejecuciones
 - Yahoo Finance tiene límites de rate por IP
+- El sensor previene la mayoría de errores 429 en la tarea principal
 
 ### Ticker no encontrado
 
+El sensor detectará tickers inválidos y fallará inmediatamente con un error descriptivo:
+
+```
+ValueError: Ticker 'INVALID' no es válido o no existe
+```
+
 Algunos tickers pueden no estar disponibles o tener nombres diferentes en Yahoo Finance. Verifica el símbolo correcto en https://finance.yahoo.com/
+
+### Sensor timeout
+
+Si el sensor alcanza el timeout de 10 minutos:
+
+1. Verifica que tengas conexión a internet
+2. Verifica que Yahoo Finance esté operativo
+3. Revisa los logs del sensor para ver errores específicos
+4. Considera aumentar el timeout si la API está lenta:
+
+```python
+api_sensor = PythonSensor(
+    task_id='check_api_availability',
+    ...
+    timeout=1200,  # 20 minutos
+)
+```
 
