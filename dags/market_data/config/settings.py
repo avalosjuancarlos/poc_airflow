@@ -65,52 +65,92 @@ def get_config_value(airflow_key, env_key, default_value, value_type=str):
 # Configuration Values
 # ============================================================================
 
-# API Configuration - Mantener como ENV (infraestructura)
-YAHOO_FINANCE_API_BASE_URL = os.environ.get(
-    'YAHOO_FINANCE_API_BASE_URL',
-    'https://query2.finance.yahoo.com/v8/finance/chart'
-)
+# ============================================================================
+# Lazy Configuration Loading
+# ============================================================================
 
-# API Timeout - Mantener como ENV (configuración global)
-API_TIMEOUT = int(os.environ.get('MARKET_DATA_API_TIMEOUT', '30'))
+def _get_yahoo_api_url():
+    """Get Yahoo Finance API base URL"""
+    return os.environ.get(
+        'YAHOO_FINANCE_API_BASE_URL',
+        'https://query2.finance.yahoo.com/v8/finance/chart'
+    )
 
-# Default Ticker - Migrado a Airflow Variable con fallback
-DEFAULT_TICKER = get_config_value(
-    airflow_key='market_data.default_ticker',
-    env_key='MARKET_DATA_DEFAULT_TICKER',
-    default_value='AAPL',
-    value_type=str
-)
 
-# Retry Configuration - Migrado a Airflow Variables con fallback
-MAX_RETRIES = get_config_value(
-    airflow_key='market_data.max_retries',
-    env_key='MARKET_DATA_MAX_RETRIES',
-    default_value='3',
-    value_type=int
-)
+def _get_api_timeout():
+    """Get API timeout value"""
+    return int(os.environ.get('MARKET_DATA_API_TIMEOUT', '30'))
 
-RETRY_DELAY = get_config_value(
-    airflow_key='market_data.retry_delay',
-    env_key='MARKET_DATA_RETRY_DELAY',
-    default_value='5',
-    value_type=int
-)
 
-# Sensor Configuration - Migrado a Airflow Variables con fallback
-SENSOR_POKE_INTERVAL = get_config_value(
-    airflow_key='market_data.sensor_poke_interval',
-    env_key='MARKET_DATA_SENSOR_POKE_INTERVAL',
-    default_value='30',
-    value_type=int
-)
+def _get_default_ticker():
+    """Get default ticker with fallback"""
+    return get_config_value(
+        airflow_key='market_data.default_ticker',
+        env_key='MARKET_DATA_DEFAULT_TICKER',
+        default_value='AAPL',
+        value_type=str
+    )
 
-SENSOR_TIMEOUT = get_config_value(
-    airflow_key='market_data.sensor_timeout',
-    env_key='MARKET_DATA_SENSOR_TIMEOUT',
-    default_value='600',
-    value_type=int
-)
+
+def _get_max_retries():
+    """Get max retries with fallback"""
+    return get_config_value(
+        airflow_key='market_data.max_retries',
+        env_key='MARKET_DATA_MAX_RETRIES',
+        default_value='3',
+        value_type=int
+    )
+
+
+def _get_retry_delay():
+    """Get retry delay with fallback"""
+    return get_config_value(
+        airflow_key='market_data.retry_delay',
+        env_key='MARKET_DATA_RETRY_DELAY',
+        default_value='5',
+        value_type=int
+    )
+
+
+def _get_sensor_poke_interval():
+    """Get sensor poke interval with fallback"""
+    return get_config_value(
+        airflow_key='market_data.sensor_poke_interval',
+        env_key='MARKET_DATA_SENSOR_POKE_INTERVAL',
+        default_value='30',
+        value_type=int
+    )
+
+
+def _get_sensor_timeout():
+    """Get sensor timeout with fallback"""
+    return get_config_value(
+        airflow_key='market_data.sensor_timeout',
+        env_key='MARKET_DATA_SENSOR_TIMEOUT',
+        default_value='600',
+        value_type=int
+    )
+
+
+# Eagerly loaded values (no Airflow dependency)
+YAHOO_FINANCE_API_BASE_URL = _get_yahoo_api_url()
+API_TIMEOUT = _get_api_timeout()
+
+# Lazily loaded values (try to load, fallback to ENV/default)
+try:
+    DEFAULT_TICKER = _get_default_ticker()
+    MAX_RETRIES = _get_max_retries()
+    RETRY_DELAY = _get_retry_delay()
+    SENSOR_POKE_INTERVAL = _get_sensor_poke_interval()
+    SENSOR_TIMEOUT = _get_sensor_timeout()
+except Exception as e:
+    logger.debug(f"Could not load Airflow Variables, using ENV/defaults: {e}")
+    # Fallback to ENV only
+    DEFAULT_TICKER = os.environ.get('MARKET_DATA_DEFAULT_TICKER', 'AAPL')
+    MAX_RETRIES = int(os.environ.get('MARKET_DATA_MAX_RETRIES', '3'))
+    RETRY_DELAY = int(os.environ.get('MARKET_DATA_RETRY_DELAY', '5'))
+    SENSOR_POKE_INTERVAL = int(os.environ.get('MARKET_DATA_SENSOR_POKE_INTERVAL', '30'))
+    SENSOR_TIMEOUT = int(os.environ.get('MARKET_DATA_SENSOR_TIMEOUT', '600'))
 
 # Exponential Backoff - Mantener como ENV (feature flag)
 SENSOR_EXPONENTIAL_BACKOFF = os.environ.get(
