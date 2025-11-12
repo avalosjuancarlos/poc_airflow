@@ -129,35 +129,37 @@ class WarehouseConnection:
     @log_execution()
     def get_connection(self) -> Generator:
         """
-        Context manager for warehouse connections
+        Context manager for warehouse connections with automatic transaction management
+
+        Uses SQLAlchemy 2.0 begin() for automatic commit/rollback.
 
         Yields:
-            SQLAlchemy connection
+            SQLAlchemy connection with active transaction
 
         Example:
             with warehouse.get_connection() as conn:
-                conn.execute("SELECT * FROM table")
+                conn.execute(text("INSERT INTO table VALUES (...)"))
+                # Auto-commits on successful exit, auto-rollbacks on exception
         """
         if not self.engine:
             self.create_engine()
 
-        connection = self.engine.connect()
-        try:
-            logger.debug("Warehouse connection acquired")
-            yield connection
-            connection.commit()
-            logger.debug("Warehouse connection committed")
-        except Exception as e:
-            connection.rollback()
-            logger.error(
-                f"Transaction rollback: {e}",
-                extra={"error": str(e)},
-                exc_info=True,
-            )
-            raise
-        finally:
-            connection.close()
-            logger.debug("Warehouse connection closed")
+        # Use engine.begin() for automatic transaction management (SQLAlchemy 2.0 style)
+        with self.engine.begin() as connection:
+            try:
+                logger.debug("Warehouse connection and transaction started")
+                yield connection
+                # Transaction commits automatically on successful exit
+                logger.debug("Transaction committed successfully")
+            except Exception as e:
+                # Transaction rolls back automatically on exception
+                logger.error(
+                    f"Transaction rollback due to error: {e}",
+                    extra={"error": str(e)},
+                    exc_info=True,
+                )
+                raise
+            # Connection closes automatically
 
     def close(self):
         """Close engine and dispose of connection pool"""

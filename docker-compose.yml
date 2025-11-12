@@ -44,10 +44,12 @@ services:
 
   warehouse-postgres:
     image: postgres:13
+    user: "999:999"  # Run as postgres user (UID 999)
     environment:
       POSTGRES_USER: warehouse_user
       POSTGRES_PASSWORD: warehouse_pass
       POSTGRES_DB: market_data_warehouse
+      PGDATA: /var/lib/postgresql/data/pgdata
     volumes:
       - warehouse-db-volume:/var/lib/postgresql/data
       - ./scripts/init_warehouse_schema.sql:/docker-entrypoint-initdb.d/init_warehouse.sql
