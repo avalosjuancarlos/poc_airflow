@@ -25,8 +25,14 @@ class TestDAGValidation:
     
     def test_dag_loaded(self, dagbag):
         """Test that the DAG is loaded without errors"""
-        assert 'get_market_data' in dagbag.dags
+        # Check for import errors first
+        if dagbag.import_errors:
+            for filename, error in dagbag.import_errors.items():
+                print(f"Import error in {filename}:")
+                print(error)
+        
         assert len(dagbag.import_errors) == 0, f"DAG import errors: {dagbag.import_errors}"
+        assert 'get_market_data' in dagbag.dags, f"Available DAGs: {list(dagbag.dags.keys())}"
     
     def test_dag_structure(self, dagbag):
         """Test DAG has correct structure"""

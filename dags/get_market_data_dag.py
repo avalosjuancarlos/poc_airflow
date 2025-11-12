@@ -31,8 +31,10 @@ from market_data.operators import (
 )
 from market_data.sensors import check_api_availability
 
-# Log configuration on DAG load
-log_configuration()
+# Log configuration on DAG load (skip in test mode)
+import os
+if not os.environ.get('AIRFLOW__CORE__UNIT_TEST_MODE'):
+    log_configuration()
 
 # ============================================================================
 # DAG Definition

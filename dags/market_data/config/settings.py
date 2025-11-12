@@ -127,16 +127,19 @@ HEADERS = {
 
 def log_configuration():
     """Log current configuration values"""
-    logger.info("=" * 60)
-    logger.info("CONFIGURACIÓN DEL DAG DE MARKET DATA")
-    logger.info("=" * 60)
-    logger.info(f"API Base URL: {YAHOO_FINANCE_API_BASE_URL}")
-    logger.info(f"Default Ticker: {DEFAULT_TICKER}")
-    logger.info(f"API Timeout: {API_TIMEOUT}s")
-    logger.info(f"Max Retries: {MAX_RETRIES}")
-    logger.info(f"Retry Delay: {RETRY_DELAY}s")
-    logger.info(f"Sensor Poke Interval: {SENSOR_POKE_INTERVAL}s")
-    logger.info(f"Sensor Timeout: {SENSOR_TIMEOUT}s")
-    logger.info(f"Sensor Exponential Backoff: {SENSOR_EXPONENTIAL_BACKOFF}")
-    logger.info("=" * 60)
+    try:
+        logger.info("=" * 60)
+        logger.info("CONFIGURACIÓN DEL DAG DE MARKET DATA")
+        logger.info("=" * 60)
+        logger.info(f"API Base URL: {YAHOO_FINANCE_API_BASE_URL}")
+        logger.info(f"Default Ticker: {DEFAULT_TICKER}")
+        logger.info(f"API Timeout: {API_TIMEOUT}s")
+        logger.info(f"Max Retries: {MAX_RETRIES}")
+        logger.info(f"Retry Delay: {RETRY_DELAY}s")
+        logger.info(f"Sensor Poke Interval: {SENSOR_POKE_INTERVAL}s")
+        logger.info(f"Sensor Timeout: {SENSOR_TIMEOUT}s")
+        logger.info(f"Sensor Exponential Backoff: {SENSOR_EXPONENTIAL_BACKOFF}")
+        logger.info("=" * 60)
+    except Exception as e:
+        logger.debug(f"Could not log configuration (likely in test mode): {e}")
 

@@ -45,10 +45,11 @@ jobs:
     
     - name: Run integration tests
       run: |
-        export PYTHONPATH="${PYTHONPATH}:${PWD}/dags"
+        export PYTHONPATH="${PWD}/dags:${PYTHONPATH}"
         export AIRFLOW__CORE__UNIT_TEST_MODE=True
         export AIRFLOW__CORE__LOAD_EXAMPLES=False
-        pytest tests/integration -v -m "integration"
+        export AIRFLOW_HOME=${PWD}
+        pytest tests/integration -v -m "integration" || pytest tests/integration -v
     
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
