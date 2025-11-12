@@ -5,8 +5,8 @@
 [![Airflow](https://img.shields.io/badge/Airflow-2.11.0-017CEE?style=for-the-badge&logo=apache-airflow&logoColor=white)](https://airflow.apache.org/)
 [![Python](https://img.shields.io/badge/Python-3.10-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 [![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
-[![Tests](https://img.shields.io/badge/Tests-82%20Passing-success?style=for-the-badge&logo=pytest)](./tests)
-[![Coverage](https://img.shields.io/badge/Coverage-84%25-success?style=for-the-badge&logo=codecov)](./htmlcov)
+[![Tests](https://img.shields.io/badge/Tests-82%20Passing-success?style=for-the-badge&logo=pytest)](#-testing)
+[![Coverage](https://img.shields.io/badge/Coverage-84%25-success?style=for-the-badge&logo=codecov)](#-testing)
 
 **Production-ready Apache Airflow setup with CeleryExecutor, comprehensive testing, and enterprise-grade logging.**
 
