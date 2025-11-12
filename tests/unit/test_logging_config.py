@@ -49,11 +49,18 @@ class TestGetLogLevel:
         level = get_log_level()
         assert level == logging.WARNING
 
-    @patch.dict(os.environ, {}, clear=True)
     def test_default_log_level(self):
         """Test default log level when no environment is set"""
-        level = get_log_level()
-        assert level == logging.INFO
+        # Clear all relevant environment variables
+        with patch.dict(os.environ, {}, clear=True):
+            # Force module reload to pick up cleared environment
+            from dags.market_data.config import logging_config
+            import importlib
+            importlib.reload(logging_config)
+            from dags.market_data.config.logging_config import get_log_level
+            
+            level = get_log_level()
+            assert level == logging.INFO
 
 
 class TestGetLogFormat:

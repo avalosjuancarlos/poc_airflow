@@ -28,7 +28,7 @@ except ImportError:
 
 # Datadog integration (optional)
 try:
-    from ddtrace import tracer
+    import ddtrace  # noqa: F401
 
     DATADOG_AVAILABLE = True
 except ImportError:
@@ -371,4 +371,3 @@ def set_dag_context(task_id: str, execution_date: str, dag_id: str = "get_market
 
     for logger in _loggers.values():
         logger.set_context(**context)
-

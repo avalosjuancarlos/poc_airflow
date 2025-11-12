@@ -57,55 +57,55 @@ class TestMarketDataLogger:
         message = logger._format_message("Test message")
         assert message == "Test message"
 
-    @patch("dags.market_data.utils.logger.MarketDataLogger.logger")
-    def test_debug_logging(self, mock_logger):
+    def test_debug_logging(self):
         """Test debug level logging"""
         logger = MarketDataLogger("test_logger")
+        mock_logger = MagicMock()
         logger.logger = mock_logger
 
         logger.debug("Debug message", extra={"key": "value"})
         mock_logger.debug.assert_called_once()
 
-    @patch("dags.market_data.utils.logger.MarketDataLogger.logger")
-    def test_info_logging(self, mock_logger):
+    def test_info_logging(self):
         """Test info level logging"""
         logger = MarketDataLogger("test_logger")
+        mock_logger = MagicMock()
         logger.logger = mock_logger
 
         logger.info("Info message", extra={"key": "value"})
         mock_logger.info.assert_called_once()
 
-    @patch("dags.market_data.utils.logger.MarketDataLogger.logger")
-    def test_warning_logging(self, mock_logger):
+    def test_warning_logging(self):
         """Test warning level logging"""
         logger = MarketDataLogger("test_logger")
+        mock_logger = MagicMock()
         logger.logger = mock_logger
 
         logger.warning("Warning message", extra={"key": "value"})
         mock_logger.warning.assert_called_once()
 
-    @patch("dags.market_data.utils.logger.MarketDataLogger.logger")
-    def test_error_logging(self, mock_logger):
+    def test_error_logging(self):
         """Test error level logging"""
         logger = MarketDataLogger("test_logger")
+        mock_logger = MagicMock()
         logger.logger = mock_logger
 
         logger.error("Error message", extra={"key": "value"}, exc_info=True)
         mock_logger.error.assert_called_once()
 
-    @patch("dags.market_data.utils.logger.MarketDataLogger.logger")
-    def test_exception_logging(self, mock_logger):
+    def test_exception_logging(self):
         """Test exception logging"""
         logger = MarketDataLogger("test_logger")
+        mock_logger = MagicMock()
         logger.logger = mock_logger
 
         logger.exception("Exception message", extra={"key": "value"})
         mock_logger.exception.assert_called_once()
 
-    @patch("dags.market_data.utils.logger.MarketDataLogger.logger")
-    def test_metric_logging(self, mock_logger):
+    def test_metric_logging(self):
         """Test metric logging"""
         logger = MarketDataLogger("test_logger")
+        mock_logger = MagicMock()
         logger.logger = mock_logger
 
         logger.metric("test_metric", 100, tags={"environment": "test"})
@@ -114,10 +114,10 @@ class TestMarketDataLogger:
         assert "METRIC: test_metric=100" in args[0]
         assert "environment=test" in args[0]
 
-    @patch("dags.market_data.utils.logger.MarketDataLogger.logger")
-    def test_audit_logging(self, mock_logger):
+    def test_audit_logging(self):
         """Test audit logging"""
         logger = MarketDataLogger("test_logger")
+        mock_logger = MagicMock()
         logger.logger = mock_logger
 
         logger.audit("user_action", details={"user": "test_user", "action": "login"})
@@ -127,10 +127,10 @@ class TestMarketDataLogger:
         assert "user=test_user" in args[0]
         assert "action=login" in args[0]
 
-    @patch("dags.market_data.utils.logger.MarketDataLogger.logger")
-    def test_execution_timer(self, mock_logger):
+    def test_execution_timer(self):
         """Test execution timer context manager"""
         logger = MarketDataLogger("test_logger")
+        mock_logger = MagicMock()
         logger.logger = mock_logger
 
         with logger.execution_timer("test_operation"):
