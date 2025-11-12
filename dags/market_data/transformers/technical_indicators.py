@@ -206,7 +206,13 @@ def calculate_technical_indicators(
     )
 
     # Extract OHLCV data
+    logger.info(f"DataFrame columns before extraction: {list(df.columns)}")
+    logger.debug(
+        f"Sample quote data: {df['quote'].iloc[0] if 'quote' in df.columns and len(df) > 0 else 'No quote column'}"
+    )
+
     if "quote" in df.columns:
+        # Extract OHLCV values from quote dictionary
         df["open"] = df["quote"].apply(
             lambda x: x.get("open") if isinstance(x, dict) else None
         )
@@ -223,11 +229,22 @@ def calculate_technical_indicators(
             lambda x: x.get("volume") if isinstance(x, dict) else None
         )
 
+        logger.debug(
+            f"Extracted close values (first 3): {df['close'].head(3).tolist()}"
+        )
+    else:
+        logger.warning("'quote' column not found in DataFrame")
+
     # Convert OHLCV columns to numeric (handle None/invalid values)
     numeric_columns = ["open", "high", "low", "close", "volume"]
     for col in numeric_columns:
         if col in df.columns:
+            before_count = df[col].notna().sum()
             df[col] = pd.to_numeric(df[col], errors="coerce")
+            after_count = df[col].notna().sum()
+            logger.debug(
+                f"Column '{col}': {before_count} → {after_count} non-null values after conversion"
+            )
 
     # Basic data validation
     required_columns = ["date", "close"]
