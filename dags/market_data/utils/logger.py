@@ -282,9 +282,7 @@ def log_execution(logger: Optional[MarketDataLogger] = None):
                     f"{elapsed_time:.3f}s",
                     {"status": "success"},
                 )
-                logger.info(
-                    f"Completed function: {func_name} in {elapsed_time:.3f}s"
-                )
+                logger.info(f"Completed function: {func_name} in {elapsed_time:.3f}s")
                 return result
             except Exception as e:
                 elapsed_time = time.time() - start_time

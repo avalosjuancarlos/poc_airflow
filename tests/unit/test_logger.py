@@ -44,9 +44,7 @@ class TestMarketDataLogger:
         logger = MarketDataLogger("test_logger")
         logger.set_context(task_id="test_task")
 
-        message = logger._format_message(
-            "Test message", extra={"key": "value"}
-        )
+        message = logger._format_message("Test message", extra={"key": "value"})
         assert "task_id=test_task" in message
         assert "key=value" in message
         assert "Test message" in message
@@ -226,4 +224,3 @@ class TestGetLogger:
 
         # Should return the same instance
         assert logger1 is logger2
-

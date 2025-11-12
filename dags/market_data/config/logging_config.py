@@ -83,9 +83,7 @@ def get_sentry_config() -> Optional[Dict[str, Any]]:
     return {
         "dsn": sentry_dsn,
         "environment": os.environ.get("ENVIRONMENT", "development"),
-        "traces_sample_rate": float(
-            os.environ.get("SENTRY_TRACES_SAMPLE_RATE", "0.1")
-        ),
+        "traces_sample_rate": float(os.environ.get("SENTRY_TRACES_SAMPLE_RATE", "0.1")),
         "send_default_pii": os.environ.get("SENTRY_SEND_PII", "false").lower()
         in ("true", "1", "yes"),
     }
@@ -118,4 +116,3 @@ LOGGING_CONFIG = {
     "sentry": get_sentry_config(),
     "datadog": get_datadog_config(),
 }
-

@@ -137,7 +137,9 @@ class YahooFinanceClient:
                 )
             except requests.exceptions.RequestException as e:
                 logger.metric(
-                    "api.request.network_error", 1, {"ticker": ticker, "error": type(e).__name__}
+                    "api.request.network_error",
+                    1,
+                    {"ticker": ticker, "error": type(e).__name__},
                 )
                 if attempt == max_retries - 1:
                     logger.error(
@@ -223,9 +225,7 @@ class YahooFinanceClient:
             data = response.json()
 
             if not data.get("chart"):
-                logger.error(
-                    "Invalid API response format", extra={"ticker": ticker}
-                )
+                logger.error("Invalid API response format", extra={"ticker": ticker})
                 logger.metric("api.availability.invalid_format", 1, {"ticker": ticker})
                 return False
 
@@ -243,9 +243,7 @@ class YahooFinanceClient:
                 return False
 
             if not data.get("chart", {}).get("result"):
-                logger.warning(
-                    "API returned no results", extra={"ticker": ticker}
-                )
+                logger.warning("API returned no results", extra={"ticker": ticker})
                 logger.metric("api.availability.no_results", 1, {"ticker": ticker})
                 return False
 
@@ -254,15 +252,11 @@ class YahooFinanceClient:
             return True
 
         except requests.exceptions.Timeout:
-            logger.warning(
-                "Timeout connecting to API", extra={"ticker": ticker}
-            )
+            logger.warning("Timeout connecting to API", extra={"ticker": ticker})
             logger.metric("api.availability.timeout", 1, {"ticker": ticker})
             return False
         except requests.exceptions.ConnectionError:
-            logger.warning(
-                "Connection error to API", extra={"ticker": ticker}
-            )
+            logger.warning("Connection error to API", extra={"ticker": ticker})
             logger.metric("api.availability.connection_error", 1, {"ticker": ticker})
             return False
         except requests.exceptions.RequestException as e:
@@ -331,8 +325,8 @@ class YahooFinanceClient:
             },
         }
 
-        close_price = quote_data.get('close')
-        volume = quote_data.get('volume')
+        close_price = quote_data.get("close")
+        volume = quote_data.get("volume")
 
         logger.info(
             f"Successfully parsed market data for {ticker}",
