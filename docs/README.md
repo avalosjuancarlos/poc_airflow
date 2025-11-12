@@ -15,7 +15,7 @@ Perfect for new users and first-time setup.
 | Document | Description | Status |
 |----------|-------------|--------|
 | **[Installation Guide](getting-started/installation.md)** | Complete installation and setup instructions | ✅ Available |
-| **Quick Start Tutorial** | Get your first DAG running in 5 minutes | 🔜 Coming Soon |
+| **[Quick Start Tutorial](getting-started/quick-start.md)** | Get your first DAG running in 5 minutes | ✅ Available |
 | **Configuration** → See [User Guide](user-guide/configuration.md) | Environment and configuration setup | ✅ Available |
 
 ---
@@ -27,6 +27,7 @@ For DAG users and data engineers working with the pipelines.
 | Document | Description | Status |
 |----------|-------------|--------|
 | **[Market Data DAG](user-guide/market-data-dag.md)** | Complete guide to the Yahoo Finance DAG | ✅ Available |
+| **[Data Warehouse Guide](user-guide/data-warehouse.md)** | Multi-environment warehouse integration | ✅ Available |
 | **[Configuration Options](user-guide/configuration.md)** | All configurable parameters and variables | ✅ Available |
 | **[Airflow Variables Guide](user-guide/airflow-variables.md)** | Working with Airflow Variables | ✅ Available |
 | **[Logging Guide](user-guide/logging.md)** | Understanding and using the logging system | ✅ Available |
@@ -39,10 +40,10 @@ For developers contributing to or extending the codebase.
 
 | Document | Description | Status |
 |----------|-------------|--------|
-| **[Testing Guide](developer-guide/testing.md)** | Running and writing tests | ✅ Available |
-| **Architecture Overview** | System design and component overview | 🔜 Coming Soon |
-| **Code Style Guide** | Coding standards and conventions | 🔜 Coming Soon |
-| **Contributing Guide** | How to contribute to the project | 🔜 Coming Soon |
+| **[Architecture Overview](architecture/overview.md)** | Complete system architecture and design decisions | ✅ Available |
+| **[Testing Guide](developer-guide/testing.md)** | Running and writing tests (142 tests, 78% coverage) | ✅ Available |
+| **[Code Style Guide](developer-guide/code-style.md)** | Coding standards and conventions | ✅ Available |
+| **[Contributing Guide](developer-guide/contributing.md)** | How to contribute to the project | ✅ Available |
 | **API Reference** | Module and function documentation | 🔜 Coming Soon |
 
 ---
@@ -53,11 +54,11 @@ For DevOps engineers and system administrators.
 
 | Document | Description | Status |
 |----------|-------------|--------|
-| **Deployment Guide** | Deploying to production environments | 🔜 Coming Soon |
-| **Monitoring Guide** | Setting up observability and alerts | 🔜 Coming Soon |
-| **Troubleshooting** → See main [README](../README.md#-troubleshooting) | Common issues and solutions | ✅ Available |
-| **Backup & Recovery** | Data backup and disaster recovery | 🔜 Coming Soon |
-| **Security Guide** | Security best practices | 🔜 Coming Soon |
+| **[Deployment Guide](operations/deployment.md)** | Production deployment (Docker, AWS, K8s) | ✅ Available |
+| **[Monitoring Guide](operations/monitoring.md)** | Observability with Prometheus, Grafana, Datadog | ✅ Available |
+| **[Troubleshooting Guide](operations/troubleshooting.md)** | Common issues and solutions | ✅ Available |
+| **Backup & Recovery** → See [Deployment Guide](operations/deployment.md#automated-backups) | Data backup and disaster recovery | ✅ Available |
+| **Security Guide** → See [SECURITY.md](../SECURITY.md) | Security best practices | ✅ Available |
 
 ---
 
@@ -67,8 +68,8 @@ Quick reference materials and cheat sheets.
 
 | Document | Description | Status |
 |----------|-------------|--------|
-| **Environment Variables** → See [Configuration](user-guide/configuration.md) | Complete list of all environment variables | ✅ Available |
-| **CLI Commands** → See main [README](../README.md#-useful-commands) | Useful Airflow CLI commands | ✅ Available |
+| **[Environment Variables](reference/environment-variables.md)** | Complete reference for all env vars | ✅ Available |
+| **[CLI Commands](reference/cli-commands.md)** | Comprehensive Airflow CLI reference | ✅ Available |
 | **Docker Compose** → See main [README](../README.md#-architecture) | Service configurations and details | ✅ Available |
 | **FAQs** | Frequently asked questions | 🔜 Coming Soon |
 
@@ -119,14 +120,14 @@ Documentation from previous versions or being phased out.
 
 | Category | Available | Coming Soon | Total |
 |----------|-----------|-------------|-------|
-| Getting Started | 1 | 2 | 3 |
-| User Guide | 4 | 0 | 4 |
-| Developer Guide | 1 | 4 | 5 |
-| Operations | 0 | 5 | 5 |
-| Reference | 0 | 4 | 4 |
-| **Total** | **6** | **15** | **21** |
+| Getting Started | 3 | 0 | 3 |
+| User Guide | 5 | 0 | 5 |
+| Developer Guide | 4 | 1 | 5 |
+| Operations | 5 | 0 | 5 |
+| Reference | 2 | 1 | 3 |
+| **Total** | **19** | **2** | **21** |
 
-**Current Completion**: 29% (6/21 planned documents)
+**Current Completion**: 90% (19/21 planned documents)
 
 **Legend**: ✅ Available | 🔜 Coming Soon
 
@@ -157,9 +158,15 @@ See the main [README](../README.md#-contributing) for contribution guidelines.
 
 | Date | Document | Change |
 |------|----------|--------|
-| 2025-11-12 | All | Documentation reorganization complete |
-| 2025-11-12 | [Logging Guide](user-guide/logging.md) | Added centralized logging system |
-| 2025-11-12 | [Testing Guide](developer-guide/testing.md) | Added 82 tests documentation |
+| 2025-11-12 | **All** | **Documentation Round 1 Complete (90% coverage)** |
+| 2025-11-12 | [Quick Start](getting-started/quick-start.md) | 5-minute setup guide added |
+| 2025-11-12 | [Architecture](architecture/overview.md) | Complete system architecture |
+| 2025-11-12 | [Deployment](operations/deployment.md) | Production deployment guide |
+| 2025-11-12 | [Monitoring](operations/monitoring.md) | Prometheus/Grafana/Datadog setup |
+| 2025-11-12 | [Troubleshooting](operations/troubleshooting.md) | Comprehensive troubleshooting guide |
+| 2025-11-12 | [CLI Reference](reference/cli-commands.md) | Complete CLI command reference |
+| 2025-11-12 | [Env Vars](reference/environment-variables.md) | All environment variables documented |
+| 2025-11-12 | [Data Warehouse](user-guide/data-warehouse.md) | Multi-environment warehouse guide |
 
 ---
 
