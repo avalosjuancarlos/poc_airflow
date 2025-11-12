@@ -1,14 +1,14 @@
 """
-DAG para obtener datos de mercado desde Yahoo Finance API
+Market Data DAG - Yahoo Finance API
 
-Este DAG obtiene datos históricos de precios de un ticker específico
-usando la API pública de Yahoo Finance.
+This DAG fetches historical price data for a specific ticker
+using the Yahoo Finance public API.
 
-Estructura modular:
-- market_data.config: Configuración y settings
-- market_data.utils: Utilidades (API client, validators)
-- market_data.operators: Funciones de las tareas
-- market_data.sensors: Sensores personalizados
+Modular structure:
+- market_data.config: Configuration and settings
+- market_data.utils: Utilities (API client, validators)
+- market_data.operators: Task functions
+- market_data.sensors: Custom sensors
 """
 
 import os

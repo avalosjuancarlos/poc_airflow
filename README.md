@@ -5,14 +5,112 @@
 [![Airflow](https://img.shields.io/badge/Airflow-2.11.0-017CEE?style=for-the-badge&logo=apache-airflow&logoColor=white)](https://airflow.apache.org/)
 [![Python](https://img.shields.io/badge/Python-3.10-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 [![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
-[![Tests](https://img.shields.io/badge/Tests-82%20Passing-success?style=for-the-badge&logo=pytest)](#-testing)
-[![Coverage](https://img.shields.io/badge/Coverage-84%25-success?style=for-the-badge&logo=codecov)](#-testing)
+[![Tests](https://img.shields.io/badge/Tests-142%20Passing-success?style=for-the-badge&logo=pytest)](#-testing)
+[![Coverage](https://img.shields.io/badge/Coverage-78%25-success?style=for-the-badge&logo=codecov)](#-testing)
 
-**Production-ready Apache Airflow setup with CeleryExecutor, comprehensive testing, and enterprise-grade logging.**
+**Automated ETL pipeline to fetch, transform, and store market data using Apache Airflow.**
 
 [Features](#-key-features) • [Quick Start](#-quick-start) • [Documentation](#-documentation) • [Architecture](#-architecture) • [Contributing](#-contributing)
 
 </div>
+
+---
+
+## 📖 What is this project?
+
+This project is a **complete, production-ready ETL (Extract, Transform, Load) pipeline** that automates the extraction and processing of financial market data from stock markets.
+
+### 🎯 What does it do?
+
+The pipeline performs the following operations **automatically** every day at 6:00 PM ET (post market close):
+
+1. **📊 Extracts** market data from Yahoo Finance API
+   - Prices (Open, High, Low, Close)
+   - Trading volume
+   - Ticker metadata (52-week high/low, market cap, etc.)
+
+2. **🔄 Transforms** data by calculating 12 technical indicators
+   - **Trend**: SMA (7, 14, 30 days), MACD
+   - **Momentum**: RSI (Relative Strength Index)
+   - **Volatility**: Bollinger Bands, 20-day standard deviation
+   - **Returns**: Daily percentage change
+
+3. **💾 Stores** enriched data in two layers
+   - **Parquet**: Efficient local storage (compressed columnar format)
+   - **Data Warehouse**: PostgreSQL (development) or Amazon Redshift (production)
+
+### 🌟 What is it useful for?
+
+- **Technical Analysis**: All indicators calculated and ready to use
+- **Backtesting**: Historical data to test trading strategies
+- **Dashboards**: Data source for visualizations (Tableau, Power BI, Grafana)
+- **Machine Learning**: Clean dataset for predictive models
+- **Reports**: Consolidated data for financial reporting
+
+### ⚡ Why use this project?
+
+- ✅ **Zero manual configuration**: Everything automated with Airflow
+- ✅ **Clean and validated data**: No worries about API errors
+- ✅ **Pre-calculated indicators**: No need to calculate them yourself
+- ✅ **Multi-environment**: Local development, staging, and production
+- ✅ **Scalable**: From 1 ticker to hundreds with simple configuration
+- ✅ **Production-ready**: Testing, logging, monitoring included
+
+### 🔧 How does it work?
+
+```
+┌─────────────┐
+│ Yahoo       │
+│ Finance API │ ────► Fetches OHLCV data
+└─────────────┘
+       │
+       ▼
+┌─────────────┐
+│ Airflow DAG │ ────► Orchestrates ETL flow
+└─────────────┘
+       │
+       ▼
+┌─────────────┐
+│ Pandas      │ ────► Calculates 12 technical indicators
+└─────────────┘
+       │
+       ├────► Parquet (.parquet files)
+       │      • Fast
+       │      • Compressed
+       │      • Versioned
+       │
+       └────► Data Warehouse (PostgreSQL/Redshift)
+              • SQL queries
+              • Analytics
+              • BI Tools
+```
+
+### 📅 Daily Execution Example
+
+```
+6:00 PM ET (Monday-Friday):
+├─ Validates ticker (AAPL)
+├─ Determines which dates to fetch
+│  └─ First time: last 20 days
+│  └─ Daily: today only
+├─ Checks if API is available
+├─ Fetches data from Yahoo Finance
+│  └─ Open: $259.45
+│  └─ High: $260.61
+│  └─ Low: $258.32
+│  └─ Close: $259.57
+│  └─ Volume: 54,123,456
+├─ Calculates indicators
+│  └─ SMA(7): $258.23
+│  └─ RSI: 68.42
+│  └─ MACD: 1.23
+│  └─ Bollinger Upper: $262.15
+│  └─ Volatility: 0.0156 (1.56%)
+├─ Saves to Parquet
+│  └─ /opt/airflow/data/AAPL_market_data.parquet
+└─ Loads to Data Warehouse
+   └─ PostgreSQL: 15 records inserted ✅
+```
 
 ---
 
@@ -173,30 +271,36 @@ Comprehensive documentation organized by audience:
 
 ### 🚦 Getting Started
 - **[Installation Guide](docs/getting-started/installation.md)** - Detailed setup instructions
-- **Quick Start Tutorial** 🔜 Coming soon - Your first DAG in 5 minutes
-- See [User Guide Configuration](docs/user-guide/configuration.md) for configuration options
+- **[Quick Start Tutorial](docs/getting-started/quick-start.md)** - Your first DAG in 5 minutes
+- See [Configuration Guide](docs/user-guide/configuration.md) for configuration options
 
 ### 👤 User Guide
 - **[Market Data DAG](docs/user-guide/market-data-dag.md)** - Using the Yahoo Finance DAG
+- **[Data Warehouse](docs/user-guide/data-warehouse.md)** - Multi-environment warehouse guide
 - **[Configuration Options](docs/user-guide/configuration.md)** - All configurable parameters
 - **[Airflow Variables](docs/user-guide/airflow-variables.md)** - Dynamic configuration
 - **[Logging Guide](docs/user-guide/logging.md)** - Understanding logs
 
 ### 👨‍💻 Developer Guide
+- **[Architecture Overview](docs/architecture/overview.md)** - Complete system design
 - **[Testing Guide](docs/developer-guide/testing.md)** - Running and writing tests
-- **Architecture Overview** 🔜 Coming soon - System design
-- **Code Style** 🔜 Coming soon - Standards and conventions
-- **Contributing** 🔜 Coming soon - How to contribute
-- **API Reference** 🔜 Coming soon - Module documentation
+- **[API Reference](docs/developer-guide/api-reference.md)** - Complete module documentation
+- **[Code Style](docs/developer-guide/code-style.md)** - Standards and conventions
+- **[Contributing](docs/developer-guide/contributing.md)** - How to contribute
 
 ### ⚙️ Operations Guide
-- See [Testing Guide](docs/developer-guide/testing.md) for running tests locally
-- **Deployment, Monitoring, Security** 🔜 Coming soon - Operations documentation
+- **[Deployment](docs/operations/deployment.md)** - Production deployment guide
+- **[Monitoring](docs/operations/monitoring.md)** - Observability and alerting
+- **[Troubleshooting](docs/operations/troubleshooting.md)** - Common issues and solutions
+- **[Migration](docs/operations/migration-guide.md)** - Environment and version migration
+- **[Performance Tuning](docs/operations/performance-tuning.md)** - Optimization guide
+- **[Security](docs/SECURITY.md)** - Security best practices
 
 ### 📖 Reference
-- See [Configuration Guide](docs/user-guide/configuration.md) for environment variables
-- See [Useful Commands](#-useful-commands) section below for CLI reference
-- **Complete Reference Documentation** 🔜 Coming soon
+- **[Environment Variables](docs/reference/environment-variables.md)** - Complete env var reference
+- **[CLI Commands](docs/reference/cli-commands.md)** - Comprehensive CLI reference  
+- **[FAQs](docs/reference/faq.md)** - Frequently asked questions
+- See [Useful Commands](#-useful-commands) section below for quick reference
 
 ---
 
