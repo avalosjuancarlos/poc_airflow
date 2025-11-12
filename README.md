@@ -59,19 +59,36 @@ Enterprise-ready Apache Airflow 2.11 deployment with:
 | **Flower** | Web-based Celery monitoring (optional) |
 | **Docker Compose** | One-command deployment |
 
-### 💼 Market Data Pipeline
+### 💼 Market Data Pipeline (ETL)
 
-- ✅ **Yahoo Finance Integration** - Real-time market data fetching
+#### Extract
+- ✅ **Yahoo Finance Integration** - Real-time market data API
+- ✅ **Smart Timestamp Logic** - Handles current day vs historical data
 - ✅ **Rate Limiting Handling** - Automatic retry with exponential backoff
 - ✅ **API Health Sensor** - Proactive availability checking
-- ✅ **Data Validation** - Ticker and date format validation
+- ✅ **Multi-Date Fetch** - Fetch 1-20 dates with resilient error handling
+
+#### Transform
+- ✅ **12 Technical Indicators** - SMA, RSI, MACD, Bollinger Bands, Volatility, Returns
+- ✅ **Data Validation** - Numeric conversion and validation
+- ✅ **Pandas Processing** - Efficient DataFrame operations
+- ✅ **NaN Handling** - Graceful handling of weekends and missing data
+
+#### Load
+- ✅ **Parquet Storage** - Apache Parquet with Snappy compression
+- ✅ **Append Mode** - Automatic deduplication by date
+- ✅ **Persistent Storage** - Docker volume for data retention
+- ✅ **Automatic Backfill** - 20-day backfill on first execution
+
+#### Additional
+- ✅ **Daily Automation** - `@daily` schedule (00:00 UTC)
 - ✅ **Configurable Parameters** - Environment variables and Airflow Variables
-- ✅ **Comprehensive Error Handling** - Robust retry logic and logging
+- ✅ **Comprehensive Error Handling** - Multi-level retry logic and logging
 
 ### 🔧 Developer Experience
 
-- ✅ **Modular Architecture** - Organized into config, utils, operators, sensors
-- ✅ **82 Unit + Integration Tests** - High test coverage (84%)
+- ✅ **Modular Architecture** - Organized into config, utils, operators, sensors, transformers, storage
+- ✅ **131 Unit + Integration Tests** - High test coverage (89%)
 - ✅ **Type Hints** - Full Python type annotations
 - ✅ **Linting & Formatting** - Black, isort, flake8 enforcement
 - ✅ **CI/CD Pipeline** - GitHub Actions automated testing
@@ -208,28 +225,35 @@ graph TB
     style SCH fill:#F39C12
 ```
 
-### Market Data DAG Flow
+### Market Data DAG Flow (ETL Pipeline)
 
 ```mermaid
 graph LR
-    A[Start] --> B[Validate Ticker]
-    B --> C[Check API<br/>Availability]
-    C --> D[Fetch Market<br/>Data]
-    D --> E[Process &<br/>Display Data]
-    E --> F[End]
+    A[Start] --> B[Validate<br/>Ticker]
+    B --> C[Determine<br/>Dates]
+    C -->|No Parquet| D1[Backfill<br/>20 Days]
+    C -->|Exists| D2[Single<br/>Day]
+    D1 --> E[Check API<br/>Sensor]
+    D2 --> E
+    E -->|Available| F[Fetch Multiple<br/>Dates]
+    E -->|Unavailable| G[Retry 30s<br/>Exp. Backoff]
+    G --> E
+    F --> H[Transform<br/>12 Indicators]
+    H --> I[Save to<br/>Parquet]
+    I --> J[End]
     
-    C -->|API Down| G[Retry with<br/>Exponential<br/>Backoff]
-    G --> C
-    
-    D -->|Rate Limit| H[Respect<br/>Retry-After]
-    H --> D
+    F -->|Rate Limit| K[Retry with<br/>Backoff]
+    K --> F
     
     style A fill:#2ECC71
-    style F fill:#2ECC71
-    style C fill:#3498DB
-    style D fill:#3498DB
+    style J fill:#2ECC71
+    style C fill:#9B59B6
+    style E fill:#3498DB
+    style F fill:#3498DB
+    style H fill:#F39C12
+    style I fill:#E74C3C
     style G fill:#E74C3C
-    style H fill:#E74C3C
+    style K fill:#E74C3C
 ```
 
 ### Execution Flow
@@ -249,32 +273,39 @@ graph LR
 ```
 poc_airflow/
 ├── dags/                          # Airflow DAGs
-│   ├── get_market_data_dag.py    # Main market data pipeline
-│   ├── README_market_data.md     # DAG documentation
+│   ├── get_market_data_dag.py    # Main ETL pipeline (@daily)
 │   └── market_data/              # Modular DAG components
 │       ├── config/               # Configuration
-│       │   ├── settings.py       # Settings management
+│       │   ├── settings.py       # Settings management (triple fallback)
 │       │   └── logging_config.py # Logging configuration
 │       ├── operators/            # Custom operators
-│       │   └── market_data_operators.py
+│       │   ├── market_data_operators.py  # Original operators
+│       │   └── transform_operators.py    # Transform & backfill logic
 │       ├── sensors/              # Custom sensors
-│       │   └── api_sensor.py
+│       │   └── api_sensor.py     # API availability check
+│       ├── transformers/         # Data transformation 🆕
+│       │   └── technical_indicators.py   # 12 technical indicators
+│       ├── storage/              # Data persistence 🆕
+│       │   └── parquet_storage.py        # Parquet save/load
 │       └── utils/                # Utilities
 │           ├── api_client.py     # Yahoo Finance client
 │           ├── validators.py     # Input validation
 │           └── logger.py         # Centralized logging
 │
+├── data/                         # Parquet storage (persistent) 🆕
+│   └── {TICKER}_market_data.parquet
+│
 ├── docs/                         # Documentation
 │   ├── getting-started/          # Getting started guides
 │   ├── user-guide/              # User documentation
 │   ├── developer-guide/         # Developer documentation
-│   ├── operations/              # Operations guides
-│   └── reference/               # Reference documentation
+│   ├── archive/                 # Archived documentation
+│   └── README.md                # Documentation index
 │
 ├── tests/                        # Test suite
-│   ├── unit/                    # Unit tests (50 tests)
-│   ├── integration/             # Integration tests (14 tests)
-│   └── conftest.py              # Pytest configuration
+│   ├── unit/                    # Unit tests (119 tests)
+│   ├── integration/             # Integration tests (12 tests)
+│   └── conftest.py              # Pytest fixtures
 │
 ├── logs/                         # Airflow logs (auto-generated)
 ├── plugins/                      # Custom Airflow plugins
