@@ -55,9 +55,23 @@ class YahooFinanceClient:
         """
         # Convert date to Unix timestamp
         # Set time to 6PM (18:00) to ensure market has closed for the day
+        # But if requesting today's data and it's before 6PM, use current time
         target_date = datetime.strptime(date, "%Y-%m-%d")
-        target_date = target_date.replace(hour=18, minute=0, second=0, microsecond=0)
-        timestamp = int(target_date.timestamp())
+        target_date_6pm = target_date.replace(
+            hour=18, minute=0, second=0, microsecond=0
+        )
+        now = datetime.now()
+
+        # If target date is today and we haven't reached 6PM yet, use current time
+        if target_date.date() == now.date() and now < target_date_6pm:
+            # Use current time for today's data (market might still be open)
+            timestamp = int(now.timestamp())
+            logger.info(
+                f"Using current time for today's data: {now.strftime('%Y-%m-%d %H:%M:%S')}"
+            )
+        else:
+            # Use 6PM for historical data or today after 6PM
+            timestamp = int(target_date_6pm.timestamp())
 
         # Build URL and params
         url = f"{self.base_url}/{ticker}"
@@ -224,7 +238,8 @@ class YahooFinanceClient:
             True if API is available, False to retry
         """
         try:
-            # Use recent date for testing (7 days ago at 6PM)
+            # Use recent date for testing (7 days ago)
+            # Always use 6PM for past dates (market already closed)
             test_date = datetime.now() - timedelta(days=7)
             test_date = test_date.replace(hour=18, minute=0, second=0, microsecond=0)
             timestamp = int(test_date.timestamp())
