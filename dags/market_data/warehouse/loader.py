@@ -4,12 +4,11 @@ Warehouse Data Loader
 Loads data from Parquet files to Data Warehouse (PostgreSQL/Redshift).
 """
 
-from typing import Dict, List
+from typing import Dict
 
 import pandas as pd
 from market_data.config.warehouse_config import (
     BATCH_SIZE,
-    ENABLE_PARTITIONS,
     LOAD_STRATEGY,
     TABLE_MARKET_DATA,
     get_warehouse_config,
@@ -59,14 +58,14 @@ class WarehouseLoader:
                 id SERIAL PRIMARY KEY,
                 ticker VARCHAR(10) NOT NULL,
                 date DATE NOT NULL,
-                
+
                 -- OHLCV Data
                 open DECIMAL(18, 6),
                 high DECIMAL(18, 6),
                 low DECIMAL(18, 6),
                 close DECIMAL(18, 6),
                 volume BIGINT,
-                
+
                 -- Technical Indicators - Trend
                 sma_7 DECIMAL(18, 6),
                 sma_14 DECIMAL(18, 6),
@@ -75,20 +74,20 @@ class WarehouseLoader:
                 macd DECIMAL(18, 6),
                 macd_signal DECIMAL(18, 6),
                 macd_histogram DECIMAL(18, 6),
-                
+
                 -- Technical Indicators - Momentum
                 rsi DECIMAL(18, 6),
-                
+
                 -- Technical Indicators - Volatility
                 bb_upper DECIMAL(18, 6),
                 bb_middle DECIMAL(18, 6),
                 bb_lower DECIMAL(18, 6),
                 volatility_20d DECIMAL(18, 6),
-                
+
                 -- Returns
                 daily_return DECIMAL(18, 6),
                 daily_return_pct DECIMAL(18, 6),
-                
+
                 -- Metadata
                 currency VARCHAR(10),
                 exchange VARCHAR(50),
@@ -98,11 +97,11 @@ class WarehouseLoader:
                 fifty_two_week_low DECIMAL(18, 6),
                 long_name VARCHAR(255),
                 short_name VARCHAR(255),
-                
+
                 -- Audit fields
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                
+
                 -- Unique constraint
                 UNIQUE(ticker, date)
             )
@@ -110,7 +109,7 @@ class WarehouseLoader:
 
             # Create index
             create_index_sql = f"""
-            CREATE INDEX IF NOT EXISTS idx_{TABLE_MARKET_DATA}_ticker_date 
+            CREATE INDEX IF NOT EXISTS idx_{TABLE_MARKET_DATA}_ticker_date
             ON {self.schema}.{TABLE_MARKET_DATA}(ticker, date DESC)
             """
 
@@ -121,14 +120,14 @@ class WarehouseLoader:
                 id BIGINT IDENTITY(1,1) PRIMARY KEY,
                 ticker VARCHAR(10) NOT NULL,
                 date DATE NOT NULL,
-                
+
                 -- OHLCV Data
                 open DECIMAL(18, 6),
                 high DECIMAL(18, 6),
                 low DECIMAL(18, 6),
                 close DECIMAL(18, 6),
                 volume BIGINT,
-                
+
                 -- Technical Indicators - Trend
                 sma_7 DECIMAL(18, 6),
                 sma_14 DECIMAL(18, 6),
@@ -137,20 +136,20 @@ class WarehouseLoader:
                 macd DECIMAL(18, 6),
                 macd_signal DECIMAL(18, 6),
                 macd_histogram DECIMAL(18, 6),
-                
+
                 -- Technical Indicators - Momentum
                 rsi DECIMAL(18, 6),
-                
+
                 -- Technical Indicators - Volatility
                 bb_upper DECIMAL(18, 6),
                 bb_middle DECIMAL(18, 6),
                 bb_lower DECIMAL(18, 6),
                 volatility_20d DECIMAL(18, 6),
-                
+
                 -- Returns
                 daily_return DECIMAL(18, 6),
                 daily_return_pct DECIMAL(18, 6),
-                
+
                 -- Metadata
                 currency VARCHAR(10),
                 exchange VARCHAR(50),
@@ -160,11 +159,11 @@ class WarehouseLoader:
                 fifty_two_week_low DECIMAL(18, 6),
                 long_name VARCHAR(255),
                 short_name VARCHAR(255),
-                
+
                 -- Audit fields
                 created_at TIMESTAMP DEFAULT SYSDATE,
                 updated_at TIMESTAMP DEFAULT SYSDATE,
-                
+
                 -- Unique constraint
                 UNIQUE(ticker, date)
             )
@@ -484,16 +483,16 @@ class WarehouseLoader:
             # Step 3 & 4: DELETE + INSERT (MERGE pattern)
             merge_sql = f"""
             BEGIN TRANSACTION;
-            
+
             -- Delete existing records
             DELETE FROM {self.schema}.{TABLE_MARKET_DATA}
             WHERE ticker = '{ticker}'
             AND date IN (SELECT date FROM {staging_table});
-            
+
             -- Insert from staging
             INSERT INTO {self.schema}.{TABLE_MARKET_DATA}
             SELECT * FROM {staging_table};
-            
+
             END TRANSACTION;
             """
 
@@ -609,7 +608,7 @@ def load_parquet_to_warehouse(ticker: str, **context) -> Dict[str, any]:
         # Get warehouse stats
         with loader.connection.get_connection() as conn:
             count_sql = f"""
-            SELECT COUNT(*) 
+            SELECT COUNT(*)
             FROM {loader.schema}.{TABLE_MARKET_DATA}
             WHERE ticker = :ticker
             """
