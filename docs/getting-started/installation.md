@@ -73,7 +73,7 @@ MARKET_DATA_DEFAULT_TICKER=AAPL
 ENVIRONMENT=development
 ```
 
-**See**: [Configuration Guide](configuration.md) for all options.
+**See**: [Configuration Guide](../user-guide/configuration.md) for all options.
 
 ### 4. Initialize Airflow Database
 
