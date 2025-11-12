@@ -64,7 +64,7 @@ with DAG(
     dag_id="get_market_data",
     default_args=default_args,
     description="ETL Pipeline: Yahoo Finance → Indicadores Técnicos → Parquet → Data Warehouse",
-    schedule_interval="@daily",  # Run daily
+    schedule_interval="0 23 * * 1-5",  # 6:00 PM ET (23:00 UTC) Monday-Friday
     catchup=False,
     tags=[
         "finance",
@@ -83,7 +83,10 @@ with DAG(
     
     ## 🎯 Funcionalidad
     
-    ### Ejecución Diaria (Schedule: @daily)
+    ### Ejecución Diaria (Schedule: 6:00 PM ET / 23:00 UTC)
+    - **Horario**: 6:00 PM Eastern Time (post-cierre del mercado)
+    - **Días**: Lunes a Viernes (días laborables)
+    - **Timezone**: UTC 23:00 (ajustado a cierre del mercado US)
     - Obtiene datos del día actual desde Yahoo Finance API
     - Calcula 12 indicadores técnicos
     - Almacena en Parquet (persistencia local)
