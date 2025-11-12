@@ -6,6 +6,7 @@ import pytest
 import sys
 import os
 from unittest.mock import Mock
+from datetime import datetime
 
 # Add dags directory to Python path
 DAGS_DIR = os.path.join(os.path.dirname(__file__), '../dags')
