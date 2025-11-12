@@ -50,7 +50,7 @@ class TestDAGValidation:
 
         # Check DAG properties
         assert dag.dag_id == "get_market_data"
-        assert dag.schedule_interval is None
+        assert dag.schedule_interval == "@daily"
         assert dag.catchup is False
 
         # Check tags
@@ -58,17 +58,20 @@ class TestDAGValidation:
         assert "market-data" in dag.tags
         assert "yahoo-finance" in dag.tags
         assert "api" in dag.tags
+        assert "etl" in dag.tags
+        assert "parquet" in dag.tags
 
     def test_dag_tasks(self, dagbag):
         """Test DAG has all required tasks"""
         dag = dagbag.get_dag("get_market_data")
 
-        # Expected tasks
+        # Expected tasks (updated for ETL pipeline)
         expected_tasks = [
             "validate_ticker",
+            "determine_dates",
             "check_api_availability",
-            "fetch_market_data",
-            "process_market_data",
+            "fetch_multiple_dates",
+            "transform_and_save",
         ]
 
         # Check all tasks exist
@@ -77,27 +80,31 @@ class TestDAGValidation:
             assert expected_task in task_ids, f"Missing task: {expected_task}"
 
         # Check exact count
-        assert len(dag.tasks) == 4
+        assert len(dag.tasks) == 5
 
     def test_task_dependencies(self, dagbag):
         """Test tasks have correct dependencies"""
         dag = dagbag.get_dag("get_market_data")
 
-        # Get tasks
+        # Get tasks (updated for ETL pipeline)
         validate_task = dag.get_task("validate_ticker")
+        determine_task = dag.get_task("determine_dates")
         sensor_task = dag.get_task("check_api_availability")
-        fetch_task = dag.get_task("fetch_market_data")
-        process_task = dag.get_task("process_market_data")
+        fetch_task = dag.get_task("fetch_multiple_dates")
+        transform_task = dag.get_task("transform_and_save")
 
         # Check dependencies
-        # validate_ticker >> check_api_availability
-        assert sensor_task in validate_task.downstream_list
+        # validate_ticker >> determine_dates
+        assert determine_task in validate_task.downstream_list
 
-        # check_api_availability >> fetch_market_data
+        # determine_dates >> check_api_availability
+        assert sensor_task in determine_task.downstream_list
+
+        # check_api_availability >> fetch_multiple_dates
         assert fetch_task in sensor_task.downstream_list
 
-        # fetch_market_data >> process_market_data
-        assert process_task in fetch_task.downstream_list
+        # fetch_multiple_dates >> transform_and_save
+        assert transform_task in fetch_task.downstream_list
 
     def test_task_retries(self, dagbag):
         """Test tasks have retry configuration"""
@@ -106,7 +113,11 @@ class TestDAGValidation:
         for task in dag.tasks:
             assert task.retries == 2
             assert task.retry_delay == timedelta(minutes=2)
-            assert task.execution_timeout == timedelta(minutes=10)
+            # fetch_multiple_dates has 15 min timeout (for backfill), others 10 min
+            if task.task_id == "fetch_multiple_dates":
+                assert task.execution_timeout == timedelta(minutes=15)
+            else:
+                assert task.execution_timeout == timedelta(minutes=10)
 
     def test_sensor_configuration(self, dagbag):
         """Test sensor has correct configuration"""

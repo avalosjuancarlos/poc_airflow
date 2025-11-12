@@ -96,10 +96,12 @@ services:
       - AIRFLOW__CORE__UNIT_TEST_MODE=True
       - AIRFLOW__CORE__LOAD_EXAMPLES=False
       - AIRFLOW_HOME=/opt/airflow
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=sqlite:////opt/airflow/airflow.db
     working_dir: /opt/airflow
     command: >
       bash -c "
       pip install --quiet --no-cache-dir -r requirements.txt &&
+      airflow db init &&
       pytest tests/integration -v
       "
 
