@@ -95,12 +95,13 @@ class TestGetConnectionString:
 
         conn_string = get_connection_string()
 
-        # Connection string is masked for security, check key components
+        # Verify connection string has correct format and components
+        assert conn_string.startswith("postgresql://")
+        assert "testuser" in conn_string
         assert "localhost" in conn_string
         assert "5432" in conn_string
         assert "testdb" in conn_string
-        # Password is masked with *** for security
-        assert "***" in conn_string or "testpass" not in conn_string
+        # Note: Password must be in connection string for SQLAlchemy to work
 
     @patch("market_data.config.warehouse_config.get_warehouse_config")
     def test_redshift_connection_string(self, mock_get_config):
@@ -117,9 +118,10 @@ class TestGetConnectionString:
 
         conn_string = get_connection_string()
 
-        # Connection string is masked for security, check key components
+        # Verify connection string has correct format and components
+        assert conn_string.startswith("redshift+psycopg2://")
+        assert "testuser" in conn_string
         assert "cluster.region.redshift.amazonaws.com" in conn_string
         assert "5439" in conn_string
         assert "testdb" in conn_string
-        # Password is masked with *** for security
-        assert "***" in conn_string or "testpass" not in conn_string
+        # Note: Password must be in connection string for SQLAlchemy to work
