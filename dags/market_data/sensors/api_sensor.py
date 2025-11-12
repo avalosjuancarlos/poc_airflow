@@ -19,14 +19,14 @@ logger = logging.getLogger(__name__)
 def check_api_availability(ticker: str, **context):
     """
     Sensor function to check API availability
-    
+
     Args:
         ticker: Ticker symbol to check
         context: Airflow context
-        
+
     Returns:
         bool: True if API is available, False to retry
-        
+
     Raises:
         ValueError: If ticker is invalid
     """
@@ -36,6 +36,6 @@ def check_api_availability(ticker: str, **context):
         headers=HEADERS,
         timeout=API_TIMEOUT
     )
-    
+
     # Check availability
     return client.check_availability(ticker)

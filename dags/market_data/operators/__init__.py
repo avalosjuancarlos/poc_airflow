@@ -13,4 +13,3 @@ __all__ = [
     'process_market_data',
     'validate_ticker',
 ]
-

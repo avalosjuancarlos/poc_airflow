@@ -21,16 +21,16 @@ def get_config_value(airflow_key, env_key, default_value, value_type=str):
     1. Airflow Variable (puede cambiarse desde UI sin reiniciar)
     2. Variable de Entorno (configurada en .env)
     3. Valor por defecto (hardcoded)
-    
+
     Args:
         airflow_key: Nombre de la variable en Airflow (ej: 'market_data.default_ticker')
         env_key: Nombre de la variable de entorno (ej: 'MARKET_DATA_DEFAULT_TICKER')
         default_value: Valor por defecto si no existe en ningún lado
         value_type: Tipo de dato a retornar (str, int, bool, float)
-        
+
     Returns:
         Valor configurado del tipo especificado
-        
+
     Example:
         >>> ticker = get_config_value('market_data.default_ticker', 'MARKET_DATA_DEFAULT_TICKER', 'AAPL')
         >>> # Busca en: Airflow Variable → ENV → Default
@@ -46,7 +46,7 @@ def get_config_value(airflow_key, env_key, default_value, value_type=str):
             return value_type(value)
     except Exception as e:
         logger.debug(f"No se pudo obtener Airflow Variable '{airflow_key}': {e}")
-    
+
     # Prioridad 2: Variable de Entorno
     env_value = os.environ.get(env_key)
     if env_value is not None:
@@ -55,7 +55,7 @@ def get_config_value(airflow_key, env_key, default_value, value_type=str):
         if value_type == bool:
             return env_value.lower() in ('true', '1', 'yes', 'on')
         return value_type(env_value)
-    
+
     # Prioridad 3: Valor por defecto
     logger.debug(f"Config '{airflow_key}' usando valor por defecto: {default_value}")
     return value_type(default_value)
@@ -154,7 +154,7 @@ except Exception as e:
 
 # Exponential Backoff - Mantener como ENV (feature flag)
 SENSOR_EXPONENTIAL_BACKOFF = os.environ.get(
-    'MARKET_DATA_SENSOR_EXPONENTIAL_BACKOFF', 
+    'MARKET_DATA_SENSOR_EXPONENTIAL_BACKOFF',
     'true'
 ).lower() == 'true'
 
