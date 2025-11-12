@@ -112,71 +112,12 @@ class TestDAGExecution:
 
         assert result is True
 
-    @patch("market_data.utils.api_client.requests.get")
-    def test_fetch_market_data_task(self, mock_get, dagbag, mock_api_response):
-        """Test fetch_market_data task execution"""
-        dag = dagbag.get_dag("get_market_data")
-        task = dag.get_task("fetch_market_data")
-
-        # Mock successful response
-        mock_response = Mock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = mock_api_response
-        mock_get.return_value = mock_response
-
-        # Create mock context
-        mock_ti = Mock()
-        mock_context = {"task_instance": mock_ti}
-
-        # Execute task
-        result = task.python_callable(ticker="AAPL", date="2023-11-09", **mock_context)
-
-        # Verify result structure
-        assert result["ticker"] == "AAPL"
-        assert result["date"] == "2023-11-09"
-        assert "quote" in result
-        assert "metadata" in result
-
-        # Verify XCom push was called
-        mock_ti.xcom_push.assert_called_once()
-
-    def test_process_market_data_task(self, dagbag):
-        """Test process_market_data task execution"""
-        dag = dagbag.get_dag("get_market_data")
-        task = dag.get_task("process_market_data")
-
-        # Mock market data from XCom
-        mock_data = {
-            "ticker": "AAPL",
-            "date": "2023-11-09",
-            "currency": "USD",
-            "exchange": "NMS",
-            "quote": {
-                "open": 182.96,
-                "high": 184.12,
-                "low": 181.81,
-                "close": 182.41,
-                "volume": 53763500,
-            },
-            "metadata": {
-                "long_name": "Apple Inc.",
-                "fifty_two_week_high": 184.95,
-                "fifty_two_week_low": 124.17,
-            },
-        }
-
-        # Create mock context
-        mock_ti = Mock()
-        mock_ti.xcom_pull.return_value = mock_data
-        mock_context = {"task_instance": mock_ti}
-
-        # Execute task
-        result = task.python_callable(**mock_context)
-
-        # Verify result
-        assert result == mock_data
-
-        # Verify XCom pull was called
-        mock_ti.xcom_pull.assert_called_once_with(
-            task_ids="fetch_market_data", key="market_data"
-        )
+    # NOTE: Tests for fetch_multiple_dates and transform_and_save tasks are not
+    # included here as they involve complex logic (backfill, technical indicators,
+    # Parquet storage) that is extensively covered by unit tests in:
+    # - test_transform_operators.py (9 comprehensive tests)
+    # - test_technical_indicators.py (17 tests for indicators)
+    # - test_parquet_storage.py (11 tests for storage)
+    #
+    # Integration testing at the task execution level would require extensive
+    # mocking that would essentially duplicate the unit test coverage.

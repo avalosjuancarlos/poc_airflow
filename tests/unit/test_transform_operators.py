@@ -234,4 +234,3 @@ class TestTransformAndSave:
                     if call[1].get("key") == "transformation_summary"
                 ]
                 assert len(push_calls) == 1
-

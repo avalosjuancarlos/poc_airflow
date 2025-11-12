@@ -73,7 +73,9 @@ def calculate_rsi(df: pd.DataFrame, period: int = 14) -> pd.DataFrame:
     rs = gain / loss
     df_result["rsi"] = 100 - (100 / (1 + rs))
 
-    logger.debug(f"RSI calculation complete. Non-null values: {df_result['rsi'].notna().sum()}")
+    logger.debug(
+        f"RSI calculation complete. Non-null values: {df_result['rsi'].notna().sum()}"
+    )
     logger.audit("rsi_calculated", {"period": period, "rows": len(df_result)})
 
     return df_result
@@ -94,7 +96,10 @@ def calculate_ema(df: pd.DataFrame, period: int = 12) -> pd.Series:
 
 
 def calculate_macd(
-    df: pd.DataFrame, fast_period: int = 12, slow_period: int = 26, signal_period: int = 9
+    df: pd.DataFrame,
+    fast_period: int = 12,
+    slow_period: int = 26,
+    signal_period: int = 9,
 ) -> pd.DataFrame:
     """
     Calculate MACD (Moving Average Convergence Divergence)
@@ -108,9 +113,7 @@ def calculate_macd(
     Returns:
         DataFrame with 'macd', 'macd_signal', 'macd_histogram' columns
     """
-    logger.info(
-        f"Calculating MACD ({fast_period}, {slow_period}, {signal_period})"
-    )
+    logger.info(f"Calculating MACD ({fast_period}, {slow_period}, {signal_period})")
 
     df_result = df.copy()
 
@@ -199,15 +202,27 @@ def calculate_technical_indicators(
     df["date"] = pd.to_datetime(df["date"])
     df = df.sort_values("date").reset_index(drop=True)
 
-    logger.info(f"Processing {len(df)} records from {df['date'].min()} to {df['date'].max()}")
+    logger.info(
+        f"Processing {len(df)} records from {df['date'].min()} to {df['date'].max()}"
+    )
 
     # Extract OHLCV data
     if "quote" in df.columns:
-        df["open"] = df["quote"].apply(lambda x: x.get("open") if isinstance(x, dict) else None)
-        df["high"] = df["quote"].apply(lambda x: x.get("high") if isinstance(x, dict) else None)
-        df["low"] = df["quote"].apply(lambda x: x.get("low") if isinstance(x, dict) else None)
-        df["close"] = df["quote"].apply(lambda x: x.get("close") if isinstance(x, dict) else None)
-        df["volume"] = df["quote"].apply(lambda x: x.get("volume") if isinstance(x, dict) else None)
+        df["open"] = df["quote"].apply(
+            lambda x: x.get("open") if isinstance(x, dict) else None
+        )
+        df["high"] = df["quote"].apply(
+            lambda x: x.get("high") if isinstance(x, dict) else None
+        )
+        df["low"] = df["quote"].apply(
+            lambda x: x.get("low") if isinstance(x, dict) else None
+        )
+        df["close"] = df["quote"].apply(
+            lambda x: x.get("close") if isinstance(x, dict) else None
+        )
+        df["volume"] = df["quote"].apply(
+            lambda x: x.get("volume") if isinstance(x, dict) else None
+        )
 
     # Basic data validation
     required_columns = ["date", "close"]

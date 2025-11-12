@@ -131,7 +131,11 @@ def save_to_parquet(
             },
         )
     else:
-        df_to_save = df.sort_values("date").reset_index(drop=True) if "date" in df.columns else df
+        df_to_save = (
+            df.sort_values("date").reset_index(drop=True)
+            if "date" in df.columns
+            else df
+        )
         logger.info("Creating new Parquet file")
 
     # Save to Parquet
@@ -233,9 +237,11 @@ def load_from_parquet(ticker: str, data_dir: Optional[str] = None) -> pd.DataFra
             "ticker": ticker,
             "format": "parquet",
             "rows": len(df),
-            "date_range": f"{df['date'].min()} to {df['date'].max()}"
-            if "date" in df.columns
-            else "N/A",
+            "date_range": (
+                f"{df['date'].min()} to {df['date'].max()}"
+                if "date" in df.columns
+                else "N/A"
+            ),
         },
     )
 

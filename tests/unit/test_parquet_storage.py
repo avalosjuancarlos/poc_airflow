@@ -23,12 +23,15 @@ class TestGetParquetPath:
     def test_default_directory(self):
         """Test with default directory"""
         with tempfile.TemporaryDirectory() as tmpdir:
-            with patch.dict(os.environ, {"MARKET_DATA_STORAGE_DIR": tmpdir}, clear=True):
+            with patch.dict(
+                os.environ, {"MARKET_DATA_STORAGE_DIR": tmpdir}, clear=True
+            ):
                 # Reload module to pick up new env var
                 import importlib
                 from dags.market_data.storage import parquet_storage
+
                 importlib.reload(parquet_storage)
-                
+
                 path = parquet_storage.get_parquet_path("AAPL")
                 assert tmpdir in path
                 assert "AAPL_market_data.parquet" in path
@@ -197,4 +200,3 @@ class TestLoadFromParquet:
             assert loaded["date"].dtype == "datetime64[ns]"
             assert loaded["close"].dtype == "float64"
             assert loaded["volume"].dtype == "int64"
-

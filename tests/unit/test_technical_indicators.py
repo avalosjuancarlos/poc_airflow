@@ -38,7 +38,9 @@ class TestCalculateMovingAverages:
 
     def test_moving_averages_custom_periods(self):
         """Test with custom periods"""
-        df = pd.DataFrame({"date": pd.date_range("2023-11-01", periods=50), "close": range(100, 150)})
+        df = pd.DataFrame(
+            {"date": pd.date_range("2023-11-01", periods=50), "close": range(100, 150)}
+        )
 
         result = calculate_moving_averages(df, periods=[5, 10])
 
@@ -293,4 +295,3 @@ class TestCalculateTechnicalIndicators:
 
         with pytest.raises(ValueError, match="Missing required columns"):
             calculate_technical_indicators(market_data_list, "AAPL")
-

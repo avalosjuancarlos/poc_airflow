@@ -76,9 +76,7 @@ def check_and_determine_dates(**context) -> dict:
     else:
         # Normal run: just today's date
         date_str = execution_date.strftime("%Y-%m-%d")
-        logger.info(
-            f"Parquet exists for {ticker}. Processing single date: {date_str}"
-        )
+        logger.info(f"Parquet exists for {ticker}. Processing single date: {date_str}")
 
         result = {"dates": [date_str], "is_backfill": False, "ticker": ticker}
 
