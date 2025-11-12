@@ -7,15 +7,18 @@ Manages multi-environment warehouse connections (PostgreSQL for dev, Redshift fo
 import os
 from typing import Dict, Literal
 
-from market_data.utils import get_logger
-
-logger = get_logger(__name__)
-
 # Environment detection
 ENVIRONMENT = os.environ.get("ENVIRONMENT", "development").lower()
 
 # Warehouse types
 WarehouseType = Literal["postgresql", "redshift"]
+
+
+def _get_logger():
+    """Lazy import to avoid circular dependency"""
+    from market_data.utils import get_logger
+
+    return get_logger(__name__)
 
 
 def get_warehouse_config() -> Dict[str, str]:
@@ -78,7 +81,7 @@ def get_warehouse_config() -> Dict[str, str]:
             f"Missing required warehouse config for {env}: {missing_fields}"
         )
 
-    logger.info(
+    _get_logger().info(
         f"Warehouse config loaded for {env}",
         extra={
             "environment": env,
@@ -120,7 +123,7 @@ def get_connection_string() -> str:
 
     # Don't log password
     safe_conn = conn_string.replace(config["password"], "****")
-    logger.debug(f"Connection string: {safe_conn}")
+    _get_logger().debug(f"Connection string: {safe_conn}")
 
     return conn_string
 
@@ -148,6 +151,7 @@ POOL_TIMEOUT = int(os.environ.get("WAREHOUSE_POOL_TIMEOUT", "30"))
 def log_warehouse_configuration():
     """Log current warehouse configuration"""
     config = get_warehouse_config()
+    logger = _get_logger()
 
     logger.info("=" * 70)
     logger.info("DATA WAREHOUSE CONFIGURATION")
