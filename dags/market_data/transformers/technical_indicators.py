@@ -278,4 +278,3 @@ def calculate_technical_indicators(
     logger.clear_context()
 
     return df
-

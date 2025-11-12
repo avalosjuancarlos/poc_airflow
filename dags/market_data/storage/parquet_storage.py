@@ -240,4 +240,3 @@ def load_from_parquet(ticker: str, data_dir: Optional[str] = None) -> pd.DataFra
     )
 
     return df
-

@@ -92,8 +92,8 @@ class TestFetchMultipleDates:
             "close": 100.0,
         }
 
-        # Patch where it's used, not where it's defined
-        with patch("market_data.operators.transform_operators.YahooFinanceClient", return_value=mock_client):
+        # Patch where it's imported, since it's imported inside the function
+        with patch("market_data.utils.YahooFinanceClient", return_value=mock_client):
             result = fetch_multiple_dates(**mock_context)
 
         assert len(result) == 3
@@ -117,7 +117,7 @@ class TestFetchMultipleDates:
             {"date": "2023-11-03", "close": 102.0},
         ]
 
-        with patch("market_data.operators.transform_operators.YahooFinanceClient", return_value=mock_client):
+        with patch("market_data.utils.YahooFinanceClient", return_value=mock_client):
             result = fetch_multiple_dates(**mock_context)
 
         # Should have 2 successful results (1 failed)
@@ -136,7 +136,7 @@ class TestFetchMultipleDates:
         mock_client = MagicMock()
         mock_client.fetch_market_data.side_effect = Exception("API Error")
 
-        with patch("market_data.operators.transform_operators.YahooFinanceClient", return_value=mock_client):
+        with patch("market_data.utils.YahooFinanceClient", return_value=mock_client):
             with pytest.raises(ValueError, match="Failed to fetch data for all"):
                 fetch_multiple_dates(**mock_context)
 

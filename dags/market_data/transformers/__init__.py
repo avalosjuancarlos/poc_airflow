@@ -15,4 +15,3 @@ __all__ = [
     "calculate_moving_averages",
     "calculate_rsi",
 ]
-
