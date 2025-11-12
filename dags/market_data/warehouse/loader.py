@@ -303,14 +303,15 @@ class WarehouseLoader:
         if "date" in df_clean.columns:
             df_clean["date"] = pd.to_datetime(df_clean["date"])
 
-        # Exclude nested dict columns (already expanded in parquet)
-        # These columns contain raw API response data that's been flattened
-        dict_columns = ["quote", "metadata"]
-        columns_to_drop = [col for col in dict_columns if col in df_clean.columns]
+        # Exclude columns not in warehouse table schema
+        # - quote, metadata: Nested dicts already expanded to individual columns
+        # - timestamp, regular_market_time: Raw API timestamps (not needed in warehouse)
+        columns_to_exclude = ["quote", "metadata", "timestamp", "regular_market_time"]
+        columns_to_drop = [col for col in columns_to_exclude if col in df_clean.columns]
         if columns_to_drop:
             df_clean = df_clean.drop(columns=columns_to_drop)
             logger.debug(
-                f"Dropped nested dict columns: {columns_to_drop}",
+                f"Dropped non-warehouse columns: {columns_to_drop}",
                 extra={"dropped_columns": columns_to_drop},
             )
 
