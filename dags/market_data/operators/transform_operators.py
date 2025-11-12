@@ -8,7 +8,6 @@ from datetime import timedelta
 from typing import List
 
 import pandas as pd
-
 from market_data.storage import check_parquet_exists, save_to_parquet
 from market_data.transformers import calculate_technical_indicators
 from market_data.utils import get_logger, log_execution

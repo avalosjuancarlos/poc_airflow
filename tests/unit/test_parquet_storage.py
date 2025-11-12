@@ -28,6 +28,7 @@ class TestGetParquetPath:
             ):
                 # Reload module to pick up new env var
                 import importlib
+
                 from dags.market_data.storage import parquet_storage
 
                 importlib.reload(parquet_storage)

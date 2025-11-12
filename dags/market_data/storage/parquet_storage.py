@@ -9,7 +9,6 @@ from pathlib import Path
 from typing import Optional
 
 import pandas as pd
-
 from market_data.utils import get_logger, log_execution
 
 logger = get_logger(__name__)

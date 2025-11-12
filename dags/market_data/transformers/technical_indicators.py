@@ -11,7 +11,6 @@ Calculates various technical indicators for financial data analysis:
 from typing import Dict, List
 
 import pandas as pd
-
 from market_data.utils import get_logger
 
 logger = get_logger(__name__)
