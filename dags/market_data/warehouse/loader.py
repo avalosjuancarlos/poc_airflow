@@ -281,6 +281,7 @@ class WarehouseLoader:
         - Ensure date column is datetime
         - Handle NaN values
         - Select relevant columns
+        - Exclude nested dict columns (quote, metadata)
 
         Args:
             df: Raw DataFrame from Parquet
@@ -301,6 +302,17 @@ class WarehouseLoader:
         # Ensure date is datetime
         if "date" in df_clean.columns:
             df_clean["date"] = pd.to_datetime(df_clean["date"])
+
+        # Exclude nested dict columns (already expanded in parquet)
+        # These columns contain raw API response data that's been flattened
+        dict_columns = ["quote", "metadata"]
+        columns_to_drop = [col for col in dict_columns if col in df_clean.columns]
+        if columns_to_drop:
+            df_clean = df_clean.drop(columns=columns_to_drop)
+            logger.debug(
+                f"Dropped nested dict columns: {columns_to_drop}",
+                extra={"dropped_columns": columns_to_drop},
+            )
 
         # Replace NaN with None for SQL compatibility
         df_clean = df_clean.where(pd.notna(df_clean), None)
