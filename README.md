@@ -173,30 +173,36 @@ Comprehensive documentation organized by audience:
 
 ### 🚦 Getting Started
 - **[Installation Guide](docs/getting-started/installation.md)** - Detailed setup instructions
-- **Quick Start Tutorial** 🔜 Coming soon - Your first DAG in 5 minutes
-- See [User Guide Configuration](docs/user-guide/configuration.md) for configuration options
+- **[Quick Start Tutorial](docs/getting-started/quick-start.md)** - Your first DAG in 5 minutes
+- See [Configuration Guide](docs/user-guide/configuration.md) for configuration options
 
 ### 👤 User Guide
 - **[Market Data DAG](docs/user-guide/market-data-dag.md)** - Using the Yahoo Finance DAG
+- **[Data Warehouse](docs/user-guide/data-warehouse.md)** - Multi-environment warehouse guide
 - **[Configuration Options](docs/user-guide/configuration.md)** - All configurable parameters
 - **[Airflow Variables](docs/user-guide/airflow-variables.md)** - Dynamic configuration
 - **[Logging Guide](docs/user-guide/logging.md)** - Understanding logs
 
 ### 👨‍💻 Developer Guide
+- **[Architecture Overview](docs/architecture/overview.md)** - Complete system design
 - **[Testing Guide](docs/developer-guide/testing.md)** - Running and writing tests
-- **Architecture Overview** 🔜 Coming soon - System design
-- **Code Style** 🔜 Coming soon - Standards and conventions
-- **Contributing** 🔜 Coming soon - How to contribute
-- **API Reference** 🔜 Coming soon - Module documentation
+- **[API Reference](docs/developer-guide/api-reference.md)** - Complete module documentation
+- **[Code Style](docs/developer-guide/code-style.md)** - Standards and conventions
+- **[Contributing](docs/developer-guide/contributing.md)** - How to contribute
 
 ### ⚙️ Operations Guide
-- See [Testing Guide](docs/developer-guide/testing.md) for running tests locally
-- **Deployment, Monitoring, Security** 🔜 Coming soon - Operations documentation
+- **[Deployment](docs/operations/deployment.md)** - Production deployment guide
+- **[Monitoring](docs/operations/monitoring.md)** - Observability and alerting
+- **[Troubleshooting](docs/operations/troubleshooting.md)** - Common issues and solutions
+- **[Migration](docs/operations/migration-guide.md)** - Environment and version migration
+- **[Performance Tuning](docs/operations/performance-tuning.md)** - Optimization guide
+- **[Security](docs/SECURITY.md)** - Security best practices
 
 ### 📖 Reference
-- See [Configuration Guide](docs/user-guide/configuration.md) for environment variables
-- See [Useful Commands](#-useful-commands) section below for CLI reference
-- **Complete Reference Documentation** 🔜 Coming soon
+- **[Environment Variables](docs/reference/environment-variables.md)** - Complete env var reference
+- **[CLI Commands](docs/reference/cli-commands.md)** - Comprehensive CLI reference  
+- **[FAQs](docs/reference/faq.md)** - Frequently asked questions
+- See [Useful Commands](#-useful-commands) section below for quick reference
 
 ---
 
