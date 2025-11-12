@@ -48,6 +48,11 @@ coverage.xml
 .hypothesis/
 .pytest_cache/
 cover/
+.pytest_cache/
+htmlcov/
+.coverage
+coverage.xml
+*.cover
 
 # Translations
 *.mo

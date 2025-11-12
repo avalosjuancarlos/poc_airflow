@@ -1,0 +1,23 @@
+[flake8]
+max-line-length = 127
+max-complexity = 15
+exclude =
+    .git,
+    __pycache__,
+    .tox,
+    .eggs,
+    *.egg,
+    build,
+    dist,
+    logs,
+    plugins,
+    config,
+    .venv,
+    venv
+
+# Ignore complexity warnings for specific methods
+# C901: Function is too complex
+# These are acceptable given the error handling logic
+per-file-ignores =
+    dags/market_data/utils/api_client.py:C901
+
