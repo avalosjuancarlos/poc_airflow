@@ -54,7 +54,9 @@ class YahooFinanceClient:
             ValueError: On invalid API response
         """
         # Convert date to Unix timestamp
+        # Set time to 6PM (18:00) to ensure market has closed for the day
         target_date = datetime.strptime(date, "%Y-%m-%d")
+        target_date = target_date.replace(hour=18, minute=0, second=0, microsecond=0)
         timestamp = int(target_date.timestamp())
 
         # Build URL and params
@@ -222,8 +224,9 @@ class YahooFinanceClient:
             True if API is available, False to retry
         """
         try:
-            # Use recent date for testing
+            # Use recent date for testing (7 days ago at 6PM)
             test_date = datetime.now() - timedelta(days=7)
+            test_date = test_date.replace(hour=18, minute=0, second=0, microsecond=0)
             timestamp = int(test_date.timestamp())
 
             url = f"{self.base_url}/{ticker}"
