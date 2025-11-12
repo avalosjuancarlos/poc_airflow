@@ -20,26 +20,26 @@ from airflow.sensors.python import PythonSensor
 
 # Import from modular structure
 from market_data.config import (
-    log_configuration,
     DEFAULT_TICKER,
+    SENSOR_EXPONENTIAL_BACKOFF,
     SENSOR_POKE_INTERVAL,
     SENSOR_TIMEOUT,
-    SENSOR_EXPONENTIAL_BACKOFF
+    log_configuration,
 )
 from market_data.operators import (
-    validate_ticker,
     fetch_market_data,
-    process_market_data
+    process_market_data,
+    validate_ticker,
 )
 from market_data.operators.transform_operators import (
     check_and_determine_dates,
     fetch_multiple_dates,
-    transform_and_save
+    transform_and_save,
 )
 from market_data.sensors import check_api_availability
 
 # Log configuration on DAG load (skip in test mode)
-if not os.environ.get('AIRFLOW__CORE__UNIT_TEST_MODE'):
+if not os.environ.get("AIRFLOW__CORE__UNIT_TEST_MODE"):
     log_configuration()
 
 # ============================================================================
@@ -48,28 +48,25 @@ if not os.environ.get('AIRFLOW__CORE__UNIT_TEST_MODE'):
 
 # Default arguments
 default_args = {
-    'owner': 'airflow',
-    'depends_on_past': False,
-    'start_date': datetime(2025, 1, 1),
-    'email_on_failure': False,
-    'email_on_retry': False,
-    'retries': 2,
-    'retry_delay': timedelta(minutes=2),
-    'execution_timeout': timedelta(minutes=10),
+    "owner": "airflow",
+    "depends_on_past": False,
+    "start_date": datetime(2024, 1, 1),  # Fixed: Changed from 2025 to 2024
+    "email_on_failure": False,
+    "email_on_retry": False,
+    "retries": 2,
+    "retry_delay": timedelta(minutes=2),
+    "execution_timeout": timedelta(minutes=10),
 }
 
 # Define DAG
 with DAG(
-    dag_id='get_market_data',
+    dag_id="get_market_data",
     default_args=default_args,
-    description='Obtiene y transforma datos de mercado con indicadores técnicos - Yahoo Finance API',
-    schedule_interval='@daily',  # Run daily
+    description="Obtiene y transforma datos de mercado con indicadores técnicos - Yahoo Finance API",
+    schedule_interval="@daily",  # Run daily
     catchup=False,
-    tags=['finance', 'market-data', 'yahoo-finance', 'api', 'etl', 'parquet'],
-    params={
-        'ticker': DEFAULT_TICKER,
-        'date': datetime.now().strftime('%Y-%m-%d')
-    },
+    tags=["finance", "market-data", "yahoo-finance", "api", "etl", "parquet"],
+    params={"ticker": DEFAULT_TICKER, "date": datetime.now().strftime("%Y-%m-%d")},
     doc_md="""
     # Get Market Data DAG - ETL Pipeline
     
@@ -125,51 +122,57 @@ with DAG(
     ## 📖 Documentación
     
     Ver `docs/user-guide/market-data-dag.md` para guía completa.
-    """
+    """,
 ) as dag:
-    
+
     # Task 1: Validate ticker
     validate_ticker_task = PythonOperator(
-        task_id='validate_ticker',
+        task_id="validate_ticker",
         python_callable=validate_ticker,
         provide_context=True,
     )
-    
+
     # Task 2: Check if parquet exists and determine dates to fetch
     determine_dates_task = PythonOperator(
-        task_id='determine_dates',
+        task_id="determine_dates",
         python_callable=check_and_determine_dates,
         provide_context=True,
     )
-    
+
     # Task 3: Sensor - Check API availability
     api_sensor = PythonSensor(
-        task_id='check_api_availability',
+        task_id="check_api_availability",
         python_callable=check_api_availability,
         op_kwargs={
-            'ticker': '{{ dag_run.conf.get("ticker", params.ticker) }}',
+            "ticker": '{{ dag_run.conf.get("ticker", params.ticker) }}',
         },
         poke_interval=SENSOR_POKE_INTERVAL,
         timeout=SENSOR_TIMEOUT,
-        mode='poke',
+        mode="poke",
         exponential_backoff=SENSOR_EXPONENTIAL_BACKOFF,
     )
-    
+
     # Task 4: Fetch market data for all determined dates
     fetch_data_task = PythonOperator(
-        task_id='fetch_multiple_dates',
+        task_id="fetch_multiple_dates",
         python_callable=fetch_multiple_dates,
         provide_context=True,
         execution_timeout=timedelta(minutes=15),  # Longer timeout for backfill
     )
-    
+
     # Task 5: Transform data (calculate indicators) and save to Parquet
     transform_and_save_task = PythonOperator(
-        task_id='transform_and_save',
+        task_id="transform_and_save",
         python_callable=transform_and_save,
         provide_context=True,
     )
-    
+
     # Define task dependencies
     # validate → determine dates → check API → fetch data → transform & save
-    validate_ticker_task >> determine_dates_task >> api_sensor >> fetch_data_task >> transform_and_save_task
+    (
+        validate_ticker_task
+        >> determine_dates_task
+        >> api_sensor
+        >> fetch_data_task
+        >> transform_and_save_task
+    )
