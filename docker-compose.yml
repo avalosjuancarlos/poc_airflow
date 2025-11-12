@@ -35,9 +35,26 @@ services:
       POSTGRES_DB: airflow
     volumes:
       - postgres-db-volume:/var/lib/postgresql/data
-      - ./scripts/init_warehouse_schema.sql:/docker-entrypoint-initdb.d/02_init_warehouse_schema.sql
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "airflow"]
+      interval: 10s
+      retries: 5
+      start_period: 5s
+    restart: always
+
+  warehouse-postgres:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: warehouse_user
+      POSTGRES_PASSWORD: warehouse_pass
+      POSTGRES_DB: market_data_warehouse
+    volumes:
+      - warehouse-db-volume:/var/lib/postgresql/data
+      - ./scripts/init_warehouse_schema.sql:/docker-entrypoint-initdb.d/init_warehouse.sql
+    ports:
+      - "5433:5432"  # Expose on different port to avoid conflict
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "warehouse_user"]
       interval: 10s
       retries: 5
       start_period: 5s
@@ -213,4 +230,5 @@ services:
 
 volumes:
   postgres-db-volume:
+  warehouse-db-volume:
 

@@ -33,12 +33,14 @@ def get_warehouse_config() -> Dict[str, str]:
     if env == "development":
         config = {
             "type": os.environ.get("DEV_WAREHOUSE_TYPE", "postgresql"),
-            "host": os.environ.get("DEV_WAREHOUSE_HOST", "postgres"),
+            "host": os.environ.get("DEV_WAREHOUSE_HOST", "warehouse-postgres"),
             "port": os.environ.get("DEV_WAREHOUSE_PORT", "5432"),
-            "database": os.environ.get("DEV_WAREHOUSE_DATABASE", "airflow"),
-            "schema": os.environ.get("DEV_WAREHOUSE_SCHEMA", "market_data_warehouse"),
-            "user": os.environ.get("DEV_WAREHOUSE_USER", "airflow"),
-            "password": os.environ.get("DEV_WAREHOUSE_PASSWORD", "airflow"),
+            "database": os.environ.get(
+                "DEV_WAREHOUSE_DATABASE", "market_data_warehouse"
+            ),
+            "schema": os.environ.get("DEV_WAREHOUSE_SCHEMA", "public"),
+            "user": os.environ.get("DEV_WAREHOUSE_USER", "warehouse_user"),
+            "password": os.environ.get("DEV_WAREHOUSE_PASSWORD", "warehouse_pass"),
         }
     elif env == "staging":
         config = {
