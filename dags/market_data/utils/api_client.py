@@ -166,6 +166,17 @@ class YahooFinanceClient:
             logger.metric("api.response.error", 1, {"ticker": ticker})
             raise ValueError(f"API error: {error_msg}")
 
+        # Debug: Log response structure
+        if data.get("chart", {}).get("result"):
+            result = data["chart"]["result"][0]
+            quote = result.get("indicators", {}).get("quote", [{}])[0]
+            logger.debug(
+                f"API response for {ticker} on {date}: "
+                f"has_quote={bool(quote)}, "
+                f"open_len={len(quote.get('open', []))}, "
+                f"close_len={len(quote.get('close', []))}"
+            )
+
         # Extract market data
         return self._parse_market_data(data, ticker, date, timestamp)
 
@@ -298,13 +309,26 @@ class YahooFinanceClient:
         quote_data = {}
         if result.get("indicators", {}).get("quote") and result["indicators"]["quote"]:
             quote = result["indicators"]["quote"][0]
+
+            # Helper function to safely extract first element from array
+            def safe_get_first(arr):
+                """Safely get first element from array, handling empty arrays"""
+                if arr and len(arr) > 0:
+                    return arr[0]
+                return None
+
             quote_data = {
-                "open": quote.get("open", [None])[0],
-                "high": quote.get("high", [None])[0],
-                "low": quote.get("low", [None])[0],
-                "close": quote.get("close", [None])[0],
-                "volume": quote.get("volume", [None])[0],
+                "open": safe_get_first(quote.get("open", [])),
+                "high": safe_get_first(quote.get("high", [])),
+                "low": safe_get_first(quote.get("low", [])),
+                "close": safe_get_first(quote.get("close", [])),
+                "volume": safe_get_first(quote.get("volume", [])),
             }
+
+            logger.debug(
+                f"Extracted quote data for {ticker}: close={quote_data.get('close')}, "
+                f"volume={quote_data.get('volume')}"
+            )
 
         # Build structured response
         market_data = {
