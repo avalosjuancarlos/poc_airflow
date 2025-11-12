@@ -421,7 +421,7 @@ class WarehouseLoader:
         with self.connection.get_connection() as conn:
             # Execute in batches
             for i in range(0, len(df), BATCH_SIZE):
-                batch = df.iloc[i : i + BATCH_SIZE]
+                batch = df.iloc[i : i + BATCH_SIZE]  # noqa: E203
 
                 logger.debug(
                     f"Upserting batch {i // BATCH_SIZE + 1}/{(len(df) - 1) // BATCH_SIZE + 1}",
