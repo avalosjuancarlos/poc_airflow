@@ -56,7 +56,7 @@ jobs:
         export AIRFLOW_HOME=${PWD}
         export AIRFLOW__CORE__LOAD_EXAMPLES=False
         export AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=sqlite:///${PWD}/airflow.db
-        pytest tests/integration -v -m "integration" || pytest tests/integration -v
+        pytest tests/integration -v -m "integration" --no-cov || pytest tests/integration -v --no-cov
     
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
