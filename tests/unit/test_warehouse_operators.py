@@ -1,4 +1,3 @@
-
 """
 Unit tests for warehouse operators
 """
@@ -15,8 +14,16 @@ class TestLoadToWarehouse:
     @patch("market_data.operators.warehouse_operators.warehouse_load_function")
     def test_loads_each_ticker(self, mock_warehouse_func):
         mock_warehouse_func.side_effect = [
-            {"records_loaded": 10, "total_in_warehouse": 10, "warehouse_type": "postgresql"},
-            {"records_loaded": 20, "total_in_warehouse": 30, "warehouse_type": "postgresql"},
+            {
+                "records_loaded": 10,
+                "total_in_warehouse": 10,
+                "warehouse_type": "postgresql",
+            },
+            {
+                "records_loaded": 20,
+                "total_in_warehouse": 30,
+                "warehouse_type": "postgresql",
+            },
         ]
 
         mock_ti = MagicMock()
@@ -38,8 +45,16 @@ class TestLoadToWarehouse:
     @patch("market_data.operators.warehouse_operators.warehouse_load_function")
     def test_returns_summary_list(self, mock_warehouse_func):
         summaries = [
-            {"records_loaded": 10, "total_in_warehouse": 10, "warehouse_type": "postgresql"},
-            {"records_loaded": 5, "total_in_warehouse": 15, "warehouse_type": "postgresql"},
+            {
+                "records_loaded": 10,
+                "total_in_warehouse": 10,
+                "warehouse_type": "postgresql",
+            },
+            {
+                "records_loaded": 5,
+                "total_in_warehouse": 15,
+                "warehouse_type": "postgresql",
+            },
         ]
         mock_warehouse_func.side_effect = summaries
 

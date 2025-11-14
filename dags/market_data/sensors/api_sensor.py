@@ -23,7 +23,9 @@ def check_api_availability(**context):
     """
     ti = context.get("task_instance")
     tickers = (
-        ti.xcom_pull(task_ids="validate_ticker", key="validated_tickers") if ti else None
+        ti.xcom_pull(task_ids="validate_ticker", key="validated_tickers")
+        if ti
+        else None
     )
 
     if not tickers:

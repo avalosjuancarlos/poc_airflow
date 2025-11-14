@@ -254,7 +254,9 @@ def transform_and_save(**context) -> dict:
         Dictionary with transformation results
     """
     # Get data from previous task
-    market_data_batches = context["task_instance"].xcom_pull(key="market_data_list") or []
+    market_data_batches = (
+        context["task_instance"].xcom_pull(key="market_data_list") or []
+    )
 
     if not market_data_batches:
         raise ValueError("No market data batches found for transformation")
@@ -312,12 +314,16 @@ def transform_and_save(**context) -> dict:
             "rows_processed": len(df_transformed),
             "columns": list(df_transformed.columns),
             "date_range": {
-                "start": str(df_transformed["date"].min())
-                if not df_transformed.empty
-                else None,
-                "end": str(df_transformed["date"].max())
-                if not df_transformed.empty
-                else None,
+                "start": (
+                    str(df_transformed["date"].min())
+                    if not df_transformed.empty
+                    else None
+                ),
+                "end": (
+                    str(df_transformed["date"].max())
+                    if not df_transformed.empty
+                    else None
+                ),
             },
             "file_path": file_path,
             "is_backfill": is_backfill,
@@ -328,9 +334,9 @@ def transform_and_save(**context) -> dict:
             summary["latest_indicators"] = {
                 "date": str(latest["date"]),
                 "close": float(latest["close"]) if pd.notna(latest["close"]) else None,
-                "sma_20": float(latest["sma_20"])
-                if pd.notna(latest["sma_20"])
-                else None,
+                "sma_20": (
+                    float(latest["sma_20"]) if pd.notna(latest["sma_20"]) else None
+                ),
                 "rsi": float(latest["rsi"]) if pd.notna(latest["rsi"]) else None,
                 "macd": float(latest["macd"]) if pd.notna(latest["macd"]) else None,
             }

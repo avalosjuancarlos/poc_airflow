@@ -22,6 +22,7 @@ class TestCheckAndDetermineDates:
 
     def test_no_parquet_returns_backfill(self, mock_context):
         """Test returns 120 days when parquet doesn't exist"""
+
         def side_effect(*args, **kwargs):
             if kwargs.get("key") == "validated_tickers":
                 return ["AAPL"]
@@ -50,6 +51,7 @@ class TestCheckAndDetermineDates:
 
     def test_existing_parquet_returns_single_date(self, mock_context):
         """Test returns single date when parquet exists"""
+
         def side_effect(*args, **kwargs):
             if kwargs.get("key") == "validated_tickers":
                 return ["AAPL"]
@@ -72,6 +74,7 @@ class TestCheckAndDetermineDates:
 
     def test_pushes_to_xcom(self, mock_context):
         """Test that result is pushed to XCom"""
+
         def side_effect(*args, **kwargs):
             if kwargs.get("key") == "validated_tickers":
                 return ["AAPL"]

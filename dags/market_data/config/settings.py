@@ -71,6 +71,7 @@ def get_config_value(airflow_key, env_key, default_value, value_type=str):
 # Configuration Values
 # ============================================================================
 
+
 def _get_yahoo_api_url():
     """Get Yahoo Finance API base URL"""
     return os.environ.get(
