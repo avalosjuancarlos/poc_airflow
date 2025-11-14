@@ -1081,12 +1081,12 @@ docker compose -f docker-compose.test.yml up test
 
 **Specific tests**:
 ```bash
-docker compose exec airflow-webserver pytest tests/unit/test_api_client.py -v
+docker compose -f docker-compose.test.yml run --rm test bash -lc "pytest tests/unit/test_api_client.py -v"
 ```
 
 **With coverage**:
 ```bash
-docker compose exec airflow-webserver pytest --cov=dags/market_data --cov-report=html
+docker compose -f docker-compose.test.yml up test-coverage
 ```
 
 See: [Testing Guide](../developer-guide/testing.md)

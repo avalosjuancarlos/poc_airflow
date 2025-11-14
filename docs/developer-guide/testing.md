@@ -42,6 +42,8 @@ requests-mock==1.11.0   # HTTP request mocking
 freezegun==1.4.0        # Time/date mocking
 ```
 
+> Todas las dependencias productivas viven en `requirements.txt`, mientras que `requirements-dev.txt` extiende ese archivo con paquetes de testing y linting. Los servicios definidos en `docker-compose.test.yml` instalan automáticamente `requirements-dev.txt`.
+
 ---
 
 ## 🎯 Tipos de Tests
@@ -93,7 +95,15 @@ def test_dag_loaded(dagbag):
 
 ## 🚀 Ejecutar Tests
 
-### Todos los Tests
+### Todos los Tests (Docker Compose recomendado)
+
+```bash
+docker compose -f docker-compose.test.yml up test
+# o
+make test
+```
+
+### Tests locales (sin Docker)
 
 ```bash
 # Desde la raíz del proyecto
@@ -107,20 +117,22 @@ pytest --cov=dags/market_data --cov-report=html
 ### Solo Tests Unitarios
 
 ```bash
-# Ejecutar solo unit tests
-pytest tests/unit -v
+# Docker Compose
+docker compose -f docker-compose.test.yml up test-unit-only
 
-# Con markers
+# Local (sin Docker)
+pytest tests/unit -v
 pytest -m "unit" -v
 ```
 
 ### Solo Tests de Integración
 
 ```bash
-# Ejecutar solo integration tests
-pytest tests/integration -v
+# Docker Compose
+docker compose -f docker-compose.test.yml up test-integration-only
 
-# Con markers
+# Local (sin Docker)
+pytest tests/integration -v
 pytest -m "integration" -v
 ```
 
@@ -160,8 +172,8 @@ pytest -x
 # Entrar al contenedor
 docker compose exec airflow-scheduler bash
 
-# Instalar dependencias de testing
-pip install pytest pytest-cov pytest-mock requests-mock freezegun
+# Instalar dependencias de testing/linting
+pip install --quiet --no-cache-dir -r requirements-dev.txt
 
 # Ejecutar tests
 cd /opt/airflow
@@ -169,33 +181,19 @@ export PYTHONPATH="/opt/airflow/dags:${PYTHONPATH}"
 pytest tests/ -v
 ```
 
-### Opción 2: Contenedor dedicado para tests
+### Opción 2: Contenedor dedicado para tests (docker-compose.test.yml)
 
-Crear `docker-compose.test.yml`:
+El repositorio ya incluye `docker-compose.test.yml` con todos los servicios de testing/linting:
 
-```yaml
-services:
-  test:
-    image: apache/airflow:2.11.0-python3.10
-    volumes:
-      - ./dags:/opt/airflow/dags
-      - ./tests:/opt/airflow/tests
-      - ./pytest.ini:/opt/airflow/pytest.ini
-      - ./requirements.txt:/opt/airflow/requirements.txt
-    environment:
-      - PYTHONPATH=/opt/airflow/dags
-      - AIRFLOW__CORE__UNIT_TEST_MODE=True
-      - AIRFLOW__CORE__LOAD_EXAMPLES=False
-    command: >
-      bash -c "
-      pip install -r requirements.txt &&
-      pytest tests/ -v --cov=dags/market_data --cov-report=term-missing
-      "
-```
+- `test`, `test-unit-only`, `test-integration-only`, `test-coverage`
+- `lint` (flake8 + black + isort, con dependencias de `requirements-dev.txt`)
 
-Ejecutar:
 ```bash
+# Ejecutar test suite completa
 docker compose -f docker-compose.test.yml up test
+
+# Solo linters
+docker compose -f docker-compose.test.yml up lint
 ```
 
 ---

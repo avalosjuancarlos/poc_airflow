@@ -99,31 +99,29 @@ stop-all: down dashboard-down ## Stop both Airflow and Dashboard
 # Development Commands
 # ============================================================================
 
-test: ## Run all tests
+test: ## Run all tests via docker-compose.test.yml
 	@echo "Running tests..."
-	docker compose -f docker-compose.test.yml up test
+	docker compose -f docker-compose.test.yml up --abort-on-container-exit test
 	@echo "✅ Tests complete"
 
 test-unit: ## Run unit tests only
 	@echo "Running unit tests..."
-	docker compose exec airflow-webserver pytest tests/unit/ -v
+	docker compose -f docker-compose.test.yml up --abort-on-container-exit test-unit-only
 	@echo "✅ Unit tests complete"
 
 test-integration: ## Run integration tests only
 	@echo "Running integration tests..."
-	docker compose exec airflow-webserver pytest tests/integration/ -v
+	docker compose -f docker-compose.test.yml up --abort-on-container-exit test-integration-only
 	@echo "✅ Integration tests complete"
 
 coverage: ## Run tests with coverage report
 	@echo "Running tests with coverage..."
-	docker compose exec airflow-webserver pytest --cov=dags/market_data --cov-report=html --cov-report=term
+	docker compose -f docker-compose.test.yml up --abort-on-container-exit test-coverage
 	@echo "✅ Coverage report generated at htmlcov/index.html"
 
 lint: ## Run linting (flake8, black, isort)
 	@echo "Running linters..."
-	docker compose exec airflow-webserver bash -c "flake8 dags/market_data --count --max-complexity=10 --max-line-length=127 --statistics && echo '✅ flake8 passed'"
-	docker compose exec airflow-webserver bash -c "black --check dags/market_data && echo '✅ black passed'"
-	docker compose exec airflow-webserver bash -c "isort --check-only dags/market_data && echo '✅ isort passed'"
+	docker compose -f docker-compose.test.yml up --abort-on-container-exit lint
 	@echo "✅ All linters passed"
 
 format: ## Format code with black and isort

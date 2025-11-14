@@ -458,7 +458,8 @@ poc_airflow/
 ├── docker-compose.yml            # Main services configuration
 ├── docker-compose.test.yml       # Testing environment
 ├── env.template                  # Environment variables template
-├── requirements.txt              # Python dependencies
+├── requirements.txt              # Runtime Python dependencies
+├── requirements-dev.txt          # Dev/test/lint dependencies (extends requirements.txt)
 ├── pytest.ini                    # Pytest configuration
 ├── .flake8                       # Flake8 configuration
 ├── .isort.cfg                    # Import sorting configuration
@@ -539,6 +540,7 @@ docker compose -f docker-compose.test.yml up test-integration-only
 # With coverage report
 docker compose -f docker-compose.test.yml up test-coverage
 ```
+> ℹ️ Estos servicios instalan automáticamente las dependencias declaradas en `requirements-dev.txt` (incluye `requirements.txt`).
 
 ### Run Linting
 
@@ -547,9 +549,9 @@ docker compose -f docker-compose.test.yml up test-coverage
 docker compose -f docker-compose.test.yml up lint
 
 # Individual linters
-flake8 dags/market_data
-black --check dags/market_data tests/
-isort --check-only dags/market_data tests/
+docker compose -f docker-compose.test.yml run --rm lint bash -lc "flake8 dags/market_data tests/"
+docker compose -f docker-compose.test.yml run --rm lint bash -lc "black dags/market_data tests/"
+docker compose -f docker-compose.test.yml run --rm lint bash -lc "isort dags/market_data tests/"
 ```
 
 ### Test Coverage
