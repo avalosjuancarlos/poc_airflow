@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   dashboard:
     build: .
@@ -38,7 +36,6 @@ services:
     
     # Connect to Airflow network to access warehouse-postgres
     networks:
-      - default
       - poc_airflow_default
     
     restart: unless-stopped
@@ -51,7 +48,6 @@ services:
 
 networks:
   poc_airflow_default:
+    name: poc_airflow_default
     external: true
-  default:
-    driver: bridge
 
