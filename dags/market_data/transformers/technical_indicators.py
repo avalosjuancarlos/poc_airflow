@@ -272,7 +272,7 @@ def calculate_technical_indicators(
     records_before_filter = len(df)
     df = df[df["close"].notna()].copy().reset_index(drop=True)
     records_after_filter = len(df)
-    
+
     if records_before_filter > records_after_filter:
         logger.info(
             f"Filtered out {records_before_filter - records_after_filter} records with NaN close prices (weekends/holidays)"
@@ -283,16 +283,16 @@ def calculate_technical_indicators(
         logger.info(
             f"Merging {len(df)} new records with {len(historical_df)} historical records"
         )
-        
+
         # Remove any overlapping dates from historical data
         historical_df["date"] = pd.to_datetime(historical_df["date"])
         new_dates = df["date"].values
         historical_df = historical_df[~historical_df["date"].isin(new_dates)]
-        
+
         # Combine historical + new data
         df = pd.concat([historical_df, df], ignore_index=True)
         df = df.sort_values("date").reset_index(drop=True)
-        
+
         logger.info(
             f"Combined dataset: {len(df)} total records from {df['date'].min()} to {df['date'].max()}"
         )
