@@ -43,9 +43,7 @@ def _extract_ohlcv_from_quotes(df: pd.DataFrame) -> pd.DataFrame:
         lambda x: x.get("volume") if isinstance(x, dict) else None
     )
 
-    logger.debug(
-        f"Extracted close values (first 3): {df['close'].head(3).tolist()}"
-    )
+    logger.debug(f"Extracted close values (first 3): {df['close'].head(3).tolist()}")
     return df
 
 
