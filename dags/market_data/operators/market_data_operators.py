@@ -24,40 +24,56 @@ from market_data.utils import (
 logger = get_logger(__name__)
 
 
-def _parse_ticker_inputs(raw_value):
-    """Normalize ticker input into list of strings."""
+def _try_parse_json_list(string_value: str):
+    """Return parsed list if string_value is JSON list, else None."""
+    try:
+        parsed = json.loads(string_value)
+    except json.JSONDecodeError:
+        return None
+    return parsed if isinstance(parsed, list) else None
+
+
+def _coerce_sequence(raw_value):
+    """Coerce raw input into a sequence for further normalization."""
     if raw_value is None:
         return []
 
     if isinstance(raw_value, (list, tuple, set)):
-        candidates = list(raw_value)
-    else:
-        string_value = str(raw_value).strip()
-        if not string_value:
-            return []
-        if string_value.startswith("[") and string_value.endswith("]"):
-            try:
-                parsed = json.loads(string_value)
-                if isinstance(parsed, list):
-                    candidates = parsed
-                else:
-                    candidates = [string_value]
-            except json.JSONDecodeError:
-                candidates = string_value.split(",")
-        elif "," in string_value:
-            candidates = string_value.split(",")
-        else:
-            candidates = [string_value]
+        return list(raw_value)
 
+    string_value = str(raw_value).strip()
+    if not string_value:
+        return []
+
+    if string_value.startswith("[") and string_value.endswith("]"):
+        parsed = _try_parse_json_list(string_value)
+        if parsed is not None:
+            return parsed
+
+    if "," in string_value:
+        return string_value.split(",")
+
+    return [string_value]
+
+
+def _normalize_candidate(candidate):
+    """Split and trim a single candidate string."""
+    if candidate is None:
+        return []
+
+    text = str(candidate).strip()
+    if not text:
+        return []
+
+    parts = [part.strip() for part in text.split(",") if part.strip()]
+    return parts or [text]
+
+
+def _parse_ticker_inputs(raw_value):
+    """Normalize ticker input into list of strings."""
     normalized = []
-    for candidate in candidates:
-        if candidate is None:
-            continue
-        ticker_str = str(candidate).strip()
-        if not ticker_str:
-            continue
-        parts = [part.strip() for part in ticker_str.split(",") if part.strip()]
-        normalized.extend(parts if parts else [ticker_str])
+    for candidate in _coerce_sequence(raw_value):
+        normalized.extend(_normalize_candidate(candidate))
     return normalized
 
 

@@ -27,7 +27,7 @@ class TestValidateTickerOperator:
 
         assert result == ["AAPL"]
         ti = mock_context["task_instance"]
-        ti.xcom_push.assert_called_once_with(key="validated_tickerss", value=["AAPL"])
+        ti.xcom_push.assert_called_once_with(key="validated_tickers", value=["AAPL"])
 
     def test_validate_ticker_lowercase(self):
         """Test validate_ticker converts lowercase to uppercase"""
@@ -68,7 +68,9 @@ class TestValidateTickerOperator:
             "task_instance": Mock(),
         }
 
-        with pytest.raises(ValueError, match="No tickers provided"):
+        with patch(
+            "market_data.operators.market_data_operators.DEFAULT_TICKERS", []
+        ), pytest.raises(ValueError, match="No tickers provided"):
             validate_ticker(**mock_context)
 
 
