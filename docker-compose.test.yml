@@ -9,6 +9,7 @@ services:
       - ./tests:/opt/airflow/tests
       - ./pytest.ini:/opt/airflow/pytest.ini
       - ./requirements.txt:/opt/airflow/requirements.txt
+      - ./requirements-dev.txt:/opt/airflow/requirements-dev.txt
       - ./.github:/opt/airflow/.github
     environment:
       - PYTHONPATH=/opt/airflow/dags
@@ -21,7 +22,7 @@ services:
       echo '=================================================='
       echo '  Installing test dependencies...'
       echo '=================================================='
-      pip install --quiet --no-cache-dir -r requirements.txt &&
+      pip install --quiet --no-cache-dir -r requirements-dev.txt &&
       echo '' &&
       echo '=================================================='
       echo '  Running Unit Tests'
@@ -48,6 +49,7 @@ services:
       - ./tests:/opt/airflow/tests
       - ./pytest.ini:/opt/airflow/pytest.ini
       - ./requirements.txt:/opt/airflow/requirements.txt
+      - ./requirements-dev.txt:/opt/airflow/requirements-dev.txt
       - ./htmlcov:/opt/airflow/htmlcov
     environment:
       - PYTHONPATH=/opt/airflow/dags
@@ -57,7 +59,7 @@ services:
     working_dir: /opt/airflow
     command: >
       bash -c "
-      pip install --quiet --no-cache-dir -r requirements.txt &&
+      pip install --quiet --no-cache-dir -r requirements-dev.txt &&
       echo '=================================================='
       echo '  Running Tests with Coverage Report'
       echo '=================================================='
@@ -73,6 +75,7 @@ services:
       - ./tests:/opt/airflow/tests
       - ./pytest.ini:/opt/airflow/pytest.ini
       - ./requirements.txt:/opt/airflow/requirements.txt
+      - ./requirements-dev.txt:/opt/airflow/requirements-dev.txt
     environment:
       - PYTHONPATH=/opt/airflow/dags
       - AIRFLOW__CORE__UNIT_TEST_MODE=True
@@ -80,7 +83,7 @@ services:
     working_dir: /opt/airflow
     command: >
       bash -c "
-      pip install --quiet --no-cache-dir -r requirements.txt &&
+      pip install --quiet --no-cache-dir -r requirements-dev.txt &&
       pytest tests/unit -v --cov=dags/market_data --cov-report=term-missing
       "
 
@@ -91,6 +94,7 @@ services:
       - ./tests:/opt/airflow/tests
       - ./pytest.ini:/opt/airflow/pytest.ini
       - ./requirements.txt:/opt/airflow/requirements.txt
+      - ./requirements-dev.txt:/opt/airflow/requirements-dev.txt
     environment:
       - PYTHONPATH=/opt/airflow/dags
       - AIRFLOW__CORE__UNIT_TEST_MODE=True
@@ -100,7 +104,7 @@ services:
     working_dir: /opt/airflow
     command: >
       bash -c "
-      pip install --quiet --no-cache-dir -r requirements.txt &&
+      pip install --quiet --no-cache-dir -r requirements-dev.txt &&
       airflow db init &&
       pytest tests/integration -v
       "
@@ -110,14 +114,16 @@ services:
     volumes:
       - ./dags:/opt/airflow/dags
       - ./tests:/opt/airflow/tests
+      - ./requirements-dev.txt:/opt/airflow/requirements-dev.txt
+      - ./requirements.txt:/opt/airflow/requirements.txt
     working_dir: /opt/airflow
     command: >
       bash -c "
-      pip install --quiet flake8 black isort pylint &&
+      pip install --quiet --no-cache-dir -r requirements-dev.txt &&
       echo '=================================================='
       echo '  Running Flake8'
       echo '=================================================='
-      flake8 dags/market_data --count --statistics &&
+      flake8 dags/market_data tests/ --count --statistics &&
       echo '' &&
       echo '=================================================='
       echo '  Checking Black Formatting'

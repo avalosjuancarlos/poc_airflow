@@ -228,63 +228,63 @@ Complete schema with all columns:
 CREATE TABLE fact_market_data (
     -- Primary Key
     id SERIAL PRIMARY KEY,
-    
+
     -- Business Keys
     ticker VARCHAR(10) NOT NULL,
     date DATE NOT NULL,
-    
-    -- OHLCV (Open, High, Low, Close, Volume)
-    open NUMERIC(10,2),
-    high NUMERIC(10,2),
-    low NUMERIC(10,2),
-    close NUMERIC(10,2) NOT NULL,
+
+    -- OHLCV
+    open DECIMAL(18,6),
+    high DECIMAL(18,6),
+    low DECIMAL(18,6),
+    close DECIMAL(18,6),
     volume BIGINT,
-    
-    -- Moving Averages
-    sma_7 NUMERIC(10,2),
-    sma_14 NUMERIC(10,2),
-    sma_30 NUMERIC(10,2),
-    
-    -- Momentum Indicators
-    rsi NUMERIC(10,2),  -- Relative Strength Index
-    
-    -- Trend Indicators
-    macd NUMERIC(10,2),  -- MACD Line
-    macd_signal NUMERIC(10,2),  -- Signal Line
-    macd_histogram NUMERIC(10,2),  -- Histogram
-    
-    -- Volatility Indicators
-    bb_upper NUMERIC(10,2),  -- Bollinger Band Upper
-    bb_middle NUMERIC(10,2),  -- Bollinger Band Middle
-    bb_lower NUMERIC(10,2),  -- Bollinger Band Lower
-    
-    -- Returns & Risk
-    daily_return NUMERIC(10,4),  -- Daily % change
-    volatility_20d NUMERIC(10,4),  -- 20-day volatility
-    
-    -- Metadata
+
+    -- Trend & Moving Averages
+    sma_7 DECIMAL(18,6),
+    sma_14 DECIMAL(18,6),
+    sma_20 DECIMAL(18,6),
+    ema_12 DECIMAL(18,6),
+    macd DECIMAL(18,6),
+    macd_signal DECIMAL(18,6),
+    macd_histogram DECIMAL(18,6),
+
+    -- Momentum
+    rsi DECIMAL(18,6),
+
+    -- Volatility
+    bb_upper DECIMAL(18,6),
+    bb_middle DECIMAL(18,6),
+    bb_lower DECIMAL(18,6),
+    volatility_20d DECIMAL(18,6),
+
+    -- Returns
+    daily_return DECIMAL(18,6),
+    daily_return_pct DECIMAL(18,6),
+
+    -- Metadata flattened from Yahoo
     currency VARCHAR(10),
-    exchange_name VARCHAR(50),
+    exchange VARCHAR(50),
     instrument_type VARCHAR(50),
-    fifty_two_week_high NUMERIC(10,2),
-    fifty_two_week_low NUMERIC(10,2),
-    fifty_day_average NUMERIC(10,2),
-    two_hundred_day_average NUMERIC(10,2),
-    market_cap BIGINT,
-    
-    -- Audit Timestamps
+    regular_market_price DECIMAL(18,6),
+    fifty_two_week_high DECIMAL(18,6),
+    fifty_two_week_low DECIMAL(18,6),
+    long_name VARCHAR(255),
+    short_name VARCHAR(255),
+
+    -- Audit
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    
-    -- Constraints
+
     UNIQUE (ticker, date)
 );
 
--- Indexes for query performance
 CREATE INDEX idx_ticker_date ON fact_market_data (ticker, date DESC);
 CREATE INDEX idx_date ON fact_market_data (date DESC);
 CREATE INDEX idx_ticker ON fact_market_data (ticker);
 ```
+
+> ℹ️ **Metadata flattening** – fields returned by Yahoo’s `meta` payload (long/short name, 52-week range, regular market price) are flattened during `transform_and_save` so Parquet and the warehouse always receive descriptive attributes along with OHLCV and indicators.
 
 ### Data Types
 
@@ -292,11 +292,15 @@ CREATE INDEX idx_ticker ON fact_market_data (ticker);
 |--------|------|-------------|---------|
 | `ticker` | VARCHAR(10) | Stock ticker symbol | `AAPL` |
 | `date` | DATE | Trading date | `2025-01-15` |
-| `close` | NUMERIC(10,2) | Closing price | `259.57` |
+| `close` | DECIMAL(18,6) | Closing price | `259.570000` |
 | `volume` | BIGINT | Trading volume | `123456789` |
-| `rsi` | NUMERIC(10,2) | RSI (0-100) | `68.42` |
-| `daily_return` | NUMERIC(10,4) | Daily return % | `0.0234` (2.34%) |
-| `volatility_20d` | NUMERIC(10,4) | 20-day volatility | `0.0156` (1.56%) |
+| `ema_12` | DECIMAL(18,6) | 12-day exponential moving average | `258.110000` |
+| `rsi` | DECIMAL(18,6) | RSI (0-100) | `68.420000` |
+| `daily_return` | DECIMAL(18,6) | Daily return (not %) | `0.012300` |
+| `daily_return_pct` | DECIMAL(18,6) | Daily return expressed in % | `1.230000` |
+| `volatility_20d` | DECIMAL(18,6) | 20-day standard deviation | `0.015600` |
+| `long_name` | VARCHAR(255) | Company display name | `Apple Inc.` |
+| `short_name` | VARCHAR(255) | Ticker short label | `Apple` |
 
 ---
 
@@ -484,16 +488,16 @@ airflow tasks test get_market_data load_to_warehouse 2025-01-15
 ❌ **Never commit real passwords**:
 ```bash
 # Bad
-DEV_WAREHOUSE_PASSWORD=mysecretpass123
+DEV_WAREHOUSE_PASSWORD=hardcoded-prod-password
 ```
 
-✅ **Use placeholder prefix**:
+✅ **Use placeholder prefix / secret manager**:
 ```bash
 # Good (in env.template)
 DEV_WAREHOUSE_PASSWORD=CHANGE_ME_dev_warehouse_password
 
-# Real password (in .env, gitignored)
-DEV_WAREHOUSE_PASSWORD=ActualSecurePassword123!
+# Real password (only in private .env or secret manager)
+DEV_WAREHOUSE_PASSWORD=${DEV_WAREHOUSE_PASSWORD_FROM_VAULT}
 ```
 
 ### Production Security

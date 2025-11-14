@@ -12,7 +12,9 @@ The Market Data Dashboard is a **Streamlit-based web application** that provides
 - 📊 Interactive charts with Plotly
 - 🔄 Real-time data from warehouse
 - 🌍 Multi-environment support (dev/staging/prod)
-- 📈 7 visualization tabs
+- 🎛️ View switcher for Market Dashboard or Warehouse Explorer
+- 📈 7 visualization tabs for market analytics
+- 🏭 Warehouse explorer with SQL preview and filters
 - ⬇️ CSV export functionality
 - 🚀 Dockerized deployment
 
@@ -74,6 +76,9 @@ streamlit run app.py
 
 Open browser at: **http://localhost:8501**
 
+Use the **Navigation** section in the sidebar to choose between the Market Data Dashboard
+or the Warehouse Explorer experience.
+
 ---
 
 ## Features
@@ -120,14 +125,14 @@ Choose from predefined ranges:
 - Close price (black line)
 - SMA 7 (blue dotted)
 - SMA 14 (orange dashed)
-- SMA 30 (red solid)
+- SMA 20 (red solid)
 
 **Usage**:
-- **Golden Cross**: SMA 7 crosses above SMA 30 (bullish)
-- **Death Cross**: SMA 7 crosses below SMA 30 (bearish)
+- **Golden Cross**: SMA 7 crosses above SMA 20 (bullish)
+- **Death Cross**: SMA 7 crosses below SMA 20 (bearish)
 
 **Metrics**:
-- Current SMA 7, 14, 30 values
+- Current SMA 7, 14, 20 values
 
 #### Tab 3: Bollinger Bands
 
@@ -219,6 +224,31 @@ Choose from predefined ranges:
 - Includes all OHLCV data
 - All technical indicators
 - Timestamps
+
+---
+
+## Warehouse Explorer View
+
+Switch to **Warehouse Explorer** using the sidebar navigation (top-left). This dedicated
+view lives outside the market tabs and is ideal when you need raw SQL visibility:
+
+- Browse any schema/table available in the warehouse (dev/staging/prod)
+- Apply ticker/date filters or add custom SQL predicates
+- Review live SQL statements with bound parameters before execution
+- Visualize record distribution by date or ticker when columns exist
+- Preview the full result set, export CSV downloads, and inspect column metadata
+- Click **🔄 Refresh warehouse data** whenever new records land or you adjust filters; the button clears cached queries and reruns the explorer instantly.
+
+You can disable or hide this view via the new environment variables:
+
+```bash
+ENABLE_MARKET_VIEW=true
+ENABLE_WAREHOUSE_VIEW=true
+DEFAULT_DASHBOARD_VIEW=market
+```
+
+Set them in `dashboard/.env` to control which experiences are available and which one
+loads by default.
 
 ---
 

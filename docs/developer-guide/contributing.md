@@ -104,23 +104,20 @@ vim docs/user-guide/new-feature.md
 docker compose -f docker-compose.test.yml up test
 
 # Run specific test file
-docker compose exec airflow-webserver pytest tests/unit/test_new_operator.py -v
+docker compose -f docker-compose.test.yml run --rm test bash -lc "pytest tests/unit/test_new_operator.py -v"
 
 # Check coverage
-docker compose exec airflow-webserver pytest --cov=dags/market_data --cov-report=term
+docker compose -f docker-compose.test.yml up test-coverage
 ```
 
 ### 4. Run Linting
 
 ```bash
-# Format code
-docker compose exec airflow-webserver black dags/market_data tests/
+# Full lint suite
+docker compose -f docker-compose.test.yml up lint
 
-# Sort imports
-docker compose exec airflow-webserver isort dags/market_data tests/
-
-# Check linting
-docker compose exec airflow-webserver flake8 dags/market_data
+# Auto-format (opcional)
+make format
 ```
 
 ### 5. Commit Changes

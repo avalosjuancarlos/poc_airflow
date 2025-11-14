@@ -185,6 +185,7 @@ Enterprise-ready Apache Airflow 2.11 deployment with:
 - ✅ **Daily Automation** - `@daily` schedule (00:00 UTC)
 - ✅ **Configurable Parameters** - Environment variables and Airflow Variables
 - ✅ **Comprehensive Error Handling** - Multi-level retry logic and logging
+- ✅ **Metadata Flattening** - Company names and 52-week stats stored with each record
 
 ### 🔧 Developer Experience
 
@@ -195,7 +196,9 @@ Enterprise-ready Apache Airflow 2.11 deployment with:
 - ✅ **CI/CD Pipeline** - GitHub Actions automated testing
 - ✅ **Local Testing** - Docker Compose test environment
 - ✅ **Makefile** - 40+ commands for common tasks
-- ✅ **Interactive Dashboard** - Streamlit web app for data visualization
+- ✅ **Interactive Dashboard** - Streamlit market view with seven analytic tabs & metrics
+- ✅ **Warehouse Explorer GUI** - SQL explorer with filters, download, and refresh button
+- ✅ **Configurable Views** - Enable/disable each experience or set the default landing page per environment
 
 ### 📊 Logging & Monitoring
 
@@ -267,6 +270,35 @@ The **`get_market_data`** DAG is ready to use:
 3. Click **▶️ Trigger DAG** 
 4. Optionally, configure parameters (ticker, date)
 5. Monitor execution in the Graph or Gantt view
+
+---
+
+## 🖥️ Dashboard
+
+The dashboard ships with two Streamlit experiences that share the same deployment:
+
+- **Market Data Dashboard** – seven responsive tabs (Price & Volume, Moving Averages, Bollinger Bands, RSI, MACD, Returns & Volatility, Raw Data) plus KPI tiles and CSV export.
+- **Warehouse Explorer** – schema-aware SQL browser with ticker/date filters, manual predicates, Plotly summaries, CSV downloads, and a `🔄 Refresh warehouse data` button that clears caches before re-running the query.
+
+Start it with:
+
+```bash
+make dashboard
+# Access http://localhost:8501
+```
+
+### View configuration
+
+Control which experience is visible (or which one loads by default) per environment:
+
+```bash
+# dashboard/.env
+ENABLE_MARKET_VIEW=true
+ENABLE_WAREHOUSE_VIEW=true
+DEFAULT_DASHBOARD_VIEW=market  # or "warehouse"
+```
+
+Toggle the navigation radio in the sidebar to jump between views at runtime. When new data is loaded into the warehouse, use the refresh button inside the Warehouse Explorer view to rerun the SQL without restarting Streamlit.
 
 ---
 
@@ -426,7 +458,8 @@ poc_airflow/
 ├── docker-compose.yml            # Main services configuration
 ├── docker-compose.test.yml       # Testing environment
 ├── env.template                  # Environment variables template
-├── requirements.txt              # Python dependencies
+├── requirements.txt              # Runtime Python dependencies
+├── requirements-dev.txt          # Dev/test/lint dependencies (extends requirements.txt)
 ├── pytest.ini                    # Pytest configuration
 ├── .flake8                       # Flake8 configuration
 ├── .isort.cfg                    # Import sorting configuration
@@ -507,6 +540,7 @@ docker compose -f docker-compose.test.yml up test-integration-only
 # With coverage report
 docker compose -f docker-compose.test.yml up test-coverage
 ```
+> ℹ️ Estos servicios instalan automáticamente las dependencias declaradas en `requirements-dev.txt` (incluye `requirements.txt`).
 
 ### Run Linting
 
@@ -515,9 +549,9 @@ docker compose -f docker-compose.test.yml up test-coverage
 docker compose -f docker-compose.test.yml up lint
 
 # Individual linters
-flake8 dags/market_data
-black --check dags/market_data tests/
-isort --check-only dags/market_data tests/
+docker compose -f docker-compose.test.yml run --rm lint bash -lc "flake8 dags/market_data tests/"
+docker compose -f docker-compose.test.yml run --rm lint bash -lc "black dags/market_data tests/"
+docker compose -f docker-compose.test.yml run --rm lint bash -lc "isort dags/market_data tests/"
 ```
 
 ### Test Coverage

@@ -405,8 +405,8 @@ python -c "import secrets; print(secrets.token_urlsafe(32))"
 # In env.template
 DEV_WAREHOUSE_PASSWORD=CHANGE_ME_dev_warehouse_password
 
-# In .env (actual value)
-DEV_WAREHOUSE_PASSWORD=ActualSecurePassword123!
+# In .env (actual value pulled from secret store)
+DEV_WAREHOUSE_PASSWORD=${DEV_WAREHOUSE_PASSWORD_FROM_VAULT}
 ```
 
 ### ✅ Rotate Credentials Regularly

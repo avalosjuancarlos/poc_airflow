@@ -204,6 +204,13 @@ class TestCalculateTechnicalIndicators:
 
     def test_full_calculation(self):
         """Test complete indicator calculation"""
+        metadata = {
+            "long_name": "Apple Inc.",
+            "short_name": "Apple",
+            "fifty_two_week_high": 200.0,
+            "fifty_two_week_low": 120.0,
+        }
+
         market_data_list = [
             {
                 "date": "2023-11-01",
@@ -215,6 +222,7 @@ class TestCalculateTechnicalIndicators:
                     "close": 101.0,
                     "volume": 1000000,
                 },
+                "metadata": metadata,
             },
             {
                 "date": "2023-11-02",
@@ -226,6 +234,7 @@ class TestCalculateTechnicalIndicators:
                     "close": 102.0,
                     "volume": 1100000,
                 },
+                "metadata": metadata,
             },
         ]
 
@@ -242,6 +251,7 @@ class TestCalculateTechnicalIndicators:
                         "close": 101.0 + i,
                         "volume": 1000000 + i * 10000,
                     },
+                    "metadata": metadata,
                 }
             )
 
@@ -255,6 +265,7 @@ class TestCalculateTechnicalIndicators:
             "sma_7",
             "sma_14",
             "sma_20",
+            "ema_12",
             "rsi",
             "macd",
             "macd_signal",
@@ -265,6 +276,10 @@ class TestCalculateTechnicalIndicators:
             "daily_return",
             "daily_return_pct",
             "volatility_20d",
+            "long_name",
+            "short_name",
+            "fifty_two_week_high",
+            "fifty_two_week_low",
         ]
 
         for col in expected_cols:
@@ -273,6 +288,13 @@ class TestCalculateTechnicalIndicators:
         # Check data integrity
         assert len(result) == 30
         assert result["ticker"].iloc[0] == "AAPL"
+
+        # EMA 12 should have numeric values (allow NaNs for initial rows)
+        assert result["ema_12"].notna().sum() > 0
+
+        # Metadata columns should be populated
+        assert result["long_name"].iloc[-1] == metadata["long_name"]
+        assert result["short_name"].iloc[-1] == metadata["short_name"]
 
     def test_sorted_by_date(self):
         """Test that result is sorted by date"""
