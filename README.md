@@ -197,7 +197,8 @@ Enterprise-ready Apache Airflow 2.11 deployment with:
 - ✅ **Local Testing** - Docker Compose test environment
 - ✅ **Makefile** - 40+ commands for common tasks
 - ✅ **Interactive Dashboard** - Streamlit market view with seven analytic tabs & metrics
-- ✅ **Warehouse Explorer GUI** - SQL explorer with filters, download, and refresh button
+- ✅ **Modular Dashboard Code** - Streamlit split into `config`, `data`, `charts`, and `views/*` modules for easier reuse and testing
+- ✅ **Warehouse Explorer GUI** - Read-only SQL explorer with filters, download, refresh button, and guard rails against injections or DDL/DML operations
 - ✅ **Configurable Views** - Enable/disable each experience or set the default landing page per environment
 
 ### 📊 Logging & Monitoring
@@ -278,7 +279,7 @@ The **`get_market_data`** DAG is ready to use:
 The dashboard ships with two Streamlit experiences that share the same deployment:
 
 - **Market Data Dashboard** – seven responsive tabs (Price & Volume, Moving Averages, Bollinger Bands, RSI, MACD, Returns & Volatility, Raw Data) plus KPI tiles and CSV export.
-- **Warehouse Explorer** – schema-aware SQL browser with ticker/date filters, manual predicates, Plotly summaries, CSV downloads, and a `🔄 Refresh warehouse data` button that clears caches before re-running the query.
+- **Warehouse Explorer** – schema-aware, read-only SQL browser with ticker/date filters, validated custom predicates, Plotly summaries, CSV downloads, and a `🔄 Refresh warehouse data` button that clears caches before re-running the query.
 
 Start it with:
 
@@ -298,7 +299,7 @@ ENABLE_WAREHOUSE_VIEW=true
 DEFAULT_DASHBOARD_VIEW=market  # or "warehouse"
 ```
 
-Toggle the navigation radio in the sidebar to jump between views at runtime. When new data is loaded into the warehouse, use the refresh button inside the Warehouse Explorer view to rerun the SQL without restarting Streamlit.
+Toggle the navigation radio in the sidebar to jump between views at runtime. When new data is loaded into the warehouse, use the refresh button inside the Warehouse Explorer view to rerun the SQL without restarting Streamlit. All explorer queries are enforced as read-only (`SELECT` only) and custom filters are sanitized to prevent SQL injection or destructive statements.
 
 ---
 
@@ -441,15 +442,28 @@ poc_airflow/
 │
 ├── docs/                         # Documentation
 │   ├── getting-started/          # Getting started guides
-│   ├── user-guide/              # User documentation
-│   ├── developer-guide/         # Developer documentation
-│   ├── archive/                 # Archived documentation
-│   └── README.md                # Documentation index
+│   ├── user-guide/               # User documentation
+│   ├── developer-guide/          # Developer documentation
+│   ├── archive/                  # Archived documentation
+│   └── README.md                 # Documentation index
+│
+├── dashboard/                    # Streamlit dashboard (modular)
+│   ├── app.py                    # Entry point (view selector only)
+│   ├── config.py                 # Environment + UI configuration helpers
+│   ├── data.py                   # Cached DB engine + query helpers
+│   ├── charts.py                 # Plotly chart builders
+│   └── views/                    # Independent Streamlit views
+│       ├── __init__.py
+│       ├── market.py             # Market analytics tabs
+│       └── warehouse.py          # Warehouse Explorer (read-only SQL)
+│   ├── Dockerfile                # Streamlit image
+│   ├── docker-compose.yml        # Dashboard-only compose file
+│   └── requirements.txt          # Dashboard dependencies
 │
 ├── tests/                        # Test suite
-│   ├── unit/                    # Unit tests (119 tests)
-│   ├── integration/             # Integration tests (12 tests)
-│   └── conftest.py              # Pytest fixtures
+│   ├── unit/                     # Unit tests (119 tests)
+│   ├── integration/              # Integration tests (12 tests)
+│   └── conftest.py               # Pytest fixtures
 │
 ├── logs/                         # Airflow logs (auto-generated)
 ├── plugins/                      # Custom Airflow plugins

@@ -22,6 +22,20 @@ The Market Data Dashboard is a **Streamlit-based web application** that provides
 
 ---
 
+### Modular Architecture
+
+The dashboard codebase is split into reusable modules:
+
+- `app.py` — lightweight entry point that sets Streamlit config and routes between experiences.
+- `config.py` — environment-aware settings, view toggles, and sidebar navigation helpers.
+- `data.py` — cached SQLAlchemy engine plus all warehouse query helpers (parameterized + sanitized).
+- `charts.py` — Plotly chart builders for each analytic tab.
+- `views/market.py` & `views/warehouse.py` — isolated Streamlit views so each experience can evolve independently or be reused in other apps.
+
+This structure keeps the UI flexible (new tabs/views are simple Python modules) and makes it easier to test or lint individual layers.
+
+---
+
 ## Quick Start
 
 ### 1. Setup Environment
@@ -238,6 +252,10 @@ view lives outside the market tabs and is ideal when you need raw SQL visibility
 - Visualize record distribution by date or ticker when columns exist
 - Preview the full result set, export CSV downloads, and inspect column metadata
 - Click **🔄 Refresh warehouse data** whenever new records land or you adjust filters; the button clears cached queries and reruns the explorer instantly.
+- Built-in guard rails enforce **read-only access**: only `SELECT` statements are executed, custom predicates are validated against a deny-list of DDL/DML keywords, and bound parameters are used for ticker/date filters to avoid SQL injection.
+
+> **Note**  
+> If you paste a filter that contains destructive keywords (e.g., `DROP`, `INSERT`, `ALTER`, comments, or multiple statements), the explorer blocks it and explains why. This keeps the shared warehouse safe even when exposing raw SQL to power users.
 
 You can disable or hide this view via the new environment variables:
 

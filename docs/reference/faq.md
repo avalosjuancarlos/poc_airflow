@@ -328,6 +328,16 @@ make dashboard
 - Sidebar view selector and 🔄 refresh button for warehouse queries
 - Multiple tickers support & customizable date ranges
 
+### Can I run INSERT/UPDATE/DELETE from the Warehouse Explorer?
+
+No. The explorer is intentionally **read-only**:
+
+- The backend rejects any statement that does not start with `SELECT`.
+- Custom filter text is validated to block semicolons, SQL comments, and destructive keywords (`INSERT`, `UPDATE`, `DELETE`, `DROP`, `ALTER`, etc.).
+- Ticker/date filters always use bound parameters to avoid SQL injection.
+
+If you need to run maintenance SQL, use psql/Redshift Query Editor or an admin tool instead of the dashboard.
+
 See: [Dashboard Guide](../user-guide/dashboard.md)
 
 ### Dashboard shows "Error loading tickers"?
