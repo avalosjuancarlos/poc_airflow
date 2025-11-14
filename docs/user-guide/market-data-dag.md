@@ -87,6 +87,26 @@ graph TD
     style I fill:#A5D6A7
 ```
 
+#### Multi-Ticker TaskGroup
+
+```mermaid
+flowchart LR
+    Start([DAG start]) --> Validate[validate_ticker]
+    Validate --> FanOut{{map(ticker)}}
+    FanOut --> Determine[determine_dates]
+    Determine --> Sensor[check_api_availability]
+    Sensor --> Fetch[fetch_multiple_dates]
+    Fetch --> Transform[transform_and_save]
+    Transform --> Load[load_to_warehouse]
+    Load --> FanIn((Results\nper ticker))
+    FanIn --> End([DAG complete])
+
+    classDef task fill:#E3F2FD,stroke:#1B4F72,color:#1B4F72;
+    class Validate,Determine,Sensor,Fetch,Transform,Load task;
+```
+
+Each mapped chain runs for a single ticker, guaranteeing isolated Parquet caches and warehouse upserts. The DAG fan‑ins only after every ticker completes its fetch → transform → load sequence.
+
 ### Task Details
 
 | Task ID | Type | Description | Retry | Timeout |

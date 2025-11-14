@@ -34,6 +34,18 @@ The dashboard codebase is split into reusable modules:
 
 This structure keeps the UI flexible (new tabs/views are simple Python modules) and makes it easier to test or lint individual layers.
 
+```mermaid
+flowchart LR
+    Sidebar[Sidebar Navigation] --> Selector{View Selector}
+    Config[config.py<br/>env toggles + defaults] --> Selector
+    Selector --> MarketView[views/market.py<br/>analytics tabs]
+    Selector --> WarehouseView[views/warehouse.py<br/>Warehouse Explorer]
+    MarketView --> Charts[charts.py<br/>Plotly figures]
+    WarehouseView --> Charts
+    Charts --> DataLayer[data.py<br/>cached SQLAlchemy engine]
+    DataLayer --> Warehouse[(Postgres/Redshift)]
+```
+
 ---
 
 ## Quick Start

@@ -62,10 +62,12 @@ Complete reference for all environment variables used in the project.
 | Variable | Default | Description | Required |
 |----------|---------|-------------|----------|
 | `YAHOO_FINANCE_API_BASE_URL` | `https://query2.finance.yahoo.com/v8/finance/chart` | Yahoo Finance API base URL | Yes |
-| `MARKET_DATA_DEFAULT_TICKERS` | `["AAPL"]` | Primary list of tickers processed per DAG run (JSON array or comma separated) | Yes |
+| `MARKET_DATA_DEFAULT_TICKERS` | `["AAPL","MSFT"]` | Primary list of tickers processed per DAG run (JSON array or comma separated) | Yes |
 
 > **Tip**  
 > Configure `MARKET_DATA_DEFAULT_TICKERS` with all symbols you want the DAG to process (e.g. `["AAPL","MSFT","NVDA"]`). The list must contain at least one ticker.
+>
+> **Docker Compose note:** Any value stored in `.env` is automatically injected into every Airflow container. Restart the stack after editing the file so the scheduler/webserver display the updated defaults (for example, changes to `MARKET_DATA_DEFAULT_TICKERS`).
 | `MARKET_DATA_API_TIMEOUT` | `30` | API request timeout (seconds) | No |
 
 ### Retry Configuration

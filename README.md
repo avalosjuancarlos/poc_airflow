@@ -302,6 +302,21 @@ DEFAULT_DASHBOARD_VIEW=market  # or "warehouse"
 
 Toggle the navigation radio in the sidebar to jump between views at runtime. When new data is loaded into the warehouse, use the refresh button inside the Warehouse Explorer view to rerun the SQL without restarting Streamlit. All explorer queries are enforced as read-only (`SELECT` only) and custom filters are sanitized to prevent SQL injection or destructive statements.
 
+```mermaid
+flowchart LR
+    subgraph Streamlit
+        Sidebar[Sidebar Navigation] --> Selector{View Selector}
+        Selector --> MarketView[Market Dashboard<br/>7 tabs + KPIs]
+        Selector --> WarehouseView[Warehouse Explorer<br/>Read-only SQL + refresh]
+        Config[config.py<br/>env-aware toggles] --> Selector
+        MarketView --> Charts[charts.py<br/>Plotly builders]
+        WarehouseView --> Charts
+    end
+
+    Charts --> DataLayer[data.py<br/>cached SQLAlchemy engine]
+    DataLayer --> Warehouse[(Warehouse<br/>Postgres/Redshift)]
+```
+
 ---
 
 ## 📚 Documentation
@@ -522,6 +537,8 @@ AIRFLOW__LOGGING__JSON_FORMAT=false
 # SENTRY_DSN=https://your-key@sentry.io/project
 # DD_API_KEY=your-datadog-api-key
 ```
+
+> ℹ️ **Tip:** Docker Compose exports these variables to every Airflow component (scheduler, workers, triggerer, webserver). After editing `.env`, restart the stack (`make down && make up`) so the DAG UI loads the new defaults (e.g., updated `MARKET_DATA_DEFAULT_TICKERS`).
 
 ### Airflow Variables
 

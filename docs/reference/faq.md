@@ -173,6 +173,30 @@ airflow variables set market_data_default_tickers '["AAPL","MSFT","NVDA"]'
 MARKET_DATA_DEFAULT_TICKERS=MSFT
 ```
 
+### Airflow UI still shows `["AAPL"]` in the DAG parameters after I changed `.env` — why?
+
+Two common causes:
+
+1. **Airflow Variable overrides the env var.**  
+   The CLI script `scripts/setup_airflow_variables.sh` sets `market_data.default_tickers`. If that variable exists, it wins over `.env`. Update it via UI/CLI or delete it:
+   ```bash
+   docker compose exec airflow-scheduler \
+     airflow variables set market_data.default_tickers '["AAPL","MSFT","NVDA"]'
+   # or remove if you prefer env-driven defaults
+   docker compose exec airflow-scheduler \
+     airflow variables delete market_data.default_tickers
+   ```
+
+2. **Scheduler/webserver are still running with the previous environment.**  
+   Docker Compose only loads `.env` during startup. After changing `MARKET_DATA_DEFAULT_TICKERS`, restart the stack so the containers receive the new value:
+   ```bash
+   make down
+   make up
+   # or docker compose down && docker compose up -d
+   ```
+
+> ✅ **Sanity check:** `docker compose exec airflow-scheduler printenv MARKET_DATA_DEFAULT_TICKERS` should output the list you expect before you check the Airflow UI.
+
 ### How does backfill work?
 
 **First Run** (no Parquet file):
