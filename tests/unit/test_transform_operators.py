@@ -21,7 +21,7 @@ class TestCheckAndDetermineDates:
     """Test check_and_determine_dates operator"""
 
     def test_no_parquet_returns_backfill(self, mock_context):
-        """Test returns 20 days when parquet doesn't exist"""
+        """Test returns 120 days when parquet doesn't exist"""
         mock_context["task_instance"].xcom_pull.return_value = "AAPL"
         mock_context["execution_date"] = datetime(2023, 11, 20)
 
@@ -32,11 +32,16 @@ class TestCheckAndDetermineDates:
             result = check_and_determine_dates(**mock_context)
 
         assert result["is_backfill"] is True
-        assert len(result["dates"]) == 20
+        assert len(result["dates"]) == 120  # Updated from 20 to 120 days
         assert result["ticker"] == "AAPL"
-        # Should start 19 days before execution_date
-        assert result["dates"][0] == "2023-11-01"
-        assert result["dates"][-1] == "2023-11-20"
+        # 120 days back from 2023-11-20 is 2023-07-23
+        assert result["dates"][-1] == "2023-11-20"  # Most recent date
+        # Verify oldest date is ~120 days back
+        from datetime import datetime
+
+        oldest_date = datetime.strptime(result["dates"][0], "%Y-%m-%d")
+        newest_date = datetime.strptime(result["dates"][-1], "%Y-%m-%d")
+        assert (newest_date - oldest_date).days == 119  # 120 days inclusive
 
     def test_existing_parquet_returns_single_date(self, mock_context):
         """Test returns single date when parquet exists"""

@@ -28,6 +28,7 @@ For DAG users and data engineers working with the pipelines.
 |----------|-------------|--------|
 | **[Market Data DAG](user-guide/market-data-dag.md)** | Complete guide to the Yahoo Finance DAG | ✅ Available |
 | **[Data Warehouse Guide](user-guide/data-warehouse.md)** | Multi-environment warehouse integration | ✅ Available |
+| **[Dashboard Guide](user-guide/dashboard.md)** | Interactive web dashboard with Streamlit | ✅ Available |
 | **[Configuration Options](user-guide/configuration.md)** | All configurable parameters and variables | ✅ Available |
 | **[Airflow Variables Guide](user-guide/airflow-variables.md)** | Working with Airflow Variables | ✅ Available |
 | **[Logging Guide](user-guide/logging.md)** | Understanding and using the logging system | ✅ Available |
@@ -122,13 +123,13 @@ Documentation from previous versions or being phased out.
 | Category | Available | Coming Soon | Total |
 |----------|-----------|-------------|-------|
 | Getting Started | 3 | 0 | 3 |
-| User Guide | 5 | 0 | 5 |
+| User Guide | 6 | 0 | 6 |
 | Developer Guide | 5 | 0 | 5 |
 | Operations | 7 | 0 | 7 |
 | Reference | 3 | 0 | 3 |
-| **Total** | **23** | **0** | **23** |
+| **Total** | **24** | **0** | **24** |
 
-**Current Completion**: 100% (23/23 documents) ✅
+**Current Completion**: 100% (24/24 documents) ✅
 
 **Legend**: ✅ Available | 🔜 Coming Soon
 

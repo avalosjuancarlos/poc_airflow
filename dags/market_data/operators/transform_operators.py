@@ -8,6 +8,7 @@ from datetime import timedelta
 from typing import List
 
 import pandas as pd
+from market_data.config import BACKFILL_DAYS
 from market_data.storage import check_parquet_exists, save_to_parquet
 from market_data.transformers import calculate_technical_indicators
 from market_data.utils import get_logger, log_execution
@@ -45,13 +46,13 @@ def check_and_determine_dates(**context) -> dict:
     parquet_exists = check_parquet_exists(ticker)
 
     if not parquet_exists:
-        # Backfill: get last 20 days
+        # Backfill: get last N days (configurable)
         logger.info(
-            f"No parquet file found for {ticker}. Preparing backfill of 20 days"
+            f"No parquet file found for {ticker}. Preparing backfill of {BACKFILL_DAYS} days"
         )
 
         dates = []
-        for i in range(19, -1, -1):  # 20 days back to today
+        for i in range(BACKFILL_DAYS - 1, -1, -1):  # N days back to today
             date = execution_date - timedelta(days=i)
             dates.append(date.strftime("%Y-%m-%d"))
 

@@ -5,6 +5,7 @@ Configuration module for Market Data DAG
 from .logging_config import LOGGING_CONFIG, get_log_level
 from .settings import (
     API_TIMEOUT,
+    BACKFILL_DAYS,
     DEFAULT_TICKER,
     HEADERS,
     MAX_RETRIES,
@@ -36,6 +37,7 @@ __all__ = [
     "SENSOR_POKE_INTERVAL",
     "SENSOR_TIMEOUT",
     "SENSOR_EXPONENTIAL_BACKOFF",
+    "BACKFILL_DAYS",
     "HEADERS",
     "LOGGING_CONFIG",
     "get_log_level",

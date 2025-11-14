@@ -16,7 +16,7 @@ Get up and running with Airflow Market Data Pipeline in 5 minutes.
 
 ```bash
 # Clone the repository
-git clone <repository-url>
+git clone https://github.com/avalosjuancarlos/poc_airflow.git
 cd poc_airflow
 
 # Copy environment template

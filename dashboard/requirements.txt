@@ -1,0 +1,8 @@
+# Dashboard dependencies
+streamlit==1.29.0
+plotly==5.18.0
+pandas==2.1.4
+sqlalchemy==1.4.54
+psycopg2-binary==2.9.9
+redshift-connector==2.0.918
+
