@@ -267,6 +267,17 @@ def calculate_technical_indicators(
         f"Data validation: {valid_close_count}/{len(df)} records with valid close prices"
     )
 
+    # Filter out records with NaN close prices BEFORE calculating indicators
+    # This prevents NaN propagation in rolling calculations
+    records_before_filter = len(df)
+    df = df[df["close"].notna()].copy().reset_index(drop=True)
+    records_after_filter = len(df)
+    
+    if records_before_filter > records_after_filter:
+        logger.info(
+            f"Filtered out {records_before_filter - records_after_filter} records with NaN close prices (weekends/holidays)"
+        )
+
     # Merge with historical data if provided (incremental mode)
     if historical_df is not None and len(historical_df) > 0:
         logger.info(

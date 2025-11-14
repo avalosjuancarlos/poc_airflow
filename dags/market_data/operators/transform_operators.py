@@ -25,7 +25,7 @@ def check_and_determine_dates(**context) -> dict:
     """
     Check if parquet exists and determine dates to fetch
 
-    If parquet doesn't exist, returns list of 20 days for backfill.
+    If parquet doesn't exist, returns list of BACKFILL_DAYS (default 120) for backfill.
     If exists, returns only execution_date.
 
     Args:
