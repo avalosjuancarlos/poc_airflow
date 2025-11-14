@@ -7,8 +7,10 @@ This module handles configuration with a triple fallback system:
 3. Default values (lowest priority)
 """
 
+import json
 import logging
 import os
+from typing import List
 
 from airflow.models import Variable
 
@@ -23,8 +25,8 @@ def get_config_value(airflow_key, env_key, default_value, value_type=str):
     3. Default value (hardcoded)
 
     Args:
-        airflow_key: Name of Airflow variable (e.g., 'market_data.default_ticker')
-        env_key: Name of environment variable (e.g., 'MARKET_DATA_DEFAULT_TICKER')
+        airflow_key: Name of Airflow variable (e.g., 'market_data.default_tickers')
+        env_key: Name of environment variable (e.g., 'MARKET_DATA_DEFAULT_TICKERS')
         default_value: Default value if not found anywhere
         value_type: Data type to return (str, int, bool, float)
 
@@ -32,7 +34,7 @@ def get_config_value(airflow_key, env_key, default_value, value_type=str):
         Configured value of specified type
 
     Example:
-        >>> ticker = get_config_value('market_data.default_ticker', 'MARKET_DATA_DEFAULT_TICKER', 'AAPL')
+        >>> ticker = get_config_value('market_data.default_tickers', 'MARKET_DATA_DEFAULT_TICKERS', 'AAPL')
         >>> # Searches in: Airflow Variable → ENV → Default
     """
     try:
@@ -69,10 +71,6 @@ def get_config_value(airflow_key, env_key, default_value, value_type=str):
 # Configuration Values
 # ============================================================================
 
-# ============================================================================
-# Lazy Configuration Loading
-# ============================================================================
-
 
 def _get_yahoo_api_url():
     """Get Yahoo Finance API base URL"""
@@ -87,14 +85,60 @@ def _get_api_timeout():
     return int(os.environ.get("MARKET_DATA_API_TIMEOUT", "30"))
 
 
-def _get_default_ticker():
-    """Get default ticker with fallback"""
-    return get_config_value(
-        airflow_key="market_data.default_ticker",
-        env_key="MARKET_DATA_DEFAULT_TICKER",
+def _parse_ticker_list(value: str) -> List[str]:
+    """Normalize comma-separated or JSON list of tickers."""
+    if value is None:
+        return []
+
+    raw = value
+    items = []
+
+    if isinstance(raw, list):
+        items = raw
+    else:
+        stripped = str(raw).strip()
+        if not stripped:
+            return []
+
+        if stripped.startswith("[") and stripped.endswith("]"):
+            try:
+                parsed = json.loads(stripped)
+                if isinstance(parsed, list):
+                    items = parsed
+                else:
+                    items = [stripped]
+            except json.JSONDecodeError:
+                items = stripped.split(",")
+        elif "," in stripped:
+            items = stripped.split(",")
+        else:
+            items = [stripped]
+
+    normalized = []
+    for item in items:
+        if item is None:
+            continue
+        ticker = str(item).strip().upper()
+        if ticker and ticker not in normalized:
+            normalized.append(ticker)
+
+    return normalized
+
+
+def _get_default_tickers() -> List[str]:
+    """Get list of default tickers."""
+    raw_value = get_config_value(
+        airflow_key="market_data.default_tickers",
+        env_key="MARKET_DATA_DEFAULT_TICKERS",
         default_value="AAPL",
         value_type=str,
     )
+
+    parsed = _parse_ticker_list(raw_value)
+    if parsed:
+        return parsed
+
+    return ["AAPL"]
 
 
 def _get_max_retries():
@@ -153,7 +197,7 @@ API_TIMEOUT = _get_api_timeout()
 
 # Lazily loaded values (try to load, fallback to ENV/default)
 try:
-    DEFAULT_TICKER = _get_default_ticker()
+    DEFAULT_TICKERS = _get_default_tickers()
     MAX_RETRIES = _get_max_retries()
     RETRY_DELAY = _get_retry_delay()
     SENSOR_POKE_INTERVAL = _get_sensor_poke_interval()
@@ -162,7 +206,9 @@ try:
 except Exception as e:
     logger.debug(f"Could not load Airflow Variables, using ENV/defaults: {e}")
     # Fallback to environment variables only
-    DEFAULT_TICKER = os.environ.get("MARKET_DATA_DEFAULT_TICKER", "AAPL")
+    DEFAULT_TICKERS = _parse_ticker_list(
+        os.environ.get("MARKET_DATA_DEFAULT_TICKERS", "")
+    ) or ["AAPL"]
     MAX_RETRIES = int(os.environ.get("MARKET_DATA_MAX_RETRIES", "3"))
     RETRY_DELAY = int(os.environ.get("MARKET_DATA_RETRY_DELAY", "5"))
     SENSOR_POKE_INTERVAL = int(os.environ.get("MARKET_DATA_SENSOR_POKE_INTERVAL", "30"))
@@ -193,7 +239,7 @@ def log_configuration():
         logger.info("MARKET DATA DAG CONFIGURATION")
         logger.info("=" * 60)
         logger.info(f"API Base URL: {YAHOO_FINANCE_API_BASE_URL}")
-        logger.info(f"Default Ticker: {DEFAULT_TICKER}")
+        logger.info(f"Default Tickers: {DEFAULT_TICKERS}")
         logger.info(f"API Timeout: {API_TIMEOUT}s")
         logger.info(f"Max Retries: {MAX_RETRIES}")
         logger.info(f"Retry Delay: {RETRY_DELAY}s")

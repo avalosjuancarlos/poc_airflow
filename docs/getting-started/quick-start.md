@@ -164,7 +164,7 @@ You now have:
 nano .env
 
 # Set your default ticker
-MARKET_DATA_DEFAULT_TICKER=TSLA
+MARKET_DATA_DEFAULT_TICKERS=TSLA
 
 # Restart services
 docker compose restart airflow-webserver airflow-scheduler

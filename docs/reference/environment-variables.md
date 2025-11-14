@@ -62,7 +62,12 @@ Complete reference for all environment variables used in the project.
 | Variable | Default | Description | Required |
 |----------|---------|-------------|----------|
 | `YAHOO_FINANCE_API_BASE_URL` | `https://query2.finance.yahoo.com/v8/finance/chart` | Yahoo Finance API base URL | Yes |
-| `MARKET_DATA_DEFAULT_TICKER` | `AAPL` | Default stock ticker | Yes |
+| `MARKET_DATA_DEFAULT_TICKERS` | `["AAPL","MSFT"]` | Primary list of tickers processed per DAG run (JSON array or comma separated) | Yes |
+
+> **Tip**  
+> Configure `MARKET_DATA_DEFAULT_TICKERS` with all symbols you want the DAG to process (e.g. `["AAPL","MSFT","NVDA"]`). The list must contain at least one ticker.
+>
+> **Docker Compose note:** Any value stored in `.env` is automatically injected into every Airflow container. Restart the stack after editing the file so the scheduler/webserver display the updated defaults (for example, changes to `MARKET_DATA_DEFAULT_TICKERS`).
 | `MARKET_DATA_API_TIMEOUT` | `30` | API request timeout (seconds) | No |
 
 ### Retry Configuration
@@ -310,7 +315,7 @@ deploy:
 ENVIRONMENT=development
 AIRFLOW__CORE__LOAD_EXAMPLES=false
 AIRFLOW__LOGGING__LEVEL=DEBUG
-MARKET_DATA_DEFAULT_TICKER=AAPL
+MARKET_DATA_DEFAULT_TICKERS=["AAPL","MSFT"]
 DEV_WAREHOUSE_PASSWORD=local_dev_pass
 ```
 
@@ -322,7 +327,7 @@ ENVIRONMENT=staging
 AIRFLOW__CORE__LOAD_EXAMPLES=false
 AIRFLOW__LOGGING__LEVEL=INFO
 AIRFLOW__LOGGING__JSON_FORMAT=true
-MARKET_DATA_DEFAULT_TICKER=AAPL
+MARKET_DATA_DEFAULT_TICKERS=["AAPL","MSFT","NVDA"]
 STAGING_WAREHOUSE_HOST=staging-cluster.us-east-1.redshift.amazonaws.com
 STAGING_WAREHOUSE_USER=staging_user
 STAGING_WAREHOUSE_PASSWORD=secure_staging_pass
@@ -339,7 +344,7 @@ AIRFLOW__LOGGING__LEVEL=INFO
 AIRFLOW__LOGGING__JSON_FORMAT=true
 AIRFLOW__WEBSERVER__SECRET_KEY=<SECURE_RANDOM_KEY>
 _AIRFLOW_WWW_USER_PASSWORD=<SECURE_PASSWORD>
-MARKET_DATA_DEFAULT_TICKER=AAPL
+MARKET_DATA_DEFAULT_TICKERS=["AAPL","MSFT","NVDA","TSLA"]
 PROD_WAREHOUSE_HOST=prod-cluster.us-east-1.redshift.amazonaws.com
 PROD_WAREHOUSE_USER=prod_user
 PROD_WAREHOUSE_PASSWORD=secure_prod_pass
@@ -370,8 +375,8 @@ Variables are evaluated in this order:
 **Example**:
 ```python
 # Triple-fallback system
-ticker = Variable.get("market_data_default_ticker",  # Try Airflow Variable first
-    default_var=os.environ.get("MARKET_DATA_DEFAULT_TICKER",  # Then env var
+ticker = Variable.get("market_data_default_tickers",  # Try Airflow Variable first
+    default_var=os.environ.get("MARKET_DATA_DEFAULT_TICKERS",  # Then env var
         "AAPL"))  # Finally, default value
 ```
 
@@ -425,7 +430,7 @@ DEV_WAREHOUSE_PASSWORD=${DEV_WAREHOUSE_PASSWORD_FROM_VAULT}
 
 REQUIRED_VARS=(
     "AIRFLOW_UID"
-    "MARKET_DATA_DEFAULT_TICKER"
+    "MARKET_DATA_DEFAULT_TICKERS"
     "YAHOO_FINANCE_API_BASE_URL"
     "DEV_WAREHOUSE_PASSWORD"
 )

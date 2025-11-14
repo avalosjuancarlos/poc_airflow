@@ -22,7 +22,13 @@ class TestCheckAndDetermineDates:
 
     def test_no_parquet_returns_backfill(self, mock_context):
         """Test returns 120 days when parquet doesn't exist"""
-        mock_context["task_instance"].xcom_pull.return_value = "AAPL"
+
+        def side_effect(*args, **kwargs):
+            if kwargs.get("key") == "validated_tickers":
+                return ["AAPL"]
+            return None
+
+        mock_context["task_instance"].xcom_pull.side_effect = side_effect
         mock_context["execution_date"] = datetime(2023, 11, 20)
 
         with patch(
@@ -31,19 +37,27 @@ class TestCheckAndDetermineDates:
         ):
             result = check_and_determine_dates(**mock_context)
 
-        assert result["is_backfill"] is True
-        assert len(result["dates"]) == 120  # Updated from 20 to 120 days
-        assert result["ticker"] == "AAPL"
+        assert len(result) == 1
+        payload = result[0]
+        assert payload["is_backfill"] is True
+        assert len(payload["dates"]) == 120  # Updated from 20 to 120 days
+        assert payload["ticker"] == "AAPL"
         # 120 days back from 2023-11-20 is 2023-07-23
-        assert result["dates"][-1] == "2023-11-20"  # Most recent date
+        assert payload["dates"][-1] == "2023-11-20"  # Most recent date
         # Verify oldest date is ~120 days back
-        oldest_date = datetime.strptime(result["dates"][0], "%Y-%m-%d")
-        newest_date = datetime.strptime(result["dates"][-1], "%Y-%m-%d")
+        oldest_date = datetime.strptime(payload["dates"][0], "%Y-%m-%d")
+        newest_date = datetime.strptime(payload["dates"][-1], "%Y-%m-%d")
         assert (newest_date - oldest_date).days == 119  # 120 days inclusive
 
     def test_existing_parquet_returns_single_date(self, mock_context):
         """Test returns single date when parquet exists"""
-        mock_context["task_instance"].xcom_pull.return_value = "AAPL"
+
+        def side_effect(*args, **kwargs):
+            if kwargs.get("key") == "validated_tickers":
+                return ["AAPL"]
+            return None
+
+        mock_context["task_instance"].xcom_pull.side_effect = side_effect
         mock_context["execution_date"] = datetime(2023, 11, 20)
 
         with patch(
@@ -52,14 +66,21 @@ class TestCheckAndDetermineDates:
         ):
             result = check_and_determine_dates(**mock_context)
 
-        assert result["is_backfill"] is False
-        assert len(result["dates"]) == 1
-        assert result["dates"][0] == "2023-11-20"
-        assert result["ticker"] == "AAPL"
+        payload = result[0]
+        assert payload["is_backfill"] is False
+        assert len(payload["dates"]) == 1
+        assert payload["dates"][0] == "2023-11-20"
+        assert payload["ticker"] == "AAPL"
 
     def test_pushes_to_xcom(self, mock_context):
         """Test that result is pushed to XCom"""
-        mock_context["task_instance"].xcom_pull.return_value = "AAPL"
+
+        def side_effect(*args, **kwargs):
+            if kwargs.get("key") == "validated_tickers":
+                return ["AAPL"]
+            return None
+
+        mock_context["task_instance"].xcom_pull.side_effect = side_effect
         mock_context["execution_date"] = datetime(2023, 11, 20)
 
         with patch(
@@ -74,6 +95,33 @@ class TestCheckAndDetermineDates:
         assert call_args[1]["key"] == "dates_to_process"
         assert call_args[1]["value"] == result
 
+    def test_multiple_tickers_return_payloads(self, mock_context):
+        """Test multiple tickers produce multiple payloads"""
+
+        def side_effect(*args, **kwargs):
+            if kwargs.get("key") == "validated_tickers":
+                return ["AAPL", "MSFT"]
+            return None
+
+        mock_context["task_instance"].xcom_pull.side_effect = side_effect
+        mock_context["execution_date"] = datetime(2023, 11, 20)
+
+        with patch(
+            "dags.market_data.operators.transform_operators.check_parquet_exists",
+            return_value=False,
+        ):
+            result = check_and_determine_dates(**mock_context)
+
+        tickers = [payload["ticker"] for payload in result]
+        assert tickers == ["AAPL", "MSFT"]
+
+    def test_raises_when_no_validated_tickers(self, mock_context):
+        """Test error when no validated tickers present"""
+        mock_context["task_instance"].xcom_pull.return_value = []
+
+        with pytest.raises(ValueError, match="No validated tickers"):
+            check_and_determine_dates(**mock_context)
+
 
 class TestFetchMultipleDates:
     """Test fetch_multiple_dates operator"""
@@ -86,7 +134,12 @@ class TestFetchMultipleDates:
             "is_backfill": True,
         }
 
-        mock_context["task_instance"].xcom_pull.return_value = dates_info
+        def side_effect(*args, **kwargs):
+            if kwargs.get("key") == "dates_to_process":
+                return [dates_info]
+            return None
+
+        mock_context["task_instance"].xcom_pull.side_effect = side_effect
 
         mock_client = MagicMock()
         mock_client.fetch_market_data.return_value = {
@@ -99,7 +152,9 @@ class TestFetchMultipleDates:
         with patch("market_data.utils.YahooFinanceClient", return_value=mock_client):
             result = fetch_multiple_dates(**mock_context)
 
-        assert len(result) == 3
+        assert len(result) == 1
+        assert result[0]["ticker"] == "AAPL"
+        assert len(result[0]["market_data"]) == 3
         assert mock_client.fetch_market_data.call_count == 3
 
     def test_fetch_continues_on_error(self, mock_context):
@@ -110,7 +165,12 @@ class TestFetchMultipleDates:
             "is_backfill": False,
         }
 
-        mock_context["task_instance"].xcom_pull.return_value = dates_info
+        def side_effect(*args, **kwargs):
+            if kwargs.get("key") == "dates_to_process":
+                return [dates_info]
+            return None
+
+        mock_context["task_instance"].xcom_pull.side_effect = side_effect
 
         mock_client = MagicMock()
         # First call fails, others succeed
@@ -124,7 +184,7 @@ class TestFetchMultipleDates:
             result = fetch_multiple_dates(**mock_context)
 
         # Should have 2 successful results (1 failed)
-        assert len(result) == 2
+        assert len(result[0]["market_data"]) == 2
 
     def test_fetch_all_fail_raises_error(self, mock_context):
         """Test raises error if all dates fail"""
@@ -134,7 +194,12 @@ class TestFetchMultipleDates:
             "is_backfill": False,
         }
 
-        mock_context["task_instance"].xcom_pull.return_value = dates_info
+        def side_effect(*args, **kwargs):
+            if kwargs.get("key") == "dates_to_process":
+                return [dates_info]
+            return None
+
+        mock_context["task_instance"].xcom_pull.side_effect = side_effect
 
         mock_client = MagicMock()
         mock_client.fetch_market_data.side_effect = Exception("API Error")
@@ -160,12 +225,20 @@ class TestTransformAndSave:
                 }
             )
 
-        dates_info = {"ticker": "AAPL", "is_backfill": True}
-
-        mock_context["task_instance"].xcom_pull.side_effect = [
-            market_data_list,
-            dates_info,
+        batch_payload = [
+            {
+                "ticker": "AAPL",
+                "market_data": market_data_list,
+                "is_backfill": True,
+            }
         ]
+
+        def side_effect(*args, **kwargs):
+            if kwargs.get("key") == "market_data_list":
+                return batch_payload
+            return None
+
+        mock_context["task_instance"].xcom_pull.side_effect = side_effect
 
         with tempfile.TemporaryDirectory() as tmpdir:
             with patch(
@@ -175,9 +248,9 @@ class TestTransformAndSave:
 
                 result = transform_and_save(**mock_context)
 
-                assert result["ticker"] == "AAPL"
-                assert result["rows_processed"] == 30
-                assert "latest_indicators" in result
+                assert result[0]["ticker"] == "AAPL"
+                assert result[0]["rows_processed"] == 30
+                assert "latest_indicators" in result[0]
                 mock_save.assert_called_once()
 
     def test_transform_calculates_indicators(self, mock_context):
@@ -192,18 +265,27 @@ class TestTransformAndSave:
                 }
             )
 
-        dates_info = {"ticker": "AAPL", "is_backfill": True}
-        mock_context["task_instance"].xcom_pull.side_effect = [
-            market_data_list,
-            dates_info,
+        batch_payload = [
+            {
+                "ticker": "AAPL",
+                "market_data": market_data_list,
+                "is_backfill": True,
+            }
         ]
+
+        def side_effect(*args, **kwargs):
+            if kwargs.get("key") == "market_data_list":
+                return batch_payload
+            return None
+
+        mock_context["task_instance"].xcom_pull.side_effect = side_effect
 
         with tempfile.TemporaryDirectory() as tmpdir:
             with patch.dict(os.environ, {"MARKET_DATA_STORAGE_DIR": tmpdir}):
                 result = transform_and_save(**mock_context)
 
                 # Check that file was created
-                file_path = result["file_path"]
+                file_path = result[0]["file_path"]
                 assert os.path.exists(file_path)
 
                 # Load and verify indicators
@@ -220,17 +302,26 @@ class TestTransformAndSave:
             {"date": "2023-11-02", "ticker": "AAPL", "quote": {"close": 101.0}},
         ]
 
-        dates_info = {"ticker": "AAPL", "is_backfill": False}
-        mock_context["task_instance"].xcom_pull.side_effect = [
-            market_data_list,
-            dates_info,
+        batch_payload = [
+            {
+                "ticker": "AAPL",
+                "market_data": market_data_list,
+                "is_backfill": False,
+            }
         ]
+
+        def side_effect(*args, **kwargs):
+            if kwargs.get("key") == "market_data_list":
+                return batch_payload
+            return None
+
+        mock_context["task_instance"].xcom_pull.side_effect = side_effect
 
         with tempfile.TemporaryDirectory() as tmpdir:
             with patch.dict(os.environ, {"MARKET_DATA_STORAGE_DIR": tmpdir}):
                 transform_and_save(**mock_context)
 
-                # Check xcom_push was called with summary
+                # Check xcom_push was called with summary list
                 push_calls = [
                     call
                     for call in mock_context["task_instance"].xcom_push.call_args_list

@@ -71,7 +71,7 @@ class TestDAGExecution:
 
         # Create mock context
         mock_context = {
-            "dag_run": Mock(conf={"ticker": "AAPL"}),
+            "dag_run": Mock(conf={"tickers": ["AAPL"], "ticker": "AAPL"}),
             "task_instance": Mock(),
         }
 
@@ -79,7 +79,7 @@ class TestDAGExecution:
         result = task.python_callable(**mock_context)
 
         # Verify result
-        assert result == "AAPL"
+        assert result == ["AAPL"]
 
     def test_validate_ticker_lowercase(self, dagbag):
         """Test validate_ticker converts to uppercase"""
@@ -87,13 +87,13 @@ class TestDAGExecution:
         task = dag.get_task("validate_ticker")
 
         mock_context = {
-            "dag_run": Mock(conf={"ticker": "aapl"}),
+            "dag_run": Mock(conf={"tickers": ["aapl"], "ticker": "aapl"}),
             "task_instance": Mock(),
         }
 
         result = task.python_callable(**mock_context)
 
-        assert result == "AAPL"
+        assert result == ["AAPL"]
 
     @patch("market_data.utils.api_client.requests.get")
     def test_check_api_availability_task(self, mock_get, dagbag, mock_api_response):
@@ -107,8 +107,17 @@ class TestDAGExecution:
         mock_response.json.return_value = mock_api_response
         mock_get.return_value = mock_response
 
+        mock_task_instance = Mock()
+
+        def side_effect(*args, **kwargs):
+            if kwargs.get("key") == "validated_tickers":
+                return ["AAPL"]
+            return None
+
+        mock_task_instance.xcom_pull.side_effect = side_effect
+
         # Execute sensor
-        result = task.python_callable(ticker="AAPL")
+        result = task.python_callable(task_instance=mock_task_instance)
 
         assert result is True
 

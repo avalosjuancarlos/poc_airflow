@@ -50,18 +50,15 @@ Las variables de entorno se configuran en el archivo `.env` (basado en `env.temp
 
 ## 📊 Configuración del Market Data DAG
 
-### Ticker por Defecto
+### Lista de Tickers por Defecto
 
 | Variable | Valor por Defecto | Descripción |
 |----------|-------------------|-------------|
-| `MARKET_DATA_DEFAULT_TICKER` | `AAPL` | Ticker por defecto si no se especifica |
+| `MARKET_DATA_DEFAULT_TICKERS` | `["AAPL"]` | Lista principal (JSON o CSV) de tickers procesados en cada ejecución (requiere al menos un elemento) |
 
 **Ejemplos de valores**:
-- `AAPL` - Apple Inc.
-- `GOOGL` - Alphabet Inc.
-- `MSFT` - Microsoft
-- `TSLA` - Tesla
-- `AMZN` - Amazon
+- `MARKET_DATA_DEFAULT_TICKERS=["AAPL","MSFT","NVDA"]`
+- `MARKET_DATA_DEFAULT_TICKERS=AAPL,MSFT,NVDA  # CSV también soportado`
 
 ### Configuración de API
 
@@ -119,8 +116,8 @@ code .env
 **Ejemplo de configuración personalizada**:
 
 ```bash
-# Cambiar ticker por defecto a Google
-MARKET_DATA_DEFAULT_TICKER=GOOGL
+# Procesar múltiples tickers por defecto
+MARKET_DATA_DEFAULT_TICKERS=["AAPL","MSFT","TSLA"]
 
 # Aumentar timeout para conexiones lentas
 MARKET_DATA_API_TIMEOUT=60
@@ -135,7 +132,7 @@ MARKET_DATA_SENSOR_POKE_INTERVAL=15
 **Opción B: Variables de entorno del sistema**
 
 ```bash
-export MARKET_DATA_DEFAULT_TICKER=GOOGL
+export MARKET_DATA_DEFAULT_TICKERS='["GOOGL","META"]'
 export MARKET_DATA_API_TIMEOUT=60
 ```
 
@@ -170,17 +167,19 @@ Además de las variables de entorno, Airflow permite crear variables desde la UI
 1. Ve a **Admin → Variables** en http://localhost:8080
 2. Haz clic en "+" para agregar una nueva variable
 3. Configura:
-   - **Key**: `market_data_default_ticker`
-   - **Val**: `GOOGL`
+   - **Key**: `market_data_default_tickers`
+   - **Val**: `["GOOGL","MSFT"]`
 
 ### Crear Variables desde CLI
 
 ```bash
 # Crear variable
-docker compose exec airflow-scheduler airflow variables set market_data_default_ticker "GOOGL"
+docker compose exec airflow-scheduler \
+  airflow variables set market_data_default_tickers '["GOOGL","MSFT"]'
 
 # Ver variable
-docker compose exec airflow-scheduler airflow variables get market_data_default_ticker
+docker compose exec airflow-scheduler \
+  airflow variables get market_data_default_tickers
 
 # Listar todas las variables
 docker compose exec airflow-scheduler airflow variables list
@@ -191,8 +190,11 @@ docker compose exec airflow-scheduler airflow variables list
 ```python
 from airflow.models import Variable
 
-# Obtener variable con valor por defecto
-ticker = Variable.get("market_data_default_ticker", default_var="AAPL")
+# Obtener lista de tickers con valor por defecto
+tickers = Variable.get(
+    "market_data_default_tickers",
+    default_var='["AAPL"]'
+)
 ```
 
 ---
@@ -210,7 +212,7 @@ ticker = Variable.get("market_data_default_ticker", default_var="AAPL")
 
 #### Desarrollo (`.env`)
 ```bash
-MARKET_DATA_DEFAULT_TICKER=AAPL
+MARKET_DATA_DEFAULT_TICKERS=["AAPL","MSFT"]
 MARKET_DATA_API_TIMEOUT=30
 AIRFLOW__CORE__LOAD_EXAMPLES=false
 _AIRFLOW_WWW_USER_PASSWORD=airflow
@@ -218,7 +220,7 @@ _AIRFLOW_WWW_USER_PASSWORD=airflow
 
 #### Producción (`.env`)
 ```bash
-MARKET_DATA_DEFAULT_TICKER=AAPL
+MARKET_DATA_DEFAULT_TICKERS=["AAPL","MSFT","NVDA","TSLA"]
 MARKET_DATA_API_TIMEOUT=60
 MARKET_DATA_MAX_RETRIES=5
 AIRFLOW__CORE__LOAD_EXAMPLES=false
@@ -250,7 +252,7 @@ version: '3.8'
 x-airflow-common:
   &airflow-common-override
   environment:
-    MARKET_DATA_DEFAULT_TICKER: GOOGL
+    MARKET_DATA_DEFAULT_TICKERS: GOOGL
     MARKET_DATA_API_TIMEOUT: 60
 ```
 

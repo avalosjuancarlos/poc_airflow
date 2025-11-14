@@ -25,7 +25,7 @@ Configuration management with triple-fallback system (Airflow Variable → Env V
 #### Constants
 
 ```python
-DEFAULT_TICKER: str = "AAPL"
+DEFAULT_TICKERS[0]: str = "AAPL"
 # Default stock ticker to fetch
 
 API_BASE_URL: str = "https://query2.finance.yahoo.com/v8/finance/chart"
@@ -1284,8 +1284,8 @@ import os
 
 # Priority: Airflow Variable > Env Var > Default
 ticker = Variable.get(
-    "market_data_default_ticker",
-    default_var=os.environ.get("MARKET_DATA_DEFAULT_TICKER", "AAPL")
+    "market_data_default_tickers",
+    default_var=os.environ.get("MARKET_DATA_DEFAULT_TICKERS[0]S", "AAPL")
 )
 
 timeout = int(Variable.get(

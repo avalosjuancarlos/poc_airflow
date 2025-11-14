@@ -182,7 +182,7 @@ pyarrow==14.0.1 ✅  # Para formato Parquet
 
 ### env.template
 ```bash
-MARKET_DATA_DEFAULT_TICKER=AAPL
+MARKET_DATA_DEFAULT_TICKERS=AAPL
 MARKET_DATA_STORAGE_DIR=/opt/airflow/data  # 🆕 NUEVO
 ```
 

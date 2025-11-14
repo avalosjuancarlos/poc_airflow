@@ -4,9 +4,11 @@ Operators for Market Data DAG
 Contains all the callable functions used by PythonOperators
 """
 
+import json
+
 from market_data.config import (
     API_TIMEOUT,
-    DEFAULT_TICKER,
+    DEFAULT_TICKERS,
     HEADERS,
     MAX_RETRIES,
     RETRY_DELAY,
@@ -22,35 +24,114 @@ from market_data.utils import (
 logger = get_logger(__name__)
 
 
+def _try_parse_json_list(string_value: str):
+    """Return parsed list if string_value is JSON list, else None."""
+    try:
+        parsed = json.loads(string_value)
+    except json.JSONDecodeError:
+        return None
+    return parsed if isinstance(parsed, list) else None
+
+
+def _coerce_sequence(raw_value):
+    """Coerce raw input into a sequence for further normalization."""
+    if raw_value is None:
+        return []
+
+    if isinstance(raw_value, (list, tuple, set)):
+        return list(raw_value)
+
+    string_value = str(raw_value).strip()
+    if not string_value:
+        return []
+
+    if string_value.startswith("[") and string_value.endswith("]"):
+        parsed = _try_parse_json_list(string_value)
+        if parsed is not None:
+            return parsed
+
+    if "," in string_value:
+        return string_value.split(",")
+
+    return [string_value]
+
+
+def _normalize_candidate(candidate):
+    """Split and trim a single candidate string."""
+    if candidate is None:
+        return []
+
+    text = str(candidate).strip()
+    if not text:
+        return []
+
+    parts = [part.strip() for part in text.split(",") if part.strip()]
+    return parts or [text]
+
+
+def _parse_ticker_inputs(raw_value):
+    """Normalize ticker input into list of strings."""
+    normalized = []
+    for candidate in _coerce_sequence(raw_value):
+        normalized.extend(_normalize_candidate(candidate))
+    return normalized
+
+
+def _resolve_requested_tickers(context):
+    """Resolve configured tickers from dag_run, params, or defaults."""
+    dag_run = context.get("dag_run")
+    conf = dag_run.conf if dag_run else {}
+    params = context.get("params", {}) or {}
+
+    candidates = (
+        _parse_ticker_inputs(conf.get("tickers"))
+        or _parse_ticker_inputs(conf.get("ticker"))
+        or _parse_ticker_inputs(params.get("tickers"))
+        or _parse_ticker_inputs(params.get("ticker"))
+        or list(DEFAULT_TICKERS)
+    )
+
+    normalized = []
+    for ticker in candidates:
+        upper = ticker.strip().upper()
+        if upper and upper not in normalized:
+            normalized.append(upper)
+
+    logger.info(
+        "Resolved ticker request",
+        extra={"requested": candidates, "resolved": normalized},
+    )
+    return normalized
+
+
 @log_execution()
 def validate_ticker(**context):
     """
-    Validate ticker configuration
+    Validate ticker configuration (supports multiple tickers)
 
     Args:
         context: Airflow context
 
     Returns:
-        Validated ticker symbol
+        List of validated ticker symbols
 
     Raises:
-        ValueError: If ticker is invalid
+        ValueError: If any ticker is invalid
     """
-    dag_run = context["dag_run"]
-    ticker = dag_run.conf.get("ticker", DEFAULT_TICKER)
+    resolved_tickers = _resolve_requested_tickers(context)
 
-    logger.info(f"Validating ticker: {ticker}")
-    logger.info(f"Default ticker configured: {DEFAULT_TICKER}")
+    if not resolved_tickers:
+        raise ValueError(
+            "No tickers provided. Configure `tickers` in dag_run.conf/params or set MARKET_DATA_DEFAULT_TICKERS."
+        )
 
-    # Validate and normalize ticker
-    validated_ticker = validate_ticker_format(ticker)
+    logger.info(f"Validating tickers: {resolved_tickers}")
+    validated = [validate_ticker_format(ticker) for ticker in resolved_tickers]
 
-    logger.info(f"Ticker validated: {validated_ticker}")
+    logger.info(f"Tickers validated: {validated}")
 
-    # Save to XCom for downstream tasks
-    context["task_instance"].xcom_push(key="validated_ticker", value=validated_ticker)
-
-    return validated_ticker
+    context["task_instance"].xcom_push(key="validated_tickers", value=validated)
+    return validated
 
 
 @log_execution()

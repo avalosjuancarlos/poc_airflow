@@ -186,6 +186,7 @@ Enterprise-ready Apache Airflow 2.11 deployment with:
 - ✅ **Configurable Parameters** - Environment variables and Airflow Variables
 - ✅ **Comprehensive Error Handling** - Multi-level retry logic and logging
 - ✅ **Metadata Flattening** - Company names and 52-week stats stored with each record
+- ✅ **Multi-Ticker DAG Runs** - Supply `tickers=["AAPL","MSFT",...]` to process several symbols per execution with isolated Parquet caches and warehouse upserts
 
 ### 🔧 Developer Experience
 
@@ -300,6 +301,21 @@ DEFAULT_DASHBOARD_VIEW=market  # or "warehouse"
 ```
 
 Toggle the navigation radio in the sidebar to jump between views at runtime. When new data is loaded into the warehouse, use the refresh button inside the Warehouse Explorer view to rerun the SQL without restarting Streamlit. All explorer queries are enforced as read-only (`SELECT` only) and custom filters are sanitized to prevent SQL injection or destructive statements.
+
+```mermaid
+flowchart LR
+    subgraph Streamlit
+        Sidebar[Sidebar Navigation] --> Selector{View Selector}
+        Selector --> MarketView[Market Dashboard<br/>7 tabs + KPIs]
+        Selector --> WarehouseView[Warehouse Explorer<br/>Read-only SQL + refresh]
+        Config[config.py<br/>env-aware toggles] --> Selector
+        MarketView --> Charts[charts.py<br/>Plotly builders]
+        WarehouseView --> Charts
+    end
+
+    Charts --> DataLayer[data.py<br/>cached SQLAlchemy engine]
+    DataLayer --> Warehouse[(Warehouse<br/>Postgres/Redshift)]
+```
 
 ---
 
@@ -500,7 +516,8 @@ _AIRFLOW_WWW_USER_USERNAME=airflow
 _AIRFLOW_WWW_USER_PASSWORD=airflow
 
 # Market Data Configuration
-MARKET_DATA_DEFAULT_TICKER=AAPL
+# JSON or CSV list of default tickers for bulk runs
+MARKET_DATA_DEFAULT_TICKERS=["AAPL","MSFT"]
 MARKET_DATA_BACKFILL_DAYS=120  # Days to backfill on first run
 YAHOO_FINANCE_API_BASE_URL=https://query2.finance.yahoo.com/v8/finance/chart
 MARKET_DATA_API_TIMEOUT=30
@@ -521,13 +538,15 @@ AIRFLOW__LOGGING__JSON_FORMAT=false
 # DD_API_KEY=your-datadog-api-key
 ```
 
+> ℹ️ **Tip:** Docker Compose exports these variables to every Airflow component (scheduler, workers, triggerer, webserver). After editing `.env`, restart the stack (`make down && make up`) so the DAG UI loads the new defaults (e.g., updated `MARKET_DATA_DEFAULT_TICKERS`).
+
 ### Airflow Variables
 
 Set dynamic configuration via Airflow UI or CLI:
 
 ```bash
 # Via CLI
-docker compose exec airflow-scheduler airflow variables set market_data_default_ticker TSLA
+docker compose exec airflow-scheduler airflow variables set market_data_default_tickers TSLA
 
 # Via script
 ./scripts/setup_airflow_variables.sh

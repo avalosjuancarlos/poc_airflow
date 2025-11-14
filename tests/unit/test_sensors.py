@@ -25,8 +25,12 @@ class TestCheckApiAvailability:
         mock_client.check_availability.return_value = True
         mock_client_class.return_value = mock_client
 
+        mock_context["task_instance"].xcom_pull.side_effect = lambda *args, **kwargs: (
+            ["AAPL"] if kwargs.get("key") == "validated_tickers" else None
+        )
+
         # Execute
-        result = check_api_availability(ticker="AAPL", **mock_context)
+        result = check_api_availability(**mock_context)
 
         # Assertions
         assert result is True
@@ -40,8 +44,12 @@ class TestCheckApiAvailability:
         mock_client.check_availability.return_value = False
         mock_client_class.return_value = mock_client
 
+        mock_context["task_instance"].xcom_pull.side_effect = lambda *args, **kwargs: (
+            ["AAPL"] if kwargs.get("key") == "validated_tickers" else None
+        )
+
         # Execute
-        result = check_api_availability(ticker="AAPL", **mock_context)
+        result = check_api_availability(**mock_context)
 
         # Assertions
         assert result is False
@@ -55,9 +63,13 @@ class TestCheckApiAvailability:
 
         tickers = ["AAPL", "GOOGL", "MSFT", "TSLA"]
 
-        for ticker in tickers:
-            result = check_api_availability(ticker=ticker, **mock_context)
-            assert result is True
+        mock_context["task_instance"].xcom_pull.side_effect = lambda *args, **kwargs: (
+            tickers if kwargs.get("key") == "validated_tickers" else None
+        )
+
+        result = check_api_availability(**mock_context)
+        assert result is True
+        assert mock_client.check_availability.call_count == len(tickers)
 
     @patch("market_data.sensors.api_sensor.YahooFinanceClient")
     def test_sensor_uses_correct_config(self, mock_client_class, mock_context):
@@ -66,8 +78,12 @@ class TestCheckApiAvailability:
         mock_client.check_availability.return_value = True
         mock_client_class.return_value = mock_client
 
+        mock_context["task_instance"].xcom_pull.side_effect = lambda *args, **kwargs: (
+            ["AAPL"] if kwargs.get("key") == "validated_tickers" else None
+        )
+
         # Execute
-        check_api_availability(ticker="AAPL", **mock_context)
+        check_api_availability(**mock_context)
 
         # Verify client was initialized with configuration
         mock_client_class.assert_called_once()
@@ -76,3 +92,11 @@ class TestCheckApiAvailability:
         assert "base_url" in call_kwargs
         assert "headers" in call_kwargs
         assert "timeout" in call_kwargs
+
+    @patch("market_data.sensors.api_sensor.YahooFinanceClient")
+    def test_sensor_raises_when_no_tickers(self, mock_client_class, mock_context):
+        """Test sensor raises if validate_ticker did not provide tickers"""
+        mock_context["task_instance"].xcom_pull.return_value = []
+
+        with pytest.raises(ValueError, match="No tickers available"):
+            check_api_availability(**mock_context)

@@ -449,8 +449,8 @@ tar -czf data_backup.tar.gz ./data/
 
 ```python
 # Priority: Airflow Variable > Env Var > Default
-ticker = Variable.get("market_data_default_ticker", 
-                      default_var=os.environ.get("MARKET_DATA_DEFAULT_TICKER", 
+ticker = Variable.get("market_data_default_tickers", 
+                      default_var=os.environ.get("MARKET_DATA_DEFAULT_TICKERS", 
                                                   "AAPL"))
 ```
 

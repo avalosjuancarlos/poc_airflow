@@ -306,7 +306,7 @@ docker compose up -d
 
 ### Ejecución Diaria Automática
 - DAG corre daily a las 00:00 UTC
-- Procesa ticker configurado en `MARKET_DATA_DEFAULT_TICKER`
+- Procesa ticker configurado en `MARKET_DATA_DEFAULT_TICKERS`
 - Primera vez: backfill de 20 días
 - Subsecuentes: solo día actual
 

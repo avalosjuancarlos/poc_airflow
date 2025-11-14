@@ -222,13 +222,14 @@ docker-compose exec postgres psql -U airflow -d airflow -c \
 docker-compose exec airflow-scheduler airflow variables list
 
 # Get a variable
-docker-compose exec airflow-scheduler airflow variables get market_data_default_ticker
+docker-compose exec airflow-scheduler airflow variables get market_data_default_tickers
 
 # Set a variable
-docker-compose exec airflow-scheduler airflow variables set market_data_default_ticker TSLA
+docker-compose exec airflow-scheduler \
+  airflow variables set market_data_default_tickers '["TSLA","MSFT"]'
 
 # Delete a variable
-docker-compose exec airflow-scheduler airflow variables delete market_data_default_ticker
+docker-compose exec airflow-scheduler airflow variables delete market_data_default_tickers
 
 # Import variables from JSON
 docker-compose exec airflow-scheduler airflow variables import /path/to/variables.json
