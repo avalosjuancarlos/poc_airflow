@@ -37,8 +37,6 @@ class TestCheckAndDetermineDates:
         # 120 days back from 2023-11-20 is 2023-07-23
         assert result["dates"][-1] == "2023-11-20"  # Most recent date
         # Verify oldest date is ~120 days back
-        from datetime import datetime
-
         oldest_date = datetime.strptime(result["dates"][0], "%Y-%m-%d")
         newest_date = datetime.strptime(result["dates"][-1], "%Y-%m-%d")
         assert (newest_date - oldest_date).days == 119  # 120 days inclusive

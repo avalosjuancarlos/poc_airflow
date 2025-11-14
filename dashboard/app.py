@@ -171,7 +171,8 @@ def load_summary_stats(ticker):
         MIN(close) as min_close,
         MAX(close) as max_close,
         AVG(volume) as avg_volume,
-        AVG(volatility_20d) as avg_volatility
+        AVG(volatility_20d) FILTER (WHERE volatility_20d IS NOT NULL AND volatility_20d != 'NaN') as avg_volatility,
+        COUNT(*) FILTER (WHERE volatility_20d IS NOT NULL AND volatility_20d != 'NaN') as volatility_count
     FROM fact_market_data
     WHERE ticker = :ticker
     """
@@ -549,25 +550,51 @@ def main():
 
         st.markdown("---")
 
-        # Summary stats
+        # Summary stats - Better layout for all screen sizes
         st.header("📈 Summary")
         stats = load_summary_stats(selected_ticker)
 
         if stats:
-            st.metric("Total Records", f"{stats.get('total_records', 0):,}")
-            st.metric(
-                "Date Range",
-                f"{stats.get('first_date', 'N/A')} to {stats.get('last_date', 'N/A')}",
-            )
-            st.metric("Avg Price", f"${stats.get('avg_close', 0):.2f}")
-            st.metric(
-                "Avg Volatility",
-                (
-                    f"{stats.get('avg_volatility', 0) * 100:.2f}%"
-                    if stats.get("avg_volatility")
-                    else "N/A"
-                ),
-            )
+            # Two rows of two columns for better mobile/desktop consistency
+            # First row
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                st.metric("Total Records", f"{stats.get('total_records', 0):,}")
+            
+            with col2:
+                st.metric("Avg Price", f"${stats.get('avg_close', 0):.2f}")
+            
+            # Second row
+            col3, col4 = st.columns(2)
+            
+            with col3:
+                # Format date range with consistent styling matching metrics
+                first_date = stats.get('first_date', 'N/A')
+                last_date = stats.get('last_date', 'N/A')
+                # Convert dates to strings if they are date objects
+                first_date_str = str(first_date) if first_date != 'N/A' else 'N/A'
+                last_date_str = str(last_date) if last_date != 'N/A' else 'N/A'
+                
+                st.markdown(f"""
+                <div class="date-range-display">
+                    <strong>Date Range</strong>
+                    <div class="date-range-value">
+                        {first_date_str}<br/>
+                        to {last_date_str}
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+            
+            with col4:
+                # Calculate volatility properly - check if data exists first
+                avg_vol = stats.get('avg_volatility')
+                vol_count = stats.get('volatility_count', 0)
+                
+                if avg_vol is not None and not pd.isna(avg_vol) and vol_count > 0:
+                    st.metric("Avg Volatility", f"{avg_vol * 100:.2f}%")
+                else:
+                    st.metric("Avg Volatility", "N/A")
 
     # Main content
     if not selected_ticker:
@@ -603,7 +630,8 @@ def main():
     with tabs[0]:
         st.plotly_chart(plot_price_chart(df, selected_ticker), use_container_width=True)
 
-        col1, col2, col3, col4 = st.columns(4)
+        # Responsive columns
+        col1, col2, col3, col4 = st.columns([1, 1, 1, 1])
         with col1:
             st.metric(
                 "Current Price",
@@ -627,7 +655,8 @@ def main():
             plot_moving_averages(df, selected_ticker), use_container_width=True
         )
 
-        col1, col2, col3 = st.columns(3)
+        # Responsive columns
+        col1, col2, col3 = st.columns([1, 1, 1])
         with col1:
             st.metric(
                 "SMA 7",
@@ -658,7 +687,8 @@ def main():
             plot_bollinger_bands(df, selected_ticker), use_container_width=True
         )
 
-        col1, col2, col3 = st.columns(3)
+        # Responsive columns
+        col1, col2, col3 = st.columns([1, 1, 1])
         with col1:
             st.metric(
                 "Upper Band",
@@ -709,7 +739,8 @@ def main():
     with tabs[4]:
         st.plotly_chart(plot_macd(df, selected_ticker), use_container_width=True)
 
-        col1, col2, col3 = st.columns(3)
+        # Responsive columns
+        col1, col2, col3 = st.columns([1, 1, 1])
         with col1:
             st.metric(
                 "MACD",
@@ -747,7 +778,8 @@ def main():
             )
 
         # Stats
-        col1, col2, col3, col4 = st.columns(4)
+        # Responsive columns
+        col1, col2, col3, col4 = st.columns([1, 1, 1, 1])
         with col1:
             st.metric(
                 "Avg Daily Return",
@@ -767,11 +799,13 @@ def main():
                 ),
             )
         with col3:
+            # Calculate average volatility with proper NaN handling
+            avg_vol = df["volatility_20d"].mean()
             st.metric(
                 "Avg Volatility",
                 (
-                    f"{df['volatility_20d'].mean() * 100:.2f}%"
-                    if df["volatility_20d"].notna().any()
+                    f"{avg_vol * 100:.2f}%"
+                    if pd.notna(avg_vol) and df["volatility_20d"].notna().any()
                     else "N/A"
                 ),
             )

@@ -52,7 +52,9 @@ def get_config_value(airflow_key, env_key, default_value, value_type=str):
     # Priority 2: Environment Variable
     env_value = os.environ.get(env_key)
     if env_value is not None:
-        logger.debug(f"Config '{airflow_key}' obtained from ENV '{env_key}': {env_value}")
+        logger.debug(
+            f"Config '{airflow_key}' obtained from ENV '{env_key}': {env_value}"
+        )
         # Special handling for booleans
         if value_type == bool:
             return env_value.lower() in ("true", "1", "yes", "on")
