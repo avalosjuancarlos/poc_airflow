@@ -1,0 +1,53 @@
+services:
+  dashboard:
+    build: .
+    container_name: market-data-dashboard
+    ports:
+      - "${DASHBOARD_PORT:-8501}:8501"
+    environment:
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+      - DASHBOARD_TITLE=${DASHBOARD_TITLE:-Market Data Dashboard}
+      
+      # Development warehouse
+      - DEV_WAREHOUSE_HOST=${DEV_WAREHOUSE_HOST:-warehouse-postgres}
+      - DEV_WAREHOUSE_PORT=${DEV_WAREHOUSE_PORT:-5432}
+      - DEV_WAREHOUSE_DATABASE=${DEV_WAREHOUSE_DATABASE:-market_data_warehouse}
+      - DEV_WAREHOUSE_USER=${DEV_WAREHOUSE_USER:-warehouse_user}
+      - DEV_WAREHOUSE_PASSWORD=${DEV_WAREHOUSE_PASSWORD}
+      
+      # Staging warehouse
+      - STAGING_WAREHOUSE_HOST=${STAGING_WAREHOUSE_HOST}
+      - STAGING_WAREHOUSE_PORT=${STAGING_WAREHOUSE_PORT:-5439}
+      - STAGING_WAREHOUSE_DATABASE=${STAGING_WAREHOUSE_DATABASE}
+      - STAGING_WAREHOUSE_USER=${STAGING_WAREHOUSE_USER}
+      - STAGING_WAREHOUSE_PASSWORD=${STAGING_WAREHOUSE_PASSWORD}
+      - STAGING_WAREHOUSE_REGION=${STAGING_WAREHOUSE_REGION}
+      
+      # Production warehouse
+      - PROD_WAREHOUSE_HOST=${PROD_WAREHOUSE_HOST}
+      - PROD_WAREHOUSE_PORT=${PROD_WAREHOUSE_PORT:-5439}
+      - PROD_WAREHOUSE_DATABASE=${PROD_WAREHOUSE_DATABASE}
+      - PROD_WAREHOUSE_USER=${PROD_WAREHOUSE_USER}
+      - PROD_WAREHOUSE_PASSWORD=${PROD_WAREHOUSE_PASSWORD}
+      - PROD_WAREHOUSE_REGION=${PROD_WAREHOUSE_REGION}
+    
+    volumes:
+      - ./app.py:/app/app.py
+    
+    # Connect to Airflow network to access warehouse-postgres
+    networks:
+      - poc_airflow_default
+    
+    restart: unless-stopped
+    
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8501/_stcore/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  poc_airflow_default:
+    name: poc_airflow_default
+    external: true
+

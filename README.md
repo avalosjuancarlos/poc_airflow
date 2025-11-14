@@ -91,7 +91,7 @@ The pipeline performs the following operations **automatically** every day at 6:
 6:00 PM ET (Monday-Friday):
 ├─ Validates ticker (AAPL)
 ├─ Determines which dates to fetch
-│  └─ First time: last 20 days
+│  └─ First time: last 120 days (~6 months)
 │  └─ Daily: today only
 ├─ Checks if API is available
 ├─ Fetches data from Yahoo Finance
@@ -119,6 +119,7 @@ The pipeline performs the following operations **automatically** every day at 6:
 - [Overview](#-overview)
 - [Key Features](#-key-features)
 - [Quick Start](#-quick-start)
+- [Dashboard](#-dashboard)
 - [Documentation](#-documentation)
 - [Architecture](#-architecture)
 - [Project Structure](#-project-structure)
@@ -176,7 +177,9 @@ Enterprise-ready Apache Airflow 2.11 deployment with:
 - ✅ **Parquet Storage** - Apache Parquet with Snappy compression
 - ✅ **Append Mode** - Automatic deduplication by date
 - ✅ **Persistent Storage** - Docker volume for data retention
-- ✅ **Automatic Backfill** - 20-day backfill on first execution
+- ✅ **Automatic Backfill** - 120-day backfill on first execution (~6 months)
+- ✅ **Data Warehouse** - PostgreSQL (dev) / Redshift (staging/prod)
+- ✅ **UPSERT Strategy** - Insert new, update existing records
 
 #### Additional
 - ✅ **Daily Automation** - `@daily` schedule (00:00 UTC)
@@ -185,12 +188,14 @@ Enterprise-ready Apache Airflow 2.11 deployment with:
 
 ### 🔧 Developer Experience
 
-- ✅ **Modular Architecture** - Organized into config, utils, operators, sensors, transformers, storage
-- ✅ **131 Unit + Integration Tests** - High test coverage (89%)
+- ✅ **Modular Architecture** - Organized into config, utils, operators, sensors, transformers, storage, warehouse
+- ✅ **142 Unit + Integration Tests** - 78% test coverage
 - ✅ **Type Hints** - Full Python type annotations
 - ✅ **Linting & Formatting** - Black, isort, flake8 enforcement
 - ✅ **CI/CD Pipeline** - GitHub Actions automated testing
 - ✅ **Local Testing** - Docker Compose test environment
+- ✅ **Makefile** - 40+ commands for common tasks
+- ✅ **Interactive Dashboard** - Streamlit web app for data visualization
 
 ### 📊 Logging & Monitoring
 
@@ -217,7 +222,7 @@ Enterprise-ready Apache Airflow 2.11 deployment with:
 
 ```bash
 # Clone the repository
-git clone <repository-url>
+git clone https://github.com/avalosjuancarlos/poc_airflow.git
 cd poc_airflow
 
 # Copy environment template
@@ -277,6 +282,7 @@ Comprehensive documentation organized by audience:
 ### 👤 User Guide
 - **[Market Data DAG](docs/user-guide/market-data-dag.md)** - Using the Yahoo Finance DAG
 - **[Data Warehouse](docs/user-guide/data-warehouse.md)** - Multi-environment warehouse guide
+- **[Dashboard](docs/user-guide/dashboard.md)** - Interactive web dashboard
 - **[Configuration Options](docs/user-guide/configuration.md)** - All configurable parameters
 - **[Airflow Variables](docs/user-guide/airflow-variables.md)** - Dynamic configuration
 - **[Logging Guide](docs/user-guide/logging.md)** - Understanding logs
@@ -335,7 +341,7 @@ graph TB
 graph LR
     A[Start] --> B[Validate<br/>Ticker]
     B --> C[Determine<br/>Dates]
-    C -->|No Parquet| D1[Backfill<br/>20 Days]
+    C -->|No Parquet| D1[Backfill<br/>120 Days]
     C -->|Exists| D2[Single<br/>Day]
     D1 --> E[Check API<br/>Sensor]
     D2 --> E
@@ -344,7 +350,8 @@ graph LR
     G --> E
     F --> H[Transform<br/>12 Indicators]
     H --> I[Save to<br/>Parquet]
-    I --> J[End]
+    I --> L[Load to<br/>Warehouse]
+    L --> J[End]
     
     F -->|Rate Limit| K[Retry with<br/>Backoff]
     K --> F
@@ -356,6 +363,7 @@ graph LR
     style F fill:#3498DB
     style H fill:#F39C12
     style I fill:#E74C3C
+    style L fill:#9B59B6
     style G fill:#E74C3C
     style K fill:#E74C3C
 ```
@@ -446,12 +454,18 @@ _AIRFLOW_WWW_USER_PASSWORD=airflow
 
 # Market Data Configuration
 MARKET_DATA_DEFAULT_TICKER=AAPL
+MARKET_DATA_BACKFILL_DAYS=120  # Days to backfill on first run
 YAHOO_FINANCE_API_BASE_URL=https://query2.finance.yahoo.com/v8/finance/chart
 MARKET_DATA_API_TIMEOUT=30
 MARKET_DATA_MAX_RETRIES=3
 
-# Logging Configuration
+# Data Warehouse Configuration
 ENVIRONMENT=development  # development|staging|production
+DEV_WAREHOUSE_HOST=warehouse-postgres
+DEV_WAREHOUSE_PORT=5432
+DEV_WAREHOUSE_DATABASE=market_data_warehouse
+
+# Logging Configuration
 AIRFLOW__LOGGING__LEVEL=INFO
 AIRFLOW__LOGGING__JSON_FORMAT=false
 

@@ -8,7 +8,12 @@ from datetime import timedelta
 from typing import List
 
 import pandas as pd
-from market_data.storage import check_parquet_exists, save_to_parquet
+from market_data.config import BACKFILL_DAYS
+from market_data.storage import (
+    check_parquet_exists,
+    load_from_parquet,
+    save_to_parquet,
+)
 from market_data.transformers import calculate_technical_indicators
 from market_data.utils import get_logger, log_execution
 
@@ -20,7 +25,7 @@ def check_and_determine_dates(**context) -> dict:
     """
     Check if parquet exists and determine dates to fetch
 
-    If parquet doesn't exist, returns list of 20 days for backfill.
+    If parquet doesn't exist, returns list of BACKFILL_DAYS (default 120) for backfill.
     If exists, returns only execution_date.
 
     Args:
@@ -45,13 +50,13 @@ def check_and_determine_dates(**context) -> dict:
     parquet_exists = check_parquet_exists(ticker)
 
     if not parquet_exists:
-        # Backfill: get last 20 days
+        # Backfill: get last N days (configurable)
         logger.info(
-            f"No parquet file found for {ticker}. Preparing backfill of 20 days"
+            f"No parquet file found for {ticker}. Preparing backfill of {BACKFILL_DAYS} days"
         )
 
         dates = []
-        for i in range(19, -1, -1):  # 20 days back to today
+        for i in range(BACKFILL_DAYS - 1, -1, -1):  # N days back to today
             date = execution_date - timedelta(days=i)
             dates.append(date.strftime("%Y-%m-%d"))
 
@@ -212,6 +217,12 @@ def transform_and_save(**context) -> dict:
     """
     Transform market data with technical indicators and save to Parquet
 
+    This function ensures technical indicators are calculated correctly by:
+    1. Loading existing historical data from Parquet (if exists)
+    2. Combining with new data
+    3. Recalculating ALL indicators on the complete dataset
+    4. Saving the updated dataset back to Parquet
+
     Args:
         context: Airflow context
 
@@ -234,13 +245,25 @@ def transform_and_save(**context) -> dict:
         f"Starting transformation for {ticker}",
         extra={
             "ticker": ticker,
-            "records": len(market_data_list),
+            "new_records": len(market_data_list),
             "is_backfill": is_backfill,
         },
     )
 
-    # Calculate technical indicators
-    df_transformed = calculate_technical_indicators(market_data_list, ticker)
+    # Load existing historical data if not backfill
+    historical_df = None
+    if not is_backfill and check_parquet_exists(ticker):
+        logger.info(f"Loading existing Parquet for {ticker} to recalculate indicators")
+        historical_df = load_from_parquet(ticker)
+        logger.info(
+            f"Loaded {len(historical_df)} historical records",
+            extra={"historical_records": len(historical_df)},
+        )
+
+    # Calculate technical indicators on complete dataset
+    df_transformed = calculate_technical_indicators(
+        market_data_list, ticker, historical_df=historical_df
+    )
 
     logger.info(
         f"Transformation complete. DataFrame shape: {df_transformed.shape}",

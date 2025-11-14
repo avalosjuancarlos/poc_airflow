@@ -10,6 +10,7 @@ Common questions and answers about the Airflow Market Data Pipeline.
 - [Installation & Setup](#installation--setup)
 - [DAG Execution](#dag-execution)
 - [Data & Storage](#data--storage)
+- [Dashboard](#dashboard)
 - [Performance & Scaling](#performance--scaling)
 - [Troubleshooting](#troubleshooting)
 - [Advanced Topics](#advanced-topics)
@@ -37,6 +38,7 @@ This is a production-ready Apache Airflow 2.11 pipeline that:
 - **Data Processing**: Pandas
 - **Storage**: Parquet (Pyarrow)
 - **Warehouse**: PostgreSQL (dev), Amazon Redshift (staging/prod)
+- **Dashboard**: Streamlit (interactive visualizations)
 - **Message Broker**: Redis
 - **Testing**: pytest (142 tests, 78% coverage)
 
@@ -174,9 +176,9 @@ MARKET_DATA_DEFAULT_TICKER=MSFT
 ### How does backfill work?
 
 **First Run** (no Parquet file):
-- Fetches last 20 trading days
-- Creates initial dataset
-- ~14 days of data (excluding weekends)
+- Fetches last 120 trading days (~6 months)
+- Creates initial dataset with historical context
+- ~85 days of data (excluding weekends)
 
 **Subsequent Runs** (Parquet exists):
 - Fetches only current day
@@ -185,10 +187,16 @@ MARKET_DATA_DEFAULT_TICKER=MSFT
 
 **Example**:
 ```
-Day 1: Fetch 20 days (2025-10-24 to 2025-11-12)
-Day 2: Fetch 1 day (2025-11-13)
-Day 3: Fetch 1 day (2025-11-14)
+Day 1: Fetch 120 days (2025-05-20 to 2025-11-14)
+Day 2: Fetch 1 day (2025-11-15)
+Day 3: Fetch 1 day (2025-11-18) [skips weekend]
 ...
+```
+
+**Configuration**:
+```bash
+# .env
+MARKET_DATA_BACKFILL_DAYS=120  # Adjustable
 ```
 
 ### Can I run multiple tickers?
@@ -301,6 +309,154 @@ docker compose exec warehouse-postgres psql -U warehouse_user -d market_data_war
 
 ---
 
+## Dashboard
+
+### How do I access the dashboard?
+
+The dashboard is a Streamlit web application for visualizing market data.
+
+**Start dashboard**:
+```bash
+make dashboard
+```
+
+**Access**: http://localhost:8501
+
+**Features**:
+- 7 interactive visualization tabs
+- Multiple tickers support
+- Customizable date ranges
+- Technical indicators charts
+- CSV export functionality
+
+See: [Dashboard Guide](../user-guide/dashboard.md)
+
+### Dashboard shows "Error loading tickers"?
+
+**Common causes**:
+
+**1. No data in warehouse**:
+```bash
+# Check if data exists
+docker compose exec warehouse-postgres psql -U warehouse_user -d market_data_warehouse \
+  -c "SELECT COUNT(*) FROM fact_market_data;"
+
+# Solution: Run the DAG first to load data
+```
+
+**2. Connection refused (localhost:5433)**:
+
+**Problem**: Dashboard running in Docker can't connect to `localhost`
+
+**Solution**: Dashboard must connect to `warehouse-postgres:5432` via Docker network
+
+```bash
+# Check dashboard/.env
+DEV_WAREHOUSE_HOST=warehouse-postgres  # NOT localhost
+DEV_WAREHOUSE_PORT=5432                 # NOT 5433
+
+# Restart dashboard
+cd dashboard && docker compose restart
+```
+
+**3. Wrong password**:
+
+**Problem**: Default template password doesn't match docker-compose.yml
+
+**Solution**: Use `warehouse_pass` (from docker-compose.yml)
+```bash
+# dashboard/.env
+DEV_WAREHOUSE_PASSWORD=warehouse_pass
+```
+
+### Dashboard shows SQL syntax error with INTERVAL?
+
+**Error**: `syntax error at or near "180" LINE 25: AND date >= CURRENT_DATE - INTERVAL '180 days'`
+
+**Cause**: Cannot parametrize values inside `INTERVAL` in PostgreSQL
+
+**Fixed in v1.1.0**: Query now uses `CURRENT_DATE - :days * INTERVAL '1 day'`
+
+**If you see this**: Update to latest version or modify `dashboard/app.py` line 144
+
+### Dashboard shows "column sma_30 does not exist"?
+
+**Error**: `column "sma_30" does not exist HINT: Perhaps you meant "sma_20"`
+
+**Cause**: Table schema has `sma_20`, not `sma_30`
+
+**Fixed in v1.1.0**: Dashboard now correctly uses `sma_20`
+
+**Actual indicators**:
+- SMA: 7, 14, 20 days (not 30)
+- EMA: 12 days
+- All other indicators as documented
+
+### How do I run dashboard locally (without Docker)?
+
+**For development** (connects to Docker warehouse on host):
+
+```bash
+# Install dependencies
+cd dashboard
+pip install -r requirements.txt
+
+# Configure for localhost
+cat > .env << EOF
+ENVIRONMENT=development
+DEV_WAREHOUSE_HOST=localhost
+DEV_WAREHOUSE_PORT=5433  # Host port, not container port
+DEV_WAREHOUSE_DATABASE=market_data_warehouse
+DEV_WAREHOUSE_USER=warehouse_user
+DEV_WAREHOUSE_PASSWORD=warehouse_pass
+EOF
+
+# Run
+streamlit run app.py
+```
+
+**Access**: http://localhost:8501
+
+### Can I deploy dashboard to production?
+
+Yes! See: [Dashboard Deployment](../user-guide/dashboard.md#deployment)
+
+**Options**:
+1. **Streamlit Cloud** (free tier available)
+2. **Docker Compose** (recommended for internal use)
+3. **Kubernetes** (for scalability)
+
+**Requirements**:
+- Network access to warehouse
+- Proper credentials in environment
+- HTTPS for production (use reverse proxy)
+
+### Dashboard is slow, how to improve?
+
+**Performance tips**:
+
+**1. Reduce date range**:
+- Default: 180 days
+- Try: 90 days for faster queries
+
+**2. Enable caching** (already configured):
+```python
+@st.cache_data(ttl=300)  # 5 min cache
+```
+
+**3. Optimize warehouse queries**:
+```sql
+-- Ensure indexes exist
+CREATE INDEX IF NOT EXISTS idx_fact_market_data_ticker_date 
+ON fact_market_data(ticker, date DESC);
+```
+
+**4. Scale warehouse**:
+- Development: Increase PostgreSQL resources
+- Production: Use Redshift with proper dist/sort keys
+
+---
+
 ## Performance & Scaling
 
 ### How many workers can I run?
@@ -330,12 +486,12 @@ docker compose up -d --scale airflow-worker=5
 
 **Total**: ~30-60 seconds
 
-**Backfill** (20 days):
-- fetch_data: ~30-40s (20 API calls)
-- transform_and_save: ~10s
-- load_to_warehouse: ~5s
+**Backfill** (120 days):
+- fetch_data: ~3-4 minutes (120 API calls)
+- transform_and_save: ~30s
+- load_to_warehouse: ~10s
 
-**Total**: ~1-2 minutes
+**Total**: ~4-5 minutes
 
 ### Can I run multiple DAGs in parallel?
 
@@ -950,6 +1106,6 @@ See: [Code Style Guide](../developer-guide/code-style.md)
 
 ---
 
-**Last Updated**: 2025-11-12  
+**Last Updated**: 2025-11-14  
 **Questions not answered?** [Open an issue](https://github.com/avalosjuancarlos/poc_airflow/issues) or check [Troubleshooting](../operations/troubleshooting.md)
 

@@ -23,7 +23,7 @@ Migrating from local development to staging environment.
 
 ```bash
 # On staging server
-git clone <repository-url> /opt/airflow-staging
+git clone https://github.com/avalosjuancarlos/poc_airflow.git /opt/airflow-staging
 cd /opt/airflow-staging
 cp env.template .env
 ```

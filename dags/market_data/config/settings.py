@@ -17,49 +17,51 @@ logger = logging.getLogger(__name__)
 
 def get_config_value(airflow_key, env_key, default_value, value_type=str):
     """
-    Obtiene valor de configuración con prioridad de fallback:
-    1. Airflow Variable (puede cambiarse desde UI sin reiniciar)
-    2. Variable de Entorno (configurada en .env)
-    3. Valor por defecto (hardcoded)
+    Get configuration value with fallback priority:
+    1. Airflow Variable (can be changed from UI without restart)
+    2. Environment Variable (configured in .env)
+    3. Default value (hardcoded)
 
     Args:
-        airflow_key: Nombre de la variable en Airflow (ej: 'market_data.default_ticker')
-        env_key: Nombre de la variable de entorno (ej: 'MARKET_DATA_DEFAULT_TICKER')
-        default_value: Valor por defecto si no existe en ningún lado
-        value_type: Tipo de dato a retornar (str, int, bool, float)
+        airflow_key: Name of Airflow variable (e.g., 'market_data.default_ticker')
+        env_key: Name of environment variable (e.g., 'MARKET_DATA_DEFAULT_TICKER')
+        default_value: Default value if not found anywhere
+        value_type: Data type to return (str, int, bool, float)
 
     Returns:
-        Valor configurado del tipo especificado
+        Configured value of specified type
 
     Example:
         >>> ticker = get_config_value('market_data.default_ticker', 'MARKET_DATA_DEFAULT_TICKER', 'AAPL')
-        >>> # Busca en: Airflow Variable → ENV → Default
+        >>> # Searches in: Airflow Variable → ENV → Default
     """
     try:
-        # Prioridad 1: Airflow Variable
+        # Priority 1: Airflow Variable
         value = Variable.get(airflow_key, default_var=None)
         if value is not None:
             logger.debug(
-                f"Config '{airflow_key}' obtenida de Airflow Variable: {value}"
+                f"Config '{airflow_key}' obtained from Airflow Variable: {value}"
             )
-            # Manejo especial para booleanos
+            # Special handling for booleans
             if value_type == bool:
                 return value.lower() in ("true", "1", "yes", "on")
             return value_type(value)
     except Exception as e:
-        logger.debug(f"No se pudo obtener Airflow Variable '{airflow_key}': {e}")
+        logger.debug(f"Could not get Airflow Variable '{airflow_key}': {e}")
 
-    # Prioridad 2: Variable de Entorno
+    # Priority 2: Environment Variable
     env_value = os.environ.get(env_key)
     if env_value is not None:
-        logger.debug(f"Config '{airflow_key}' obtenida de ENV '{env_key}': {env_value}")
-        # Manejo especial para booleanos
+        logger.debug(
+            f"Config '{airflow_key}' obtained from ENV '{env_key}': {env_value}"
+        )
+        # Special handling for booleans
         if value_type == bool:
             return env_value.lower() in ("true", "1", "yes", "on")
         return value_type(env_value)
 
-    # Prioridad 3: Valor por defecto
-    logger.debug(f"Config '{airflow_key}' usando valor por defecto: {default_value}")
+    # Priority 3: Default value
+    logger.debug(f"Config '{airflow_key}' using default value: {default_value}")
     return value_type(default_value)
 
 
@@ -135,6 +137,16 @@ def _get_sensor_timeout():
     )
 
 
+def _get_backfill_days():
+    """Get backfill days with fallback"""
+    return get_config_value(
+        airflow_key="market_data.backfill_days",
+        env_key="MARKET_DATA_BACKFILL_DAYS",
+        default_value="120",
+        value_type=int,
+    )
+
+
 # Eagerly loaded values (no Airflow dependency)
 YAHOO_FINANCE_API_BASE_URL = _get_yahoo_api_url()
 API_TIMEOUT = _get_api_timeout()
@@ -146,21 +158,23 @@ try:
     RETRY_DELAY = _get_retry_delay()
     SENSOR_POKE_INTERVAL = _get_sensor_poke_interval()
     SENSOR_TIMEOUT = _get_sensor_timeout()
+    BACKFILL_DAYS = _get_backfill_days()
 except Exception as e:
     logger.debug(f"Could not load Airflow Variables, using ENV/defaults: {e}")
-    # Fallback to ENV only
+    # Fallback to environment variables only
     DEFAULT_TICKER = os.environ.get("MARKET_DATA_DEFAULT_TICKER", "AAPL")
     MAX_RETRIES = int(os.environ.get("MARKET_DATA_MAX_RETRIES", "3"))
     RETRY_DELAY = int(os.environ.get("MARKET_DATA_RETRY_DELAY", "5"))
     SENSOR_POKE_INTERVAL = int(os.environ.get("MARKET_DATA_SENSOR_POKE_INTERVAL", "30"))
     SENSOR_TIMEOUT = int(os.environ.get("MARKET_DATA_SENSOR_TIMEOUT", "600"))
+    BACKFILL_DAYS = int(os.environ.get("MARKET_DATA_BACKFILL_DAYS", "120"))
 
-# Exponential Backoff - Mantener como ENV (feature flag)
+# Exponential Backoff - Keep as ENV (feature flag)
 SENSOR_EXPONENTIAL_BACKOFF = (
     os.environ.get("MARKET_DATA_SENSOR_EXPONENTIAL_BACKOFF", "true").lower() == "true"
 )
 
-# Headers para evitar bloqueos de la API
+# Headers to avoid API blocks
 HEADERS = {
     "User-Agent": (
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
@@ -176,7 +190,7 @@ def log_configuration():
     """Log current configuration values"""
     try:
         logger.info("=" * 60)
-        logger.info("CONFIGURACIÓN DEL DAG DE MARKET DATA")
+        logger.info("MARKET DATA DAG CONFIGURATION")
         logger.info("=" * 60)
         logger.info(f"API Base URL: {YAHOO_FINANCE_API_BASE_URL}")
         logger.info(f"Default Ticker: {DEFAULT_TICKER}")
@@ -186,6 +200,7 @@ def log_configuration():
         logger.info(f"Sensor Poke Interval: {SENSOR_POKE_INTERVAL}s")
         logger.info(f"Sensor Timeout: {SENSOR_TIMEOUT}s")
         logger.info(f"Sensor Exponential Backoff: {SENSOR_EXPONENTIAL_BACKOFF}")
+        logger.info(f"Backfill Days: {BACKFILL_DAYS}")
         logger.info("=" * 60)
     except Exception as e:
         logger.debug(f"Could not log configuration (likely in test mode): {e}")

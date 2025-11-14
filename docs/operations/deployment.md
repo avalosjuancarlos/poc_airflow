@@ -139,7 +139,7 @@ docker-compose --version
 ```bash
 # Clone to production directory
 cd /opt
-sudo git clone <repository-url> airflow-production
+sudo git clone https://github.com/avalosjuancarlos/poc_airflow.git airflow-production
 cd airflow-production
 
 # Set ownership
