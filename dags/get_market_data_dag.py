@@ -28,19 +28,51 @@ from market_data.config import (
     log_configuration,
 )
 # Resolve default tickers for DAG params (reflects env configuration literally)
-_raw_env_tickers = os.environ.get("MARKET_DATA_DEFAULT_TICKERS")
-if _raw_env_tickers:
-    _raw_env_tickers = _raw_env_tickers.strip()
-    if _raw_env_tickers.startswith("[") and _raw_env_tickers.endswith("]"):
-        try:
-            _tickers_param_default = json.dumps(json.loads(_raw_env_tickers))
-        except json.JSONDecodeError:
-            _tickers_param_default = json.dumps(DEFAULT_TICKERS)
+def _parse_ticker_sequence(raw_value):
+    """Parse comma-separated or JSON list into a list of tickers."""
+    if raw_value is None:
+        return []
+
+    if isinstance(raw_value, (list, tuple, set)):
+        candidates = list(raw_value)
     else:
-        tokens = [token.strip() for token in _raw_env_tickers.split(",") if token.strip()]
-        _tickers_param_default = json.dumps(tokens or DEFAULT_TICKERS)
-else:
-    _tickers_param_default = json.dumps(DEFAULT_TICKERS)
+        text = str(raw_value).strip().strip("'").strip('"')
+        if not text:
+            return []
+
+        if text.startswith("[") and text.endswith("]"):
+            try:
+                parsed = json.loads(text)
+            except json.JSONDecodeError:
+                parsed = None
+            if isinstance(parsed, list):
+                candidates = parsed
+            else:
+                candidates = [text]
+        elif "," in text:
+            candidates = text.split(",")
+        else:
+            candidates = [text]
+
+    normalized = []
+    for candidate in candidates:
+        if candidate is None:
+            continue
+        ticker = str(candidate).strip().strip("'").strip('"').upper()
+        if ticker and ticker not in normalized:
+            normalized.append(ticker)
+    return normalized
+
+
+def _tickers_param_default():
+    """Default ticker list displayed in the Airflow UI."""
+    env_tickers = _parse_ticker_sequence(os.environ.get("MARKET_DATA_DEFAULT_TICKERS"))
+    if env_tickers:
+        return env_tickers
+    return list(DEFAULT_TICKERS)
+
+
+_TICKERS_PARAM_DEFAULT = _tickers_param_default()
 from market_data.operators import (
     fetch_market_data,
     process_market_data,
@@ -92,7 +124,7 @@ with DAG(
     ],
     params={
         # Airflow UI treats params as strings; keep JSON string so the default shows as an array.
-        "tickers": _tickers_param_default,
+        "tickers": _TICKERS_PARAM_DEFAULT,
         "date": datetime.now().strftime("%Y-%m-%d"),
     },
     doc_md="""
