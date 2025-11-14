@@ -323,11 +323,10 @@ make dashboard
 **Access**: http://localhost:8501
 
 **Features**:
-- 7 interactive visualization tabs
-- Multiple tickers support
-- Customizable date ranges
-- Technical indicators charts
-- CSV export functionality
+- Market Data Dashboard with 7 interactive tabs + responsive KPIs
+- Warehouse Explorer view with SQL preview, filters, and CSV export
+- Sidebar view selector and 🔄 refresh button for warehouse queries
+- Multiple tickers support & customizable date ranges
 
 See: [Dashboard Guide](../user-guide/dashboard.md)
 
@@ -391,6 +390,30 @@ DEV_WAREHOUSE_PASSWORD=warehouse_pass
 - SMA: 7, 14, 20 days (not 30)
 - EMA: 12 days
 - All other indicators as documented
+
+### Warehouse Explorer is still showing old data after a DAG run?
+
+The explorer caches queries for a few minutes. Click **🔄 Refresh warehouse data** (top of the Warehouse Explorer view) to clear the cache and rerun the SQL with the latest records—no need to restart Streamlit.
+
+### EMA or company names show as NULL in the warehouse/dashboard?
+
+Make sure you are running the latest DAG:
+
+1. The `transform_and_save` task now flattens metadata (`long_name`, `short_name`, `fifty_two_week_high`, `fifty_two_week_low`) and calculates `ema_12`.
+2. If historical rows were loaded before this change, trigger a backfill per ticker:
+   ```bash
+   # Optional: remove local Parquet/cache if you want a clean recompute
+   rm data/AAPL_market_data.parquet
+
+   # Trigger DAG per ticker
+   docker compose exec airflow-scheduler \
+     airflow dags trigger get_market_data --conf '{"ticker": "AAPL"}'
+   ```
+3. Verify via SQL:
+   ```sql
+   SELECT ticker, COUNT(ema_12) AS ema12_nn, COUNT(long_name) AS long_name_nn
+   FROM fact_market_data GROUP BY ticker;
+   ```
 
 ### How do I run dashboard locally (without Docker)?
 

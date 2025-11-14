@@ -207,7 +207,8 @@ docker compose exec airflow-scheduler airflow dags trigger get_market_data \
 ```
 - sma_7           (float64)
 - sma_14          (float64)
-- sma_30          (float64)
+- sma_20          (float64)
+- ema_12          (float64)
 - macd            (float64)
 - macd_signal     (float64)
 - macd_histogram  (float64)
@@ -229,19 +230,19 @@ docker compose exec airflow-scheduler airflow dags trigger get_market_data \
 #### Returns
 ```
 - daily_return    (float64)
+- daily_return_pct (float64)
 ```
 
 #### Additional Metadata
 ```
 - currency                (string)
-- exchange_name          (string)
+- exchange               (string)
 - instrument_type        (string)
 - regular_market_price   (float64)
 - fifty_two_week_high    (float64)
 - fifty_two_week_low     (float64)
-- fifty_day_average      (float64)
-- two_hundred_day_average (float64)
-- market_cap             (int64)
+- long_name              (string)
+- short_name             (string)
 ```
 
 ---

@@ -241,6 +241,36 @@ def calculate_technical_indicators(
     else:
         logger.warning("'quote' column not found in DataFrame")
 
+    # Flatten metadata fields if present
+    if "metadata" in df.columns:
+        logger.info("Flattening metadata fields into top-level columns")
+
+        def safe_meta_value(meta_obj, key):
+            if isinstance(meta_obj, dict):
+                return meta_obj.get(key)
+            return None
+
+        df["fifty_two_week_high"] = df["metadata"].apply(
+            lambda meta: safe_meta_value(meta, "fifty_two_week_high")
+        )
+        df["fifty_two_week_low"] = df["metadata"].apply(
+            lambda meta: safe_meta_value(meta, "fifty_two_week_low")
+        )
+        df["long_name"] = df["metadata"].apply(
+            lambda meta: safe_meta_value(meta, "long_name")
+        )
+        df["short_name"] = df["metadata"].apply(
+            lambda meta: safe_meta_value(meta, "short_name")
+        )
+
+        logger.debug(
+            "Flattened metadata added",
+            extra={
+                "long_name_sample": df["long_name"].dropna().head(1).tolist(),
+                "short_name_sample": df["short_name"].dropna().head(1).tolist(),
+            },
+        )
+
     # Convert OHLCV columns to numeric (handle None/invalid values)
     numeric_columns = ["open", "high", "low", "close", "volume"]
     for col in numeric_columns:
@@ -300,6 +330,9 @@ def calculate_technical_indicators(
     # Calculate indicators
     logger.info("Calculating moving averages...")
     df = calculate_moving_averages(df, periods=[7, 14, 20])
+
+    logger.info("Calculating EMA (12)...")
+    df["ema_12"] = calculate_ema(df, period=12)
 
     logger.info("Calculating RSI...")
     df = calculate_rsi(df, period=14)
