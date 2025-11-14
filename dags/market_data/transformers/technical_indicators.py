@@ -179,17 +179,23 @@ def calculate_bollinger_bands(
 
 
 def calculate_technical_indicators(
-    market_data_list: List[Dict], ticker: str
+    market_data_list: List[Dict], ticker: str, historical_df: pd.DataFrame = None
 ) -> pd.DataFrame:
     """
     Calculate comprehensive technical indicators from market data
 
+    This function can work in two modes:
+    1. Backfill mode (historical_df=None): Calculate indicators on new data only
+    2. Incremental mode (historical_df provided): Merge with historical data and
+       recalculate ALL indicators on complete dataset for accuracy
+
     Args:
-        market_data_list: List of market data dictionaries
+        market_data_list: List of market data dictionaries (new data)
         ticker: Stock ticker symbol
+        historical_df: Optional existing historical data to merge with
 
     Returns:
-        DataFrame with all technical indicators calculated
+        DataFrame with all technical indicators calculated on complete dataset
     """
     logger.info(f"Starting technical indicators calculation for {ticker}")
     logger.set_context(ticker=ticker, records=len(market_data_list))
@@ -260,6 +266,25 @@ def calculate_technical_indicators(
     logger.info(
         f"Data validation: {valid_close_count}/{len(df)} records with valid close prices"
     )
+
+    # Merge with historical data if provided (incremental mode)
+    if historical_df is not None and len(historical_df) > 0:
+        logger.info(
+            f"Merging {len(df)} new records with {len(historical_df)} historical records"
+        )
+        
+        # Remove any overlapping dates from historical data
+        historical_df["date"] = pd.to_datetime(historical_df["date"])
+        new_dates = df["date"].values
+        historical_df = historical_df[~historical_df["date"].isin(new_dates)]
+        
+        # Combine historical + new data
+        df = pd.concat([historical_df, df], ignore_index=True)
+        df = df.sort_values("date").reset_index(drop=True)
+        
+        logger.info(
+            f"Combined dataset: {len(df)} total records from {df['date'].min()} to {df['date'].max()}"
+        )
 
     # Calculate indicators
     logger.info("Calculating moving averages...")
