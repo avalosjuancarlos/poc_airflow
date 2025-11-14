@@ -1,7 +1,7 @@
 """
 Market Data DAG - Yahoo Finance API
 
-This DAG fetches historical price data for a specific ticker
+This DAG fetches historical price data for one or more tickers
 using the Yahoo Finance public API.
 
 Modular structure:
@@ -11,6 +11,7 @@ Modular structure:
 - market_data.sensors: Custom sensors
 """
 
+import json
 import os
 from datetime import datetime, timedelta
 
@@ -20,12 +21,26 @@ from airflow.sensors.python import PythonSensor
 
 # Import from modular structure
 from market_data.config import (
-    DEFAULT_TICKER,
+    DEFAULT_TICKERS,
     SENSOR_EXPONENTIAL_BACKOFF,
     SENSOR_POKE_INTERVAL,
     SENSOR_TIMEOUT,
     log_configuration,
 )
+# Resolve default tickers for DAG params (reflects env configuration literally)
+_raw_env_tickers = os.environ.get("MARKET_DATA_DEFAULT_TICKERS")
+if _raw_env_tickers:
+    _raw_env_tickers = _raw_env_tickers.strip()
+    if _raw_env_tickers.startswith("[") and _raw_env_tickers.endswith("]"):
+        try:
+            _tickers_param_default = json.dumps(json.loads(_raw_env_tickers))
+        except json.JSONDecodeError:
+            _tickers_param_default = json.dumps(DEFAULT_TICKERS)
+    else:
+        tokens = [token.strip() for token in _raw_env_tickers.split(",") if token.strip()]
+        _tickers_param_default = json.dumps(tokens or DEFAULT_TICKERS)
+else:
+    _tickers_param_default = json.dumps(DEFAULT_TICKERS)
 from market_data.operators import (
     fetch_market_data,
     process_market_data,
@@ -75,7 +90,11 @@ with DAG(
         "parquet",
         "warehouse",
     ],
-    params={"ticker": DEFAULT_TICKER, "date": datetime.now().strftime("%Y-%m-%d")},
+    params={
+        # Airflow UI treats params as strings; keep JSON string so the default shows as an array.
+        "tickers": _tickers_param_default,
+        "date": datetime.now().strftime("%Y-%m-%d"),
+    },
     doc_md="""
     # Get Market Data DAG - ETL Pipeline
     
@@ -137,14 +156,14 @@ with DAG(
     
     ```json
     {
-        "ticker": "AAPL"
+        "tickers": ["AAPL", "MSFT", "NVDA"]
     }
     ```
     
     ## ⚙️ Variables de Entorno Principales
     
     - `ENVIRONMENT`: development | staging | production
-    - `MARKET_DATA_DEFAULT_TICKER`: Ticker por defecto (default: AAPL)
+    - `MARKET_DATA_DEFAULT_TICKERS`: Lista de tickers por defecto (JSON/CSV)
     - `MARKET_DATA_STORAGE_DIR`: Directorio Parquet (default: /opt/airflow/data)
     - `WAREHOUSE_LOAD_STRATEGY`: upsert | append | truncate_insert
     - `DEV_WAREHOUSE_HOST`: Host PostgreSQL (development)
@@ -174,9 +193,6 @@ with DAG(
     api_sensor = PythonSensor(
         task_id="check_api_availability",
         python_callable=check_api_availability,
-        op_kwargs={
-            "ticker": '{{ dag_run.conf.get("ticker", params.ticker) }}',
-        },
         poke_interval=SENSOR_POKE_INTERVAL,
         timeout=SENSOR_TIMEOUT,
         mode="poke",

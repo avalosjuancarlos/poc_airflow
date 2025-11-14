@@ -37,7 +37,7 @@
 
 | Variable Actual (ENV) | Nueva Variable (Airflow) | Razón | Prioridad |
 |----------------------|--------------------------|-------|-----------|
-| `MARKET_DATA_DEFAULT_TICKER` | `market_data.default_ticker` | Valor de negocio que puede cambiar frecuentemente | 🔴 Alta |
+| `MARKET_DATA_DEFAULT_TICKERSS` | `market_data.default_tickers` | Valor de negocio que puede cambiar frecuentemente | 🔴 Alta |
 | `MARKET_DATA_MAX_RETRIES` | `market_data.max_retries` | Parámetro configurable sin reinicio | 🟡 Media |
 | `MARKET_DATA_RETRY_DELAY` | `market_data.retry_delay` | Parámetro configurable sin reinicio | 🟡 Media |
 | `MARKET_DATA_SENSOR_POKE_INTERVAL` | `market_data.sensor_poke_interval` | Parámetro de tuning del sensor | 🟢 Baja |
@@ -60,9 +60,9 @@
 # En get_market_data_dag.py
 
 # Usar Airflow Variable con fallback a ENV
-DEFAULT_TICKER = Variable.get(
-    "market_data.default_ticker",
-    default_var=os.environ.get('MARKET_DATA_DEFAULT_TICKER', 'AAPL')
+DEFAULT_TICKERS = Variable.get(
+    "market_data.default_tickers",
+    default_var=os.environ.get('MARKET_DATA_DEFAULT_TICKERSS', 'AAPL')
 )
 ```
 
@@ -125,9 +125,9 @@ def get_config_value(airflow_key, env_key, default_value, value_type=str):
     return value_type(default_value)
 
 # Uso
-DEFAULT_TICKER = get_config_value(
-    airflow_key="market_data.default_ticker",
-    env_key="MARKET_DATA_DEFAULT_TICKER",
+DEFAULT_TICKERS = get_config_value(
+    airflow_key="market_data.default_tickers",
+    env_key="MARKET_DATA_DEFAULT_TICKERSS",
     default_value="AAPL",
     value_type=str
 )
@@ -157,7 +157,7 @@ MAX_RETRIES = get_config_value(
 Usar notación con puntos para organización:
 
 ```
-market_data.default_ticker          # Configuración general
+market_data.default_tickers          # Configuración general
 market_data.api.timeout             # Configuración de API
 market_data.api.max_retries         # Configuración de reintentos
 market_data.sensor.poke_interval    # Configuración de sensor
@@ -170,7 +170,7 @@ Agrupar configuraciones relacionadas en un JSON:
 
 ```json
 {
-  "default_ticker": "AAPL",
+  "default_tickers": "AAPL",
   "api": {
     "timeout": 30,
     "max_retries": 3,
@@ -188,7 +188,7 @@ Acceder con:
 ```python
 import json
 config = json.loads(Variable.get("market_data.config"))
-DEFAULT_TICKER = config["default_ticker"]
+DEFAULT_TICKERS = config["default_tickers"]
 ```
 
 ---
@@ -203,7 +203,7 @@ DEFAULT_TICKER = config["default_ticker"]
 
 | Key | Val | Description |
 |-----|-----|-------------|
-| `market_data.default_ticker` | `AAPL` | Default ticker symbol for market data |
+| `market_data.default_tickers` | `AAPL` | Default ticker symbol for market data |
 | `market_data.max_retries` | `3` | Maximum number of API retry attempts |
 | `market_data.retry_delay` | `5` | Delay in seconds between retries |
 
@@ -212,14 +212,14 @@ DEFAULT_TICKER = config["default_ticker"]
 ```bash
 # Crear variables
 docker compose exec airflow-scheduler airflow variables set \
-  market_data.default_ticker "GOOGL"
+  market_data.default_tickers "GOOGL"
 
 docker compose exec airflow-scheduler airflow variables set \
   market_data.max_retries "5"
 
 # Ver variable
 docker compose exec airflow-scheduler airflow variables get \
-  market_data.default_ticker
+  market_data.default_tickers
 
 # Listar todas
 docker compose exec airflow-scheduler airflow variables list
@@ -284,7 +284,7 @@ Para DAGs que se ejecutan frecuentemente:
 with DAG(...) as dag:
     # Leer una vez al inicio
     config = {
-        'ticker': Variable.get("market_data.default_ticker", "AAPL"),
+        'ticker': Variable.get("market_data.default_tickers", "AAPL"),
         'max_retries': int(Variable.get("market_data.max_retries", "3")),
     }
     
@@ -300,7 +300,7 @@ with DAG(...) as dag:
 ## 🎯 Recomendación Final
 
 ### Migrar a Airflow Variables:
-1. 🔴 `market_data.default_ticker` - Alta prioridad
+1. 🔴 `market_data.default_tickers` - Alta prioridad
 2. 🟡 `market_data.max_retries` - Media prioridad  
 3. 🟡 `market_data.retry_delay` - Media prioridad
 

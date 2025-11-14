@@ -39,7 +39,7 @@ check_variable() {
 
 echo "Este script configurará las siguientes variables de Airflow:"
 echo ""
-echo "  • market_data.default_ticker"
+echo "  • market_data.default_tickers"
 echo "  • market_data.max_retries"
 echo "  • market_data.retry_delay"
 echo "  • market_data.sensor_poke_interval"
@@ -63,7 +63,7 @@ echo "=================================================="
 echo ""
 
 # Crear variables con valores por defecto
-create_variable "market_data.default_ticker" "AAPL" "Default ticker symbol"
+create_variable "market_data.default_tickers" '["AAPL","MSFT"]' "Default ticker list"
 create_variable "market_data.max_retries" "3" "Maximum number of API retry attempts"
 create_variable "market_data.retry_delay" "5" "Delay in seconds between retries"
 create_variable "market_data.sensor_poke_interval" "30" "Sensor poke interval in seconds"

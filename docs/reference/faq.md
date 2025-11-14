@@ -164,13 +164,13 @@ airflow dags trigger get_market_data --conf '{"ticker": "TSLA"}'
 
 **2. Airflow Variable** (runtime):
 ```bash
-airflow variables set market_data_default_ticker GOOGL
+airflow variables set market_data_default_tickers '["AAPL","MSFT","NVDA"]'
 ```
 
 **3. Environment Variable** (requires restart):
 ```bash
 # .env
-MARKET_DATA_DEFAULT_TICKER=MSFT
+MARKET_DATA_DEFAULT_TICKERS=MSFT
 ```
 
 ### How does backfill work?

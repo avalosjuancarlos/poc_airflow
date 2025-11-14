@@ -186,6 +186,7 @@ Enterprise-ready Apache Airflow 2.11 deployment with:
 - ✅ **Configurable Parameters** - Environment variables and Airflow Variables
 - ✅ **Comprehensive Error Handling** - Multi-level retry logic and logging
 - ✅ **Metadata Flattening** - Company names and 52-week stats stored with each record
+- ✅ **Multi-Ticker DAG Runs** - Supply `tickers=["AAPL","MSFT",...]` to process several symbols per execution with isolated Parquet caches and warehouse upserts
 
 ### 🔧 Developer Experience
 
@@ -500,7 +501,8 @@ _AIRFLOW_WWW_USER_USERNAME=airflow
 _AIRFLOW_WWW_USER_PASSWORD=airflow
 
 # Market Data Configuration
-MARKET_DATA_DEFAULT_TICKER=AAPL
+# JSON or CSV list of default tickers for bulk runs
+MARKET_DATA_DEFAULT_TICKERS=["AAPL","MSFT"]
 MARKET_DATA_BACKFILL_DAYS=120  # Days to backfill on first run
 YAHOO_FINANCE_API_BASE_URL=https://query2.finance.yahoo.com/v8/finance/chart
 MARKET_DATA_API_TIMEOUT=30
@@ -527,7 +529,7 @@ Set dynamic configuration via Airflow UI or CLI:
 
 ```bash
 # Via CLI
-docker compose exec airflow-scheduler airflow variables set market_data_default_ticker TSLA
+docker compose exec airflow-scheduler airflow variables set market_data_default_tickers TSLA
 
 # Via script
 ./scripts/setup_airflow_variables.sh

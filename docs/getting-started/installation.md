@@ -69,7 +69,7 @@ _AIRFLOW_WWW_USER_USERNAME=airflow  # Change for production
 _AIRFLOW_WWW_USER_PASSWORD=airflow   # Change for production
 
 # Market data configuration
-MARKET_DATA_DEFAULT_TICKER=AAPL
+MARKET_DATA_DEFAULT_TICKERS=AAPL
 ENVIRONMENT=development
 ```
 

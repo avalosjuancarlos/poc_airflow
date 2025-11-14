@@ -23,7 +23,7 @@ os.environ["AIRFLOW__CORE__LOAD_EXAMPLES"] = "False"
 def mock_dag_run():
     """Create a mock DAG run"""
     mock = Mock()
-    mock.conf = {"ticker": "AAPL", "date": "2023-11-09"}
+    mock.conf = {"ticker": "AAPL", "tickers": ["AAPL"], "date": "2023-11-09"}
     return mock
 
 

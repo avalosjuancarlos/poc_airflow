@@ -25,10 +25,9 @@ class TestValidateTickerOperator:
         """Test validate_ticker with config value"""
         result = validate_ticker(**mock_context)
 
-        assert result == "AAPL"
-        mock_context["task_instance"].xcom_push.assert_called_once_with(
-            key="validated_ticker", value="AAPL"
-        )
+        assert result == ["AAPL"]
+        ti = mock_context["task_instance"]
+        ti.xcom_push.assert_called_once_with(key="validated_tickerss", value=["AAPL"])
 
     def test_validate_ticker_lowercase(self):
         """Test validate_ticker converts lowercase to uppercase"""
@@ -39,7 +38,7 @@ class TestValidateTickerOperator:
 
         result = validate_ticker(**mock_context)
 
-        assert result == "GOOGL"
+        assert result == ["GOOGL"]
 
     def test_validate_ticker_uses_default(self):
         """Test validate_ticker uses default when no config provided"""
@@ -48,7 +47,29 @@ class TestValidateTickerOperator:
         result = validate_ticker(**mock_context)
 
         assert result is not None
-        assert isinstance(result, str)
+        assert isinstance(result, list)
+        assert len(result) >= 1
+
+    def test_validate_ticker_multiple_inputs(self):
+        """Test validate_ticker handles multiple tickers"""
+        mock_context = {
+            "dag_run": Mock(conf={"tickers": ["aapl", "msft", "aapl"]}),
+            "task_instance": Mock(),
+        }
+
+        result = validate_ticker(**mock_context)
+
+        assert result == ["AAPL", "MSFT"]
+
+    def test_validate_ticker_raises_when_empty(self):
+        """Test validate_ticker raises when no tickers provided"""
+        mock_context = {
+            "dag_run": Mock(conf={"tickers": []}),
+            "task_instance": Mock(),
+        }
+
+        with pytest.raises(ValueError, match="No tickers provided"):
+            validate_ticker(**mock_context)
 
 
 class TestFetchMarketDataOperator:

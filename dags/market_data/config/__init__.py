@@ -6,7 +6,7 @@ from .logging_config import LOGGING_CONFIG, get_log_level
 from .settings import (
     API_TIMEOUT,
     BACKFILL_DAYS,
-    DEFAULT_TICKER,
+    DEFAULT_TICKERS,
     HEADERS,
     MAX_RETRIES,
     RETRY_DELAY,
@@ -31,7 +31,7 @@ __all__ = [
     "log_configuration",
     "YAHOO_FINANCE_API_BASE_URL",
     "API_TIMEOUT",
-    "DEFAULT_TICKER",
+    "DEFAULT_TICKERS",
     "MAX_RETRIES",
     "RETRY_DELAY",
     "SENSOR_POKE_INTERVAL",

@@ -129,9 +129,10 @@ make dag-list
    {"ticker": "AAPL"}
    ```
 
+> 💡 Need batch processing? Pass `{"tickers": ["AAPL", "MSFT", "NVDA"]}` and the DAG will iterate through each ticker—determining dates, fetching data, writing Parquet, and loading the warehouse independently per symbol.
 **What happens**:
 ```
-1. Validates ticker: AAPL ✅
+1. Validates ticker(s): AAPL ✅
 2. Detects: AAPL_market_data.parquet doesn't exist
 3. Determines dates: Last 120 days (~6 months)
 4. Checks API: Available ✅
@@ -152,7 +153,7 @@ make dag-list
 
 **What happens**:
 ```
-1. Validates ticker: AAPL ✅
+1. Validates ticker(s): AAPL ✅
 2. Detects: AAPL_market_data.parquet exists
 3. Determines dates: Today only (2025-11-14)
 4. Checks API: Available ✅
@@ -178,6 +179,15 @@ Using CLI:
 docker compose exec airflow-scheduler airflow dags trigger get_market_data \
   --conf '{"ticker": "TSLA"}'
 ```
+
+#### Trigger with multiple tickers
+
+```bash
+docker compose exec airflow-scheduler airflow dags trigger get_market_data \
+  --conf '{"tickers": ["AAPL", "MSFT", "NVDA"]}'
+```
+
+Each ticker runs through the exact same pipeline (determine dates → fetch → transform → save Parquet → load warehouse). The tasks are executed sequentially inside the DAG run, ensuring isolated Parquet files and UPSERTs per symbol.
 
 - If `TSLA_market_data.parquet` doesn't exist: 120-day backfill
 - If exists: Only adds current day
@@ -258,7 +268,7 @@ MARKET_DATA_BACKFILL_DAYS=120  # Days to backfill on first run
 
 # API
 YAHOO_FINANCE_API_BASE_URL=https://query2.finance.yahoo.com/v8/finance/chart
-MARKET_DATA_DEFAULT_TICKER=AAPL
+MARKET_DATA_DEFAULT_TICKERS=["AAPL","MSFT"]
 MARKET_DATA_API_TIMEOUT=30
 
 # Retry Logic

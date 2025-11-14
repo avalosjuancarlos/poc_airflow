@@ -4,9 +4,11 @@ Operators for Market Data DAG
 Contains all the callable functions used by PythonOperators
 """
 
+import json
+
 from market_data.config import (
     API_TIMEOUT,
-    DEFAULT_TICKER,
+    DEFAULT_TICKERS,
     HEADERS,
     MAX_RETRIES,
     RETRY_DELAY,
@@ -22,35 +24,98 @@ from market_data.utils import (
 logger = get_logger(__name__)
 
 
+def _parse_ticker_inputs(raw_value):
+    """Normalize ticker input into list of strings."""
+    if raw_value is None:
+        return []
+
+    if isinstance(raw_value, (list, tuple, set)):
+        candidates = list(raw_value)
+    else:
+        string_value = str(raw_value).strip()
+        if not string_value:
+            return []
+        if string_value.startswith("[") and string_value.endswith("]"):
+            try:
+                parsed = json.loads(string_value)
+                if isinstance(parsed, list):
+                    candidates = parsed
+                else:
+                    candidates = [string_value]
+            except json.JSONDecodeError:
+                candidates = string_value.split(",")
+        elif "," in string_value:
+            candidates = string_value.split(",")
+        else:
+            candidates = [string_value]
+
+    normalized = []
+    for candidate in candidates:
+        if candidate is None:
+            continue
+        ticker_str = str(candidate).strip()
+        if not ticker_str:
+            continue
+        parts = [part.strip() for part in ticker_str.split(",") if part.strip()]
+        normalized.extend(parts if parts else [ticker_str])
+    return normalized
+
+
+def _resolve_requested_tickers(context):
+    """Resolve configured tickers from dag_run, params, or defaults."""
+    dag_run = context.get("dag_run")
+    conf = dag_run.conf if dag_run else {}
+    params = context.get("params", {}) or {}
+
+    candidates = (
+        _parse_ticker_inputs(conf.get("tickers"))
+        or _parse_ticker_inputs(conf.get("ticker"))
+        or _parse_ticker_inputs(params.get("tickers"))
+        or _parse_ticker_inputs(params.get("ticker"))
+        or list(DEFAULT_TICKERS)
+    )
+
+    normalized = []
+    for ticker in candidates:
+        upper = ticker.strip().upper()
+        if upper and upper not in normalized:
+            normalized.append(upper)
+
+    logger.info(
+        "Resolved ticker request",
+        extra={"requested": candidates, "resolved": normalized},
+    )
+    return normalized
+
+
 @log_execution()
 def validate_ticker(**context):
     """
-    Validate ticker configuration
+    Validate ticker configuration (supports multiple tickers)
 
     Args:
         context: Airflow context
 
     Returns:
-        Validated ticker symbol
+        List of validated ticker symbols
 
     Raises:
-        ValueError: If ticker is invalid
+        ValueError: If any ticker is invalid
     """
-    dag_run = context["dag_run"]
-    ticker = dag_run.conf.get("ticker", DEFAULT_TICKER)
+    resolved_tickers = _resolve_requested_tickers(context)
 
-    logger.info(f"Validating ticker: {ticker}")
-    logger.info(f"Default ticker configured: {DEFAULT_TICKER}")
+    if not resolved_tickers:
+        raise ValueError(
+            "No tickers provided. Configure `tickers` in dag_run.conf/params or set MARKET_DATA_DEFAULT_TICKERS."
+        )
 
-    # Validate and normalize ticker
-    validated_ticker = validate_ticker_format(ticker)
+    logger.info(f"Validating tickers: {resolved_tickers}")
+    validated = [validate_ticker_format(ticker) for ticker in resolved_tickers]
 
-    logger.info(f"Ticker validated: {validated_ticker}")
+    logger.info(f"Tickers validated: {validated}")
 
-    # Save to XCom for downstream tasks
-    context["task_instance"].xcom_push(key="validated_ticker", value=validated_ticker)
-
-    return validated_ticker
+    context["task_instance"].xcom_push(key="validated_tickers", value=validated)
+    return validated
 
 
 @log_execution()

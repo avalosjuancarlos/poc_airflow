@@ -74,8 +74,8 @@ url = "https://query2.finance..."
 ```python
 # Triple fallback
 ticker = get_config_value(
-    'market_data.default_ticker',  # Airflow Var
-    'MARKET_DATA_DEFAULT_TICKER',  # ENV
+    'market_data.default_tickers',  # Airflow Var
+    'MARKET_DATA_DEFAULT_TICKERS',  # ENV
     'AAPL'                         # Default
 )
 ```

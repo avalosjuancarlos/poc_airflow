@@ -431,57 +431,49 @@ If logging is impacting performance:
 
 ```python
 from market_data.utils import get_logger, log_execution
-from market_data.config import DEFAULT_TICKER
+from market_data.config import DEFAULT_TICKERS
 
 logger = get_logger(__name__)
 
 @log_execution()
-def process_market_data(ticker=DEFAULT_TICKER, **context):
+def process_market_data(tickers=DEFAULT_TICKERS, **context):
     """Process market data with comprehensive logging"""
     
-    # Set context
-    logger.set_context(
-        task_id=context.get('task_instance').task_id,
-        ticker=ticker
-    )
-    
-    logger.info(f"Starting processing for {ticker}")
-    
-    try:
-        # Fetch data with timing
-        with logger.execution_timer("fetch_data"):
-            data = fetch_data(ticker)
-        
-        # Log metrics
-        logger.metric("data.records", len(data), {"ticker": ticker})
-        
-        # Process data
-        result = process_data(data)
-        
-        # Audit log
-        logger.audit(
-            "processing_completed",
-            {
-                "ticker": ticker,
-                "records_processed": len(data),
-                "success": True
-            }
+    for ticker in tickers:
+        logger.set_context(
+            task_id=context.get('task_instance').task_id,
+            ticker=ticker
         )
         
-        logger.info(f"Processing completed successfully for {ticker}")
-        return result
+        logger.info(f"Starting processing for {ticker}")
         
-    except Exception as e:
-        logger.exception(
-            f"Processing failed for {ticker}",
-            extra={"ticker": ticker, "error": str(e)}
-        )
-        # Send critical errors to Sentry
-        logger.error("Critical processing failure", send_to_sentry=True)
-        raise
-    
-    finally:
-        logger.clear_context()
+        try:
+            with logger.execution_timer("fetch_data"):
+                data = fetch_data(ticker)
+            
+            logger.metric("data.records", len(data), {"ticker": ticker})
+            
+            result = process_data(data)
+            
+            logger.audit(
+                "processing_completed",
+                {
+                    "ticker": ticker,
+                    "records_processed": len(data),
+                    "success": True
+                }
+            )
+            
+            logger.info(f"Processing completed successfully for {ticker}")
+        except Exception as e:
+            logger.exception(
+                f"Processing failed for {ticker}",
+                extra={"ticker": ticker, "error": str(e)}
+            )
+            logger.error("Critical processing failure", send_to_sentry=True)
+            raise
+        finally:
+            logger.clear_context()
 ```
 
 ## Additional Resources

@@ -50,7 +50,7 @@ Airflow Variable → Variable de Entorno → Valor por Defecto
 ### Ejemplo de Funcionamiento
 
 ```python
-# Variable: market_data.default_ticker
+# Variable: market_data.default_tickers
 
 # Escenario 1: Airflow Variable existe
 # Resultado: "GOOGL"
@@ -82,7 +82,10 @@ Default: "AAPL"
 
 | Airflow Variable | ENV Fallback | Default | Tipo | Descripción |
 |-----------------|--------------|---------|------|-------------|
-| `market_data.default_ticker` | `MARKET_DATA_DEFAULT_TICKER` | `AAPL` | string | Ticker por defecto |
+| `market_data.default_tickers` | `MARKET_DATA_DEFAULT_TICKERS` | `["AAPL"]` | JSON list | Lista principal de tickers para cada ejecución (requiere al menos un elemento) |
+
+> **Importante**  
+> Usa siempre `market_data.default_tickers` (JSON array o CSV). El DAG procesará cada ticker de esta lista durante la misma ejecución.
 | `market_data.max_retries` | `MARKET_DATA_MAX_RETRIES` | `3` | int | Máximo de reintentos |
 | `market_data.retry_delay` | `MARKET_DATA_RETRY_DELAY` | `5` | int | Delay entre reintentos (seg) |
 | `market_data.sensor_poke_interval` | `MARKET_DATA_SENSOR_POKE_INTERVAL` | `30` | int | Intervalo del sensor (seg) |
@@ -120,7 +123,7 @@ Este script:
 ```bash
 # Crear todas las variables de una vez
 docker compose exec airflow-scheduler bash -c '
-airflow variables set market_data.default_ticker "AAPL" &&
+airflow variables set market_data.default_tickers "[\"AAPL\",\"MSFT\"]" &&
 airflow variables set market_data.max_retries "3" &&
 airflow variables set market_data.retry_delay "5" &&
 airflow variables set market_data.sensor_poke_interval "30" &&
@@ -141,7 +144,7 @@ airflow variables set market_data.sensor_timeout "600"
 2. **Crear Nueva Variable**
    - Haz clic en el botón `+` (Add a new record)
    - Completa los campos:
-     - **Key**: `market_data.default_ticker`
+     - **Key**: `market_data.default_tickers`
      - **Val**: `GOOGL`
      - **Description**: (opcional) Default ticker symbol
 
@@ -160,7 +163,7 @@ docker compose exec airflow-scheduler \
 
 # Ejemplos
 docker compose exec airflow-scheduler \
-  airflow variables set market_data.default_ticker "GOOGL"
+  airflow variables set market_data.default_tickers "GOOGL"
 
 docker compose exec airflow-scheduler \
   airflow variables set market_data.max_retries "5"
@@ -171,7 +174,7 @@ docker compose exec airflow-scheduler \
 ```bash
 # Ver una variable específica
 docker compose exec airflow-scheduler \
-  airflow variables get market_data.default_ticker
+  airflow variables get market_data.default_tickers
 
 # Listar todas las variables
 docker compose exec airflow-scheduler \
@@ -187,7 +190,7 @@ docker compose exec airflow-scheduler \
 ```bash
 # Actualizar (mismo comando que crear)
 docker compose exec airflow-scheduler \
-  airflow variables set market_data.default_ticker "MSFT"
+  airflow variables set market_data.default_tickers "MSFT"
 ```
 
 #### Eliminar Variable
@@ -195,7 +198,7 @@ docker compose exec airflow-scheduler \
 ```bash
 # Eliminar una variable
 docker compose exec airflow-scheduler \
-  airflow variables delete market_data.default_ticker
+  airflow variables delete market_data.default_tickers
 ```
 
 ---
@@ -209,11 +212,11 @@ docker compose exec airflow-scheduler \
 ```bash
 # Crear/actualizar variable
 docker compose exec airflow-scheduler \
-  airflow variables set market_data.default_ticker "GOOGL"
+  airflow variables set market_data.default_tickers "GOOGL"
 
 # Verificar
 docker compose exec airflow-scheduler \
-  airflow variables get market_data.default_ticker
+  airflow variables get market_data.default_tickers
 # Output: GOOGL
 
 # El siguiente DAG run usará GOOGL automáticamente
@@ -258,7 +261,7 @@ docker compose exec airflow-scheduler \
 ```bash
 # Configuración para desarrollo (más rápido)
 docker compose exec airflow-scheduler bash -c '
-airflow variables set market_data.default_ticker "AAPL" &&
+airflow variables set market_data.default_tickers "AAPL" &&
 airflow variables set market_data.max_retries "2" &&
 airflow variables set market_data.sensor_timeout "300"
 '
@@ -268,7 +271,7 @@ airflow variables set market_data.sensor_timeout "300"
 ```bash
 # Configuración para producción (más robusto)
 docker compose exec airflow-scheduler bash -c '
-airflow variables set market_data.default_ticker "AAPL" &&
+airflow variables set market_data.default_tickers "AAPL" &&
 airflow variables set market_data.max_retries "5" &&
 airflow variables set market_data.sensor_timeout "900"
 '
@@ -317,10 +320,10 @@ docker compose logs airflow-scheduler | grep "CONFIGURACIÓN DEL DAG"
 ```bash
 # 1. Verificar que la variable existe
 docker compose exec airflow-scheduler \
-  airflow variables get market_data.default_ticker
+  airflow variables get market_data.default_tickers
 
 # 2. Verificar logs del scheduler
-docker compose logs airflow-scheduler | grep "market_data.default_ticker"
+docker compose logs airflow-scheduler | grep "market_data.default_tickers"
 
 # 3. Refrescar el DAG (pausar y despausar en la UI)
 
@@ -364,7 +367,7 @@ docker compose exec airflow-scheduler \
 
 # Crear si no existe
 docker compose exec airflow-scheduler \
-  airflow variables set market_data.default_ticker "AAPL"
+  airflow variables set market_data.default_tickers "AAPL"
 ```
 
 ### Valores no se convierten correctamente
@@ -389,8 +392,8 @@ MAX_RETRIES = get_config_value(
 
 ### 1. Nombrar Variables
 
-✅ **Bueno**: `market_data.default_ticker`  
-❌ **Malo**: `default_ticker`, `TICKER`, `ticker`
+✅ **Bueno**: `market_data.default_tickers`  
+❌ **Malo**: `default_tickers`, `TICKER`, `ticker`
 
 - Usa prefijo para agrupar (`market_data.`)
 - Usa snake_case
