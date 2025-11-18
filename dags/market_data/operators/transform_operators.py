@@ -9,11 +9,7 @@ from typing import List
 
 import pandas as pd
 from market_data.config import BACKFILL_DAYS
-from market_data.storage import (
-    check_parquet_exists,
-    load_from_parquet,
-    save_to_parquet,
-)
+from market_data.storage import check_parquet_exists, load_from_parquet, save_to_parquet
 from market_data.transformers import calculate_technical_indicators
 from market_data.utils import get_logger, log_execution
 

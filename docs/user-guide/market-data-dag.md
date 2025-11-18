@@ -125,11 +125,14 @@ Each mapped chain runs for a single ticker, guaranteeing isolated Parquet caches
 ### Using Makefile (Recommended)
 
 ```bash
-# Trigger with default ticker (AAPL)
+# Trigger with default tickers (from MARKET_DATA_DEFAULT_TICKERS)
 make dag-trigger
 
-# Trigger with custom ticker
-make dag-trigger TICKER=GOOGL
+# Trigger with single ticker
+make dag-trigger TICKERS=AAPL
+
+# Trigger with multiple tickers (CSV format)
+make dag-trigger TICKERS="AAPL,MSFT,NVDA"
 
 # View logs
 make logs-worker
@@ -146,10 +149,14 @@ make dag-list
 2. Enable `get_market_data` DAG
 3. Trigger manually with:
    ```json
-   {"ticker": "AAPL"}
+   {"tickers": ["AAPL"]}
+   ```
+   Or for multiple tickers:
+   ```json
+   {"tickers": ["AAPL", "MSFT", "NVDA"]}
    ```
 
-> 💡 Need batch processing? Pass `{"tickers": ["AAPL", "MSFT", "NVDA"]}` and the DAG will iterate through each ticker—determining dates, fetching data, writing Parquet, and loading the warehouse independently per symbol.
+> 💡 The DAG supports multiple tickers in a single run. Each ticker is processed independently—determining dates, fetching data, writing Parquet, and loading the warehouse separately per symbol.
 **What happens**:
 ```
 1. Validates ticker(s): AAPL ✅
@@ -187,22 +194,24 @@ make dag-list
 
 ---
 
-### Trigger with Different Ticker
+### Trigger with Different Ticker(s)
 
 Using Makefile:
 ```bash
-make dag-trigger TICKER=TSLA
+# Single ticker
+make dag-trigger TICKERS=TSLA
+
+# Multiple tickers (CSV format)
+make dag-trigger TICKERS="AAPL,MSFT,NVDA"
 ```
 
 Using CLI:
 ```bash
+# Single ticker
 docker compose exec airflow-scheduler airflow dags trigger get_market_data \
-  --conf '{"ticker": "TSLA"}'
-```
+  --conf '{"tickers": ["TSLA"]}'
 
-#### Trigger with multiple tickers
-
-```bash
+# Multiple tickers
 docker compose exec airflow-scheduler airflow dags trigger get_market_data \
   --conf '{"tickers": ["AAPL", "MSFT", "NVDA"]}'
 ```
@@ -311,7 +320,7 @@ See `configuration.md` for complete list.
 
 ```bash
 # First execution
-make dag-trigger TICKER=AAPL
+make dag-trigger TICKERS=AAPL
 
 # Result:
 # - Fetch 120 days
@@ -335,10 +344,13 @@ make dag-trigger
 ### Example 3: Multiple Tickers
 
 ```bash
-# Trigger for each ticker
-make dag-trigger TICKER=AAPL
-make dag-trigger TICKER=TSLA
-make dag-trigger TICKER=GOOGL
+# Option 1: Single command with multiple tickers
+make dag-trigger TICKERS="AAPL,MSFT,NVDA"
+
+# Option 2: Separate commands for each ticker
+make dag-trigger TICKERS=AAPL
+make dag-trigger TICKERS=TSLA
+make dag-trigger TICKERS=GOOGL
 
 # Result:
 # - Each ticker has its own Parquet

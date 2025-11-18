@@ -5,8 +5,8 @@
 [![Airflow](https://img.shields.io/badge/Airflow-2.11.0-017CEE?style=for-the-badge&logo=apache-airflow&logoColor=white)](https://airflow.apache.org/)
 [![Python](https://img.shields.io/badge/Python-3.10-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 [![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
-[![Tests](https://img.shields.io/badge/Tests-142%20Passing-success?style=for-the-badge&logo=pytest)](#-testing)
-[![Coverage](https://img.shields.io/badge/Coverage-78%25-success?style=for-the-badge&logo=codecov)](#-testing)
+[![Tests](https://img.shields.io/badge/Tests-197%20Passing-success?style=for-the-badge&logo=pytest)](#-testing)
+[![Coverage](https://img.shields.io/badge/Coverage-92%25-success?style=for-the-badge&logo=codecov)](#-testing)
 
 **Automated ETL pipeline to fetch, transform, and store market data using Apache Airflow.**
 
@@ -138,7 +138,7 @@ Enterprise-ready Apache Airflow 2.11 deployment with:
 
 - **🔄 CeleryExecutor** for distributed task execution
 - **📊 Market Data DAG** for fetching financial data from Yahoo Finance API
-- **🧪 Comprehensive Testing** with 82 tests and 84% coverage
+- **🧪 Comprehensive Testing** with 197 tests (187 unit + 10 integration) and 92% coverage
 - **📝 Centralized Logging** with extensible architecture for monitoring integrations
 - **🐳 Docker Compose** setup for local development and testing
 - **✅ CI/CD Pipeline** with automated testing and linting
@@ -191,7 +191,7 @@ Enterprise-ready Apache Airflow 2.11 deployment with:
 ### 🔧 Developer Experience
 
 - ✅ **Modular Architecture** - Organized into config, utils, operators, sensors, transformers, storage, warehouse
-- ✅ **142 Unit + Integration Tests** - 78% test coverage
+- ✅ **197 Tests** (187 unit + 10 integration) - 92% test coverage
 - ✅ **Type Hints** - Full Python type annotations
 - ✅ **Linting & Formatting** - Black, isort, flake8 enforcement
 - ✅ **CI/CD Pipeline** - GitHub Actions automated testing
@@ -576,22 +576,24 @@ docker compose -f docker-compose.test.yml up test-coverage
 ### Run Linting
 
 ```bash
-# Run all linters
-docker compose -f docker-compose.test.yml up lint
+# Run all linting checks (recommended)
+make lint
 
-# Individual linters
-docker compose -f docker-compose.test.yml run --rm lint bash -lc "flake8 dags/market_data tests/"
-docker compose -f docker-compose.test.yml run --rm lint bash -lc "black dags/market_data tests/"
-docker compose -f docker-compose.test.yml run --rm lint bash -lc "isort dags/market_data tests/"
+# Format code (isort first, then black)
+make format
+
+# Or run individually:
+docker compose -f docker-compose.test.yml run --rm lint bash -lc "pip install --quiet --no-cache-dir -r requirements-dev.txt >/dev/null 2>&1 && flake8 dags/market_data tests/ --count --statistics"
+docker compose -f docker-compose.test.yml run --rm lint bash -lc "pip install --quiet --no-cache-dir -r requirements-dev.txt >/dev/null 2>&1 && isort dags/market_data tests/ && black dags/market_data tests/"
 ```
 
 ### Test Coverage
 
-Current coverage: **84.22%**
+Current coverage: **91.84%**
 
-- **Unit Tests**: 50 tests covering all modules
-- **Integration Tests**: 14 tests for DAG workflows
-- **Total**: 82 tests passing
+- **Unit Tests**: 187 tests covering all modules
+- **Integration Tests**: 10 tests for DAG execution
+- **Total**: 197 tests passing
 
 **See**: [Testing Guide](docs/developer-guide/testing.md) for details.
 

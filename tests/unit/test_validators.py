@@ -2,14 +2,7 @@
 Unit tests for validators module
 """
 
-import os
-import sys
-
 import pytest
-
-# Add dags directory to path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../dags"))
-
 from market_data.utils.validators import validate_date_format, validate_ticker_format
 
 
@@ -75,6 +68,77 @@ class TestValidateTickerFormat:
         """Test ticker with invalid characters raises error"""
         with pytest.raises(ValueError, match="Invalid characters"):
             validate_ticker_format("AAPL@#$")
+
+    def test_ticker_list_type(self):
+        """Test list type raises error"""
+        with pytest.raises(ValueError, match="Ticker must be a valid string"):
+            validate_ticker_format(["AAPL"])
+
+    def test_ticker_dict_type(self):
+        """Test dict type raises error"""
+        with pytest.raises(ValueError, match="Ticker must be a valid string"):
+            validate_ticker_format({"ticker": "AAPL"})
+
+    def test_ticker_bool_type(self):
+        """Test bool type raises error"""
+        with pytest.raises(ValueError, match="Ticker must be a valid string"):
+            validate_ticker_format(True)
+
+    def test_ticker_float_type(self):
+        """Test float type raises error"""
+        with pytest.raises(ValueError, match="Ticker must be a valid string"):
+            validate_ticker_format(123.45)
+
+    def test_ticker_only_spaces(self):
+        """Test ticker with only spaces raises error after strip"""
+        with pytest.raises(ValueError, match="Ticker cannot be empty"):
+            validate_ticker_format("   ")
+
+    def test_ticker_exactly_10_chars(self):
+        """Test ticker with exactly 10 characters is valid"""
+        result = validate_ticker_format("ABCDEFGHIJ")
+        assert result == "ABCDEFGHIJ"
+        assert len(result) == 10
+
+    def test_ticker_11_chars(self):
+        """Test ticker with 11 characters raises error"""
+        with pytest.raises(ValueError, match="Ticker too long"):
+            validate_ticker_format("ABCDEFGHIJK")
+
+    def test_ticker_invalid_char_at_sign(self):
+        """Test ticker with @ character raises error"""
+        with pytest.raises(ValueError, match="Invalid characters"):
+            validate_ticker_format("AAPL@")
+
+    def test_ticker_invalid_char_hash(self):
+        """Test ticker with # character raises error"""
+        with pytest.raises(ValueError, match="Invalid characters"):
+            validate_ticker_format("AAPL#")
+
+    def test_ticker_invalid_char_dollar(self):
+        """Test ticker with $ character raises error"""
+        with pytest.raises(ValueError, match="Invalid characters"):
+            validate_ticker_format("AAPL$")
+
+    def test_ticker_invalid_char_percent(self):
+        """Test ticker with % character raises error"""
+        with pytest.raises(ValueError, match="Invalid characters"):
+            validate_ticker_format("AAPL%")
+
+    def test_ticker_invalid_char_space_in_middle(self):
+        """Test ticker with space in middle raises error"""
+        with pytest.raises(ValueError, match="Invalid characters"):
+            validate_ticker_format("AAP L")
+
+    def test_ticker_valid_special_chars_combined(self):
+        """Test ticker with multiple valid special characters"""
+        result = validate_ticker_format("BRK.B-C^")
+        assert result == "BRK.B-C^"
+
+    def test_ticker_empty_after_strip(self):
+        """Test ticker that becomes empty after strip raises error"""
+        with pytest.raises(ValueError, match="Ticker cannot be empty"):
+            validate_ticker_format("\t\n\r")
 
 
 class TestValidateDateFormat:

@@ -3,13 +3,9 @@ Unit tests for configuration module
 """
 
 import os
-import sys
 from unittest.mock import MagicMock, patch
 
 import pytest
-
-# Add dags directory to path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../dags"))
 
 
 class TestGetConfigValue:

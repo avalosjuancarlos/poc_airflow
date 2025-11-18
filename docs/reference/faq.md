@@ -40,13 +40,13 @@ This is a production-ready Apache Airflow 2.11 pipeline that:
 - **Warehouse**: PostgreSQL (dev), Amazon Redshift (staging/prod)
 - **Dashboard**: Streamlit (interactive visualizations)
 - **Message Broker**: Redis
-- **Testing**: pytest (142 tests, 78% coverage)
+- **Testing**: pytest (197 tests, 92% coverage)
 
 ### Is this production-ready?
 
 Yes! The project includes:
 - ✅ Comprehensive error handling
-- ✅ 142 tests with 78% coverage
+- ✅ 197 tests (187 unit + 10 integration) with 92% coverage
 - ✅ CI/CD pipeline (GitHub Actions)
 - ✅ Centralized logging with extensible architecture
 - ✅ Multi-environment configuration
@@ -146,20 +146,28 @@ Stock markets are closed on weekends, so:
 1. Go to DAGs page
 2. Find `get_market_data`
 3. Click ▶️ (trigger)
-4. Optionally set params: `{"ticker": "TSLA"}`
+4. Optionally set params: `{"tickers": ["TSLA"]}`
 
 **From CLI**:
 ```bash
-docker compose exec airflow-scheduler airflow dags trigger get_market_data --conf '{"ticker": "AAPL"}'
+# Single ticker
+docker compose exec airflow-scheduler airflow dags trigger get_market_data --conf '{"tickers": ["AAPL"]}'
+
+# Multiple tickers
+docker compose exec airflow-scheduler airflow dags trigger get_market_data --conf '{"tickers": ["AAPL", "MSFT", "NVDA"]}'
 ```
 
-### Can I change the ticker?
+### Can I change the ticker(s)?
 
 Yes, three ways:
 
 **1. DAG Parameters** (per run):
 ```bash
-airflow dags trigger get_market_data --conf '{"ticker": "TSLA"}'
+# Single ticker
+airflow dags trigger get_market_data --conf '{"tickers": ["TSLA"]}'
+
+# Multiple tickers
+airflow dags trigger get_market_data --conf '{"tickers": ["AAPL", "MSFT", "NVDA"]}'
 ```
 
 **2. Airflow Variable** (runtime):
@@ -229,9 +237,13 @@ Yes! Each ticker gets its own Parquet file and warehouse records.
 
 **Trigger multiple runs**:
 ```bash
-airflow dags trigger get_market_data --conf '{"ticker": "AAPL"}'
-airflow dags trigger get_market_data --conf '{"ticker": "GOOGL"}'
-airflow dags trigger get_market_data --conf '{"ticker": "MSFT"}'
+# Option 1: Single command with multiple tickers
+airflow dags trigger get_market_data --conf '{"tickers": ["AAPL", "MSFT", "NVDA"]}'
+
+# Option 2: Separate commands for each ticker
+airflow dags trigger get_market_data --conf '{"tickers": ["AAPL"]}'
+airflow dags trigger get_market_data --conf '{"tickers": ["GOOGL"]}'
+airflow dags trigger get_market_data --conf '{"tickers": ["MSFT"]}'
 ```
 
 **Result**:
@@ -441,7 +453,7 @@ Make sure you are running the latest DAG:
 
    # Trigger DAG per ticker
    docker compose exec airflow-scheduler \
-     airflow dags trigger get_market_data --conf '{"ticker": "AAPL"}'
+     airflow dags trigger get_market_data --conf '{"tickers": ["AAPL"]}'
    ```
 3. Verify via SQL:
    ```sql
@@ -692,9 +704,13 @@ docker compose logs warehouse-postgres
 
 2. **Linting errors**:
    ```bash
-   # Format code
-   black dags/market_data tests/
+   # Format code (isort first, then black)
+   # Using Makefile (recommended):
+   make format
+   
+   # Or manually:
    isort dags/market_data tests/
+   black dags/market_data tests/
    ```
 
 3. **Import errors**:

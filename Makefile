@@ -124,10 +124,10 @@ lint: ## Run linting (flake8, black, isort)
 	docker compose -f docker-compose.test.yml up --abort-on-container-exit lint
 	@echo "✅ All linters passed"
 
-format: ## Format code with black and isort
+format: ## Format code with isort and black (uses lint service)
 	@echo "Formatting code..."
-	docker compose exec airflow-webserver black dags/market_data tests/
-	docker compose exec airflow-webserver isort dags/market_data tests/
+	@echo "Note: isort runs first to sort imports, then black formats the code"
+	docker compose -f docker-compose.test.yml run --rm lint bash -lc "pip install --quiet --no-cache-dir -r requirements-dev.txt >/dev/null 2>&1 && isort dags/market_data tests/ && black dags/market_data tests/"
 	@echo "✅ Code formatted"
 
 # ============================================================================
@@ -159,11 +159,11 @@ db-warehouse-stats: ## Show warehouse statistics
 dag-list: ## List all DAGs
 	docker compose exec airflow-scheduler airflow dags list
 
-dag-trigger: ## Trigger market data DAG (usage: make dag-trigger TICKER=AAPL)
-	@if [ -z "$(TICKER)" ]; then \
+dag-trigger: ## Trigger market data DAG (usage: make dag-trigger TICKERS=AAPL or TICKERS="AAPL,MSFT")
+	@if [ -z "$(TICKERS)" ]; then \
 		docker compose exec airflow-scheduler airflow dags trigger get_market_data; \
 	else \
-		docker compose exec airflow-scheduler airflow dags trigger get_market_data --conf '{"ticker": "$(TICKER)"}'; \
+		docker compose exec airflow-scheduler airflow dags trigger get_market_data --conf '{"tickers": "$(TICKERS)"}'; \
 	fi
 
 dag-errors: ## Check for DAG import errors
@@ -256,7 +256,7 @@ quickstart: setup-env init up dashboard ## Complete quick start (setup → start
 	@echo "  4. Access Dashboard: http://localhost:8501"
 	@echo ""
 	@echo "Useful commands:"
-	@echo "  make dag-trigger TICKER=AAPL  # Trigger DAG"
+	@echo "  make dag-trigger TICKERS=AAPL  # Trigger DAG (or TICKERS=\"AAPL,MSFT\" for multiple)"
 	@echo "  make logs-worker              # View worker logs"
 	@echo "  make db-warehouse-stats       # View data statistics"
 	@echo "  make help                     # Show all commands"
