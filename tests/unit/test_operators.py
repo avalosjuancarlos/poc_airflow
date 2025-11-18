@@ -5,9 +5,11 @@ Unit tests for market data operators
 from unittest.mock import Mock, patch
 
 import pytest
-from market_data.operators.market_data_operators import (fetch_market_data,
-                                                         process_market_data,
-                                                         validate_ticker)
+from market_data.operators.market_data_operators import (
+    fetch_market_data,
+    process_market_data,
+    validate_ticker,
+)
 
 
 class TestValidateTickerOperator:

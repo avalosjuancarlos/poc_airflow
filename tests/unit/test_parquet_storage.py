@@ -9,10 +9,12 @@ from unittest.mock import MagicMock, patch
 import pandas as pd
 import pytest
 
-from dags.market_data.storage.parquet_storage import (check_parquet_exists,
-                                                      get_parquet_path,
-                                                      load_from_parquet,
-                                                      save_to_parquet)
+from dags.market_data.storage.parquet_storage import (
+    check_parquet_exists,
+    get_parquet_path,
+    load_from_parquet,
+    save_to_parquet,
+)
 
 
 class TestGetParquetPath:

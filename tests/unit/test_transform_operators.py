@@ -11,7 +11,10 @@ import pandas as pd
 import pytest
 
 from dags.market_data.operators.transform_operators import (
-    check_and_determine_dates, fetch_multiple_dates, transform_and_save)
+    check_and_determine_dates,
+    fetch_multiple_dates,
+    transform_and_save,
+)
 
 
 class TestCheckAndDetermineDates:

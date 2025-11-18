@@ -6,14 +6,19 @@ import os
 from unittest.mock import MagicMock, patch
 
 import pytest
-from market_data.config.warehouse_config import (BATCH_SIZE, ENVIRONMENT,
-                                                 LOAD_STRATEGY, MAX_OVERFLOW,
-                                                 POOL_SIZE, POOL_TIMEOUT,
-                                                 TABLE_DATES,
-                                                 TABLE_MARKET_DATA,
-                                                 TABLE_TICKERS,
-                                                 get_connection_string,
-                                                 get_warehouse_config)
+from market_data.config.warehouse_config import (
+    BATCH_SIZE,
+    ENVIRONMENT,
+    LOAD_STRATEGY,
+    MAX_OVERFLOW,
+    POOL_SIZE,
+    POOL_TIMEOUT,
+    TABLE_DATES,
+    TABLE_MARKET_DATA,
+    TABLE_TICKERS,
+    get_connection_string,
+    get_warehouse_config,
+)
 
 
 class TestWarehouseConfigConstants:
@@ -329,8 +334,7 @@ class TestLogWarehouseConfiguration:
     @patch("market_data.config.warehouse_config._get_logger")
     def test_log_warehouse_configuration(self, mock_get_logger, mock_get_config):
         """Test logging warehouse configuration"""
-        from market_data.config.warehouse_config import \
-            log_warehouse_configuration
+        from market_data.config.warehouse_config import log_warehouse_configuration
 
         mock_get_config.return_value = {
             "type": "postgresql",

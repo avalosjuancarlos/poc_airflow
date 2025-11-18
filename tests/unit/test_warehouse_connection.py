@@ -5,8 +5,10 @@ Unit tests for warehouse connection management
 from unittest.mock import MagicMock, patch
 
 import pytest
-from market_data.warehouse.connection import (WarehouseConnection,
-                                              get_warehouse_connection)
+from market_data.warehouse.connection import (
+    WarehouseConnection,
+    get_warehouse_connection,
+)
 
 
 class TestGetWarehouseConnection:
