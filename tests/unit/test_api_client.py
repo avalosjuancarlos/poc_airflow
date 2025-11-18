@@ -240,9 +240,7 @@ class TestYahooFinanceClient:
 
     @patch("market_data.utils.api_client.requests.get")
     @patch("market_data.utils.api_client.time.sleep")
-    def test_fetch_market_data_max_retries_exceeded(
-        self, mock_sleep, mock_get, client
-    ):
+    def test_fetch_market_data_max_retries_exceeded(self, mock_sleep, mock_get, client):
         """Test max retries exceeded raises exception"""
         import requests
 

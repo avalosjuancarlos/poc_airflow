@@ -340,7 +340,9 @@ class TestLoadDataframe:
         loader = WarehouseLoader()
         loader._load_append = MagicMock(return_value=5)
 
-        df = pd.DataFrame({"ticker": ["AAPL"], "date": ["2023-01-01"], "close": [150.0]})
+        df = pd.DataFrame(
+            {"ticker": ["AAPL"], "date": ["2023-01-01"], "close": [150.0]}
+        )
         result = loader._load_dataframe(df, "AAPL")
 
         assert result == 5
@@ -359,7 +361,9 @@ class TestLoadDataframe:
         loader = WarehouseLoader()
         loader._load_upsert = MagicMock(return_value=5)
 
-        df = pd.DataFrame({"ticker": ["AAPL"], "date": ["2023-01-01"], "close": [150.0]})
+        df = pd.DataFrame(
+            {"ticker": ["AAPL"], "date": ["2023-01-01"], "close": [150.0]}
+        )
         result = loader._load_dataframe(df, "AAPL")
 
         assert result == 5
@@ -378,7 +382,9 @@ class TestLoadDataframe:
         loader = WarehouseLoader()
         loader._load_truncate_insert = MagicMock(return_value=5)
 
-        df = pd.DataFrame({"ticker": ["AAPL"], "date": ["2023-01-01"], "close": [150.0]})
+        df = pd.DataFrame(
+            {"ticker": ["AAPL"], "date": ["2023-01-01"], "close": [150.0]}
+        )
         result = loader._load_dataframe(df, "AAPL")
 
         assert result == 5
@@ -387,7 +393,9 @@ class TestLoadDataframe:
     @patch("market_data.warehouse.loader.get_warehouse_connection")
     @patch("market_data.warehouse.loader.get_warehouse_config")
     @patch("market_data.warehouse.loader.LOAD_STRATEGY", "invalid")
-    def test_load_dataframe_invalid_strategy(self, mock_get_config, mock_get_connection):
+    def test_load_dataframe_invalid_strategy(
+        self, mock_get_config, mock_get_connection
+    ):
         """Test _load_dataframe with invalid strategy"""
         mock_get_config.return_value = {
             "type": "postgresql",
@@ -396,7 +404,9 @@ class TestLoadDataframe:
         }
         loader = WarehouseLoader()
 
-        df = pd.DataFrame({"ticker": ["AAPL"], "date": ["2023-01-01"], "close": [150.0]})
+        df = pd.DataFrame(
+            {"ticker": ["AAPL"], "date": ["2023-01-01"], "close": [150.0]}
+        )
 
         with pytest.raises(ValueError, match="Unknown load strategy"):
             loader._load_dataframe(df, "AAPL")
@@ -451,7 +461,9 @@ class TestLoadUpsert:
         loader = WarehouseLoader()
         loader._upsert_postgresql = MagicMock(return_value=3)
 
-        df = pd.DataFrame({"ticker": ["AAPL"], "date": ["2023-01-01"], "close": [150.0]})
+        df = pd.DataFrame(
+            {"ticker": ["AAPL"], "date": ["2023-01-01"], "close": [150.0]}
+        )
         result = loader._load_upsert(df, "AAPL")
 
         assert result == 3
@@ -469,7 +481,9 @@ class TestLoadUpsert:
         loader = WarehouseLoader()
         loader._upsert_redshift = MagicMock(return_value=3)
 
-        df = pd.DataFrame({"ticker": ["AAPL"], "date": ["2023-01-01"], "close": [150.0]})
+        df = pd.DataFrame(
+            {"ticker": ["AAPL"], "date": ["2023-01-01"], "close": [150.0]}
+        )
         result = loader._load_upsert(df, "AAPL")
 
         assert result == 3
