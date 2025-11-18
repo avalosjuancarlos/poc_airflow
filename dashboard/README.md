@@ -6,12 +6,15 @@ Interactive web dashboard for visualizing market data and technical indicators.
 
 ## Features
 
-- 📊 **Interactive Charts**: Candlestick, line charts, bar charts
+- 📊 **Interactive Charts**: Candlestick, line charts, bar charts with enhanced tooltips
 - 📈 **Technical Indicators**: SMA, RSI, MACD, Bollinger Bands
 - 💹 **Returns & Volatility**: Daily returns and 20-day volatility
 - 🔄 **Real-time Updates**: Auto-refresh from warehouse
 - 🌍 **Multi-Environment**: Development, staging, production
-- ⬇️ **Data Export**: Download data as CSV
+- 📊 **Enhanced KPI Panel**: Percentage changes (1D, 7D, 30D, YTD), volatility status, indicator alerts
+- 🔀 **Multi-Ticker Comparator**: Compare multiple tickers with normalized charts, metrics table, and correlation analysis
+- ⬇️ **Enhanced Data Export**: Multiple formats (CSV, Excel, JSON, Parquet), batch export, query sharing
+- 🎨 **Centralized Icon System**: Consistent UI/UX across all components
 
 ---
 
@@ -102,15 +105,52 @@ Use sidebar dropdown to select ticker (e.g., AAPL, GOOGL, MSFT)
 - 1 Year
 - All Data
 
-### View Tabs
+### View Modes
 
-1. **Price & Volume**: Candlestick chart with volume
-2. **Moving Averages**: Price with SMA 7, 14, 30
-3. **Bollinger Bands**: Volatility bands
-4. **RSI**: Relative Strength Index with overbought/oversold levels
-5. **MACD**: MACD line, signal, and histogram
-6. **Returns & Volatility**: Daily returns and 20-day volatility
-7. **Data Table**: Raw data with download option
+**Single Ticker Mode**:
+- Select one ticker from dropdown
+- View comprehensive analytics for that ticker
+
+**Compare Tickers Mode**:
+- Select multiple tickers (2 or more)
+- Compare normalized price charts
+- View comparative metrics table
+- Analyze correlation between tickers
+- Batch export for multiple tickers
+
+### Enhanced KPI Panel
+
+At the top of the dashboard, view:
+- **Current Price** with percentage changes (1D, 7D, 30D, YTD)
+- **Volatility Status**: Current vs. historical average with alerts
+- **Indicator Status**: 
+  - RSI: Overbought (>70), Oversold (<30), or Neutral
+  - MACD: Bullish or Bearish signals
+- **Visual Alerts**: Color-coded indicators for trading signals
+
+### Visualization Tabs
+
+1. **Price & Volume**: Candlestick chart with volume and enhanced tooltips
+2. **Moving Averages**: Price with SMA 7, 14, 20 with detailed hover information
+3. **Bollinger Bands**: Volatility bands with comprehensive tooltips
+4. **RSI**: Relative Strength Index with overbought/oversold levels and status indicators
+5. **MACD**: MACD line, signal, and histogram with detailed metrics
+6. **Returns & Volatility**: Daily returns and 20-day volatility with Sharpe ratio
+7. **Data Table**: Raw data with multiple export formats
+
+### Enhanced Data Export
+
+Export data in multiple formats:
+- **CSV**: Standard comma-separated values
+- **Excel**: XLSX format with formatted sheets
+- **JSON**: Structured JSON format
+- **Parquet**: Efficient columnar format for data analysis
+
+**Export Options**:
+- Export current chart data (from any tab)
+- Batch export for multiple tickers (in Compare mode)
+- Export with applied filters
+- Share queries (SQL and Python code) in Warehouse Explorer
 
 ---
 
@@ -221,10 +261,28 @@ with tabs[N]:
 
 ## Architecture
 
+### Modular Structure
+
+```
+app.py
+├── config.py          # Environment-aware settings, view toggles
+├── icons.py           # Centralized icon system
+├── data.py            # Cached SQLAlchemy engine, warehouse queries
+├── charts.py          # Plotly chart builders with enhanced tooltips
+└── views/
+    ├── market.py      # Market Data Dashboard view
+    └── warehouse.py   # Warehouse Explorer view
+└── components/
+    ├── kpi_panel.py           # Enhanced KPI panel component
+    ├── ticker_comparator.py   # Multi-ticker comparison component
+    └── export.py              # Multi-format export component
+```
+
+**Data Flow**:
 ```
 Dashboard (Streamlit) 
     ↓
-SQLAlchemy Engine
+SQLAlchemy Engine (cached)
     ↓
 Database (PostgreSQL/Redshift)
     ↓
@@ -234,6 +292,8 @@ fact_market_data table
 **Caching**: Data cached for 5 minutes (TTL=300s)
 
 **Multi-Environment**: Reads from different warehouses based on `ENVIRONMENT` variable
+
+**Icon System**: Centralized icons in `icons.py` for consistent UI/UX across all components
 
 ---
 
@@ -274,6 +334,16 @@ fact_market_data table
 
 ---
 
-**Version**: 1.0.0  
-**Last Updated**: 2025-11-14
+**Version**: 2.0.0  
+**Last Updated**: 2025-11-18
+
+### Recent Updates (Phase 1 Improvements)
+
+- ✅ Enhanced KPI Panel with percentage changes and indicator status
+- ✅ Multi-Ticker Comparator with correlation analysis
+- ✅ Enhanced tooltips in all charts
+- ✅ Multiple export formats (CSV, Excel, JSON, Parquet)
+- ✅ Centralized icon system
+- ✅ Batch export for multiple tickers
+- ✅ Query sharing in Warehouse Explorer
 
