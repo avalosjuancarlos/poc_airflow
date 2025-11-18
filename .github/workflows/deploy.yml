@@ -3,8 +3,16 @@ name: CD - Deploy
 on:
   push:
     branches: [ main ]
+    paths-ignore:
+      - 'docs/**'
+      - '*.md'
+      - 'README.md'
+      - '**/README.md'
     tags:
       - 'v*'
+    # Note: paths-ignore also applies to tags. 
+    # If you need tags to always deploy regardless of changed files,
+    # consider creating a separate workflow for tag deployments.
 
 jobs:
   deploy-dev:
