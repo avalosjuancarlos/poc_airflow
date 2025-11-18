@@ -133,7 +133,7 @@ def fetch_backfill_data(ticker, dates):
   
 - **API Key Protection**: Ensure API credentials are not exposed
   - **Risk**: API keys in logs or error messages
-  - **Mitigation**: Use Airflow Connections or secrets management (see #11)
+  - **Mitigation**: Use Airflow Connections or secrets management (see #12)
   - **Mitigation**: Never log API keys or authentication tokens
   
 - **Rate Limiting Abuse**: Prevent abuse of batch API functionality
@@ -413,7 +413,7 @@ with TaskGroup("process_tickers") as ticker_group:
   - **Single Node**: Works but limited parallelism (constrained by single worker)
   - **Worker Cluster (Recommended)**: 
     - **Celery Executor**: Requires Redis/RabbitMQ for task queue
-    - **Kubernetes Executor**: Requires K8s cluster (see #27)
+    - **Kubernetes Executor**: Requires K8s cluster (see #28)
     - **Benefits**: True parallel execution, auto-scaling, high availability
     - **Setup**: Configure Celery workers in cluster mode or use K8s horizontal pod autoscaling
   - **Scaling Strategy**:
@@ -430,7 +430,7 @@ with TaskGroup("process_tickers") as ticker_group:
     - Self-hosted: Additional server costs
   - **Cluster Mode**: 
     - Celery cluster: +$50-200/month for queue broker (Redis/RabbitMQ)
-    - K8s cluster: See #27 for full cluster costs
+    - K8s cluster: See #28 for full cluster costs
 
 **Files to Modify**:
 - `dags/get_market_data_dag.py` - Refactor to support dynamic task groups with error isolation
@@ -521,7 +521,7 @@ def load_to_warehouse_optimized(df, strategy='upsert', batch_size=1000):
   - **Mitigation**: Use parameterized queries for all SQL operations
   - **Mitigation**: Use ORM/SQLAlchemy methods instead of raw SQL where possible
   - **Mitigation**: Validate and sanitize all input data before database operations
-  - **Mitigation**: Audit all SQL query construction (already done in #12)
+  - **Mitigation**: Audit all SQL query construction (see #13)
   
 - **Data Validation**: Validate data before bulk insert
   - **Risk**: Malicious or malformed data inserted into warehouse
@@ -1553,28 +1553,29 @@ def load_to_warehouse_optimized(df, strategy='upsert', batch_size=1000):
 
 ### Phase 1: High Priority, High Impact (Next 1-2 Months)
 
-1. **Batch API Calls for Backfill** (#1) - High impact on performance
-2. **Prometheus Metrics Export** (#5) - Essential for monitoring
-3. **Data Quality Checks** (#20) - Critical for data reliability
-4. **Secrets Management** (#11) - Security requirement
-5. **SQL Injection Prevention Audit** (#12) - Security requirement
+1. **Access Control & User Management** (#11) - ⚠️ **CRITICAL** before production
+2. **Batch API Calls for Backfill** (#1) - High impact on performance
+3. **Prometheus Metrics Export** (#5) - Essential for monitoring
+4. **Data Quality Checks** (#21) - Critical for data reliability
+5. **Secrets Management** (#12) - Security requirement
+6. **SQL Injection Prevention Audit** (#13) - Security requirement
 
 ### Phase 2: Medium Priority, Medium-High Impact (3-6 Months)
 
-6. **Implement Caching Layer** (#2)
-7. **Parallel Ticker Processing** (#3)
-8. **Structured Logging with Context** (#6)
-9. **Increase Test Coverage** (#8)
-10. **Alert System for Dashboard** (#23)
-11. **Data Validation Framework** (#31)
+7. **Implement Caching Layer** (#2)
+8. **Parallel Ticker Processing** (#3)
+9. **Structured Logging with Context** (#6)
+10. **Increase Test Coverage** (#8)
+11. **Alert System for Dashboard** (#23)
+12. **Data Validation Framework** (#31)
 
 ### Phase 3: Lower Priority, Nice to Have (6+ Months)
 
-12. **Performance Regression Tests** (#9)
-13. **Type Hints Coverage** (#25)
-14. **API Documentation with Examples** (#18)
-15. **Pre-commit Hooks** (#17)
-16. **Standardize Error Handling** (#27)
+13. **Performance Regression Tests** (#9)
+14. **Type Hints Coverage** (#25)
+15. **API Documentation with Examples** (#18)
+16. **Pre-commit Hooks** (#17)
+17. **Standardize Error Handling** (#27)
 
 ---
 
@@ -1600,7 +1601,7 @@ def load_to_warehouse_optimized(df, strategy='upsert', batch_size=1000):
 - **Warehouse Load Optimization** (#4): No additional resources (improves efficiency)
 - **Health Check Endpoint** (#7): Negligible overhead
 - **Data Quality Checks** (#21): Minimal overhead (~5-10% additional processing)
-- **Airflow Connections** (#12, Option 1): No additional resources
+- **Airflow Connections** (#12, Option 1): No additional resources (for secrets management)
 - **Custom Lineage** (#22, Option 2): Minimal (uses existing database)
 
 ### Cluster Deployment Recommendations
