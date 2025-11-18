@@ -20,16 +20,18 @@ Esta guía explica la estrategia de testing, cómo ejecutar tests y cómo contri
 ```
 tests/
 ├── __init__.py
-├── conftest.py                 # Fixtures compartidas
-├── unit/                       # Tests unitarios
+├── conftest.py                 # Shared fixtures
+├── unit/                       # Unit tests
 │   ├── __init__.py
-│   ├── test_validators.py      # Tests de validadores
-│   ├── test_config.py          # Tests de configuración
-│   └── test_api_client.py      # Tests del API client
-└── integration/                # Tests de integración
+│   ├── test_validators.py      # 30+ validator tests
+│   ├── test_config.py          # 10+ configuration tests
+│   ├── test_api_client.py      # 20+ API client tests
+│   ├── test_warehouse_loader.py  # 20+ warehouse loader tests
+│   ├── test_warehouse_config.py  # 15+ warehouse config tests
+│   └── ...                     # Additional unit tests
+└── integration/                # Integration tests
     ├── __init__.py
-    ├── test_dag_validation.py  # Validación del DAG
-    └── test_dag_execution.py   # Ejecución del DAG
+    └── test_dag_execution.py   # 10 DAG execution tests
 ```
 
 ### Dependencias de Testing
@@ -81,8 +83,9 @@ def test_validate_ticker_uppercase():
 - ✅ Validan configuración de Airflow
 
 **Alcance**:
-- Validación del DAG (`test_dag_validation.py`)
 - Ejecución del DAG (`test_dag_execution.py`)
+- Ticker format validation (list, CSV, JSON string)
+- Task execution with proper context
 
 **Ejemplo**:
 ```python
@@ -204,11 +207,9 @@ docker compose -f docker-compose.test.yml up lint
 
 ```python
 import pytest
-import sys
-import os
 
-# Add dags to path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../dags'))
+# pytest.ini automatically adds dags/ to pythonpath
+# No need for sys.path.insert
 
 from market_data.utils.validators import validate_ticker_format
 
@@ -506,10 +507,10 @@ pytest -m "not slow"
 
 | Métrica | Objetivo | Actual |
 |---------|----------|--------|
-| **Coverage** | ≥ 80% | TBD |
-| **Tests Unitarios** | > 30 | 25+ |
-| **Tests de Integración** | > 10 | 10+ |
-| **Tiempo de Ejecución** | < 2 min | TBD |
+| **Coverage** | ≥ 70% | 91.84% ✅ |
+| **Tests Unitarios** | > 30 | 187 ✅ |
+| **Tests de Integración** | > 10 | 10 ✅ |
+| **Tiempo de Ejecución** | < 2 min | ~4-5s ✅ |
 
 ### Verificar Métricas
 
@@ -533,9 +534,14 @@ pytest --durations=10
 **Problema**: `ModuleNotFoundError: No module named 'market_data'`
 
 **Solución**:
+The `pytest.ini` file automatically configures `pythonpath = dags`, so imports should work without manual PYTHONPATH setup. If you still encounter issues:
+
 ```bash
-export PYTHONPATH="${PWD}/dags:${PYTHONPATH}"
-pytest
+# Verify pytest.ini exists and has pythonpath configured
+cat pytest.ini | grep pythonpath
+
+# Run tests using Docker Compose (recommended)
+docker compose -f docker-compose.test.yml run --rm test-unit-only
 ```
 
 ### Airflow Not Found

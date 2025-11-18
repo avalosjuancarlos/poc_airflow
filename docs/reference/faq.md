@@ -40,13 +40,13 @@ This is a production-ready Apache Airflow 2.11 pipeline that:
 - **Warehouse**: PostgreSQL (dev), Amazon Redshift (staging/prod)
 - **Dashboard**: Streamlit (interactive visualizations)
 - **Message Broker**: Redis
-- **Testing**: pytest (142 tests, 78% coverage)
+- **Testing**: pytest (197 tests, 92% coverage)
 
 ### Is this production-ready?
 
 Yes! The project includes:
 - ✅ Comprehensive error handling
-- ✅ 142 tests with 78% coverage
+- ✅ 197 tests (187 unit + 10 integration) with 92% coverage
 - ✅ CI/CD pipeline (GitHub Actions)
 - ✅ Centralized logging with extensible architecture
 - ✅ Multi-environment configuration

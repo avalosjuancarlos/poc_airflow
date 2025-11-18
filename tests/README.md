@@ -1,33 +1,37 @@
 # 🧪 Tests - Market Data DAG
 
-Suite completa de tests para el Market Data DAG.
+Comprehensive test suite for the Market Data DAG.
 
 ## 🚀 Quick Start
 
 ```bash
-# Ejecutar todos los tests
-export PYTHONPATH="${PWD}/dags:${PYTHONPATH}"
-pytest
+# Run all tests using Docker Compose (recommended)
+docker compose -f docker-compose.test.yml run --rm test
 
-# Con coverage
-pytest --cov=dags/market_data --cov-report=html
+# Or using Make
+make test
+
+# With coverage report
+docker compose -f docker-compose.test.yml run --rm test-coverage
 ```
 
-## 📁 Estructura
+## 📁 Structure
 
 ```
 tests/
-├── unit/                    # Tests unitarios (rápidos, aislados)
-│   ├── test_validators.py  # 15+ tests de validadores
-│   ├── test_config.py       # 10+ tests de configuración
-│   └── test_api_client.py   # 10+ tests de API client
-├── integration/             # Tests de integración
-│   ├── test_dag_validation.py  # Validación del DAG
-│   └── test_dag_execution.py   # Ejecución del DAG
-└── conftest.py             # Fixtures compartidas
+├── unit/                    # Unit tests (fast, isolated)
+│   ├── test_validators.py  # 30+ validator tests
+│   ├── test_config.py       # 10+ configuration tests
+│   ├── test_api_client.py   # 20+ API client tests
+│   ├── test_warehouse_loader.py  # 20+ warehouse loader tests
+│   ├── test_warehouse_config.py  # 15+ warehouse config tests
+│   └── ...                  # Additional unit tests
+├── integration/             # Integration tests
+│   └── test_dag_execution.py   # 10 DAG execution tests
+└── conftest.py             # Shared fixtures
 
-Total: 35+ tests
-Coverage: 80%+ target
+Total: 197 tests (187 unit + 10 integration)
+Coverage: 91.84%
 ```
 
 ## 📊 Ejecutar Tests
@@ -59,12 +63,14 @@ pytest tests/unit/test_api_client.py -v
 pytest --cov=dags/market_data --cov-report=term-missing
 ```
 
-## ✅ Cobertura Actual
+## ✅ Current Coverage
 
-- **Validators**: ~95% coverage
-- **Config**: ~90% coverage
-- **API Client**: ~90% coverage
-- **Total**: 80%+ target
+- **Validators**: 100% coverage
+- **Config**: 100% coverage (warehouse_config)
+- **API Client**: 85% coverage
+- **Warehouse Loader**: 98% coverage
+- **Warehouse Config**: 100% coverage
+- **Total**: 91.84% coverage
 
 ## 🤖 CI/CD
 
@@ -102,17 +108,28 @@ Ver documentación completa en: `docs/TESTING_GUIDE.md`
 ## 🐛 Troubleshooting
 
 ```bash
-# Import errors
-export PYTHONPATH="${PWD}/dags:${PYTHONPATH}"
+# Import errors - pytest.ini handles pythonpath automatically
+# No need to set PYTHONPATH manually
 
-# Ver tests disponibles
+# View available tests
 pytest --collect-only
 
-# Debug con output
+# Debug with output
 pytest -v -s
 ```
 
+## 📊 Test Statistics
+
+- **Unit Tests**: 187 tests covering all modules
+- **Integration Tests**: 10 tests for DAG execution
+- **Total Coverage**: 91.84%
+- **Key Modules**:
+  - `validators.py`: 100% coverage
+  - `warehouse_config.py`: 100% coverage
+  - `warehouse_loader.py`: 98% coverage
+  - `api_client.py`: 85% coverage
+
 ---
 
-Para más detalles, ver `docs/TESTING_GUIDE.md`
+For more details, see `docs/developer-guide/testing.md`
 

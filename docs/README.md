@@ -42,7 +42,7 @@ For developers contributing to or extending the codebase.
 | Document | Description | Status |
 |----------|-------------|--------|
 | **[Architecture Overview](architecture/overview.md)** | Complete system architecture and design decisions | ✅ Available |
-| **[Testing Guide](developer-guide/testing.md)** | Running and writing tests (142 tests, 78% coverage) | ✅ Available |
+| **[Testing Guide](developer-guide/testing.md)** | Running and writing tests (197 tests, 92% coverage) | ✅ Available |
 | **[API Reference](developer-guide/api-reference.md)** | Complete module and function documentation | ✅ Available |
 | **[Code Style Guide](developer-guide/code-style.md)** | Coding standards and conventions | ✅ Available |
 | **[Contributing Guide](developer-guide/contributing.md)** | How to contribute to the project | ✅ Available |
