@@ -124,9 +124,10 @@ lint: ## Run linting (flake8, black, isort)
 	docker compose -f docker-compose.test.yml up --abort-on-container-exit lint
 	@echo "✅ All linters passed"
 
-format: ## Format code with black and isort (uses lint service)
+format: ## Format code with isort and black (uses lint service)
 	@echo "Formatting code..."
-	docker compose -f docker-compose.test.yml run --rm lint bash -lc "black dags/market_data tests/ && isort dags/market_data tests/"
+	@echo "Note: isort runs first to sort imports, then black formats the code"
+	docker compose -f docker-compose.test.yml run --rm lint bash -lc "pip install --quiet --no-cache-dir -r requirements-dev.txt >/dev/null 2>&1 && isort dags/market_data tests/ && black dags/market_data tests/"
 	@echo "✅ Code formatted"
 
 # ============================================================================

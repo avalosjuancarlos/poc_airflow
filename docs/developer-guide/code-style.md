@@ -158,6 +158,8 @@ isort dags/ tests/
 isort --check-only dags/ tests/
 ```
 
+> ⚠️ **Important**: When formatting code, always run `isort` **before** `black`. This ensures that after isort reorganizes imports, black can format the entire file consistently. Use `make format` which runs them in the correct order.
+
 ### flake8
 
 **Configuration** (`.flake8`):

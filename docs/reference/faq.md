@@ -704,9 +704,13 @@ docker compose logs warehouse-postgres
 
 2. **Linting errors**:
    ```bash
-   # Format code
-   black dags/market_data tests/
+   # Format code (isort first, then black)
+   # Using Makefile (recommended):
+   make format
+   
+   # Or manually:
    isort dags/market_data tests/
+   black dags/market_data tests/
    ```
 
 3. **Import errors**:

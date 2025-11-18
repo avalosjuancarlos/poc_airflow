@@ -576,13 +576,15 @@ docker compose -f docker-compose.test.yml up test-coverage
 ### Run Linting
 
 ```bash
-# Run all linters
-docker compose -f docker-compose.test.yml up lint
+# Run all linting checks (recommended)
+make lint
 
-# Individual linters
-docker compose -f docker-compose.test.yml run --rm lint bash -lc "flake8 dags/market_data tests/"
-docker compose -f docker-compose.test.yml run --rm lint bash -lc "black dags/market_data tests/"
-docker compose -f docker-compose.test.yml run --rm lint bash -lc "isort dags/market_data tests/"
+# Format code (isort first, then black)
+make format
+
+# Or run individually:
+docker compose -f docker-compose.test.yml run --rm lint bash -lc "pip install --quiet --no-cache-dir -r requirements-dev.txt >/dev/null 2>&1 && flake8 dags/market_data tests/ --count --statistics"
+docker compose -f docker-compose.test.yml run --rm lint bash -lc "pip install --quiet --no-cache-dir -r requirements-dev.txt >/dev/null 2>&1 && isort dags/market_data tests/ && black dags/market_data tests/"
 ```
 
 ### Test Coverage
