@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Airflow Market Data Pipeline - Presentación</title>
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.3.1/dist/reveal.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.3.1/dist/theme/white.css">
+    
+    <style>
+        .reveal .slides section {
+            text-align: left;
+            font-size: 0.85em;
+            padding: 20px 40px;
+        }
+        .reveal .slides section.center {
+            text-align: center;
+        }
+        .reveal h1 {
+            font-size: 2.2em;
+            color: #017CEE;
+            margin-bottom: 0.5em;
+            text-align: center;
+        }
+        .reveal h2 {
+            font-size: 1.6em;
+            color: #017CEE;
+            margin-bottom: 0.5em;
+            margin-top: 0.3em;
+            text-align: left;
+        }
+        .reveal h3 {
+            font-size: 1.2em;
+            color: #017CEE;
+            margin-bottom: 0.4em;
+            margin-top: 0.3em;
+        }
+        .reveal h4 {
+            font-size: 1em;
+            margin-bottom: 0.3em;
+            margin-top: 0.2em;
+        }
+        .reveal ul, .reveal ol {
+            margin: 0.4em 0;
+            padding-left: 1.2em;
+        }
+        .reveal li {
+            margin: 0.15em 0;
+            font-size: 0.9em;
+            line-height: 1.3;
+        }
+        .reveal p {
+            margin: 0.4em 0;
+            font-size: 0.9em;
+            line-height: 1.4;
+        }
+        .reveal table {
+            margin: 15px auto;
+            border-collapse: collapse;
+            border-spacing: 0;
+            font-size: 0.75em;
+            width: 100%;
+            max-width: 95%;
+        }
+        .reveal table th,
+        .reveal table td {
+            border: 1px solid #ddd;
+            padding: 8px 12px;
+            text-align: left;
+        }
+        .reveal table th {
+            background-color: #017CEE;
+            color: white;
+            font-weight: bold;
+            text-align: center;
+        }
+        .reveal code {
+            background-color: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.85em;
+        }
+        .reveal pre {
+            margin: 10px 0;
+            font-size: 0.7em;
+            text-align: left;
+            position: relative;
+        }
+        .reveal pre code {
+            background-color: #2d2d2d;
+            color: #f8f8f2;
+            padding: 12px;
+            border-radius: 5px;
+            max-height: 350px;
+            overflow: auto;
+            display: block;
+            user-select: all;
+            cursor: text;
+        }
+        .copy-button {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background-color: #017CEE;
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 0.9em;
+            opacity: 0.8;
+            transition: opacity 0.3s;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .copy-button:hover {
+            opacity: 1;
+        }
+        .copy-button:active {
+            background-color: #0156b3;
+        }
+        .reveal a {
+            color: #017CEE;
+            text-decoration: underline;
+        }
+        .reveal a:hover {
+            color: #0156b3;
+        }
+        .reveal .progress {
+            color: #017CEE;
+        }
+        .reveal hr {
+            margin: 0.8em 0;
+            border: none;
+            border-top: 2px solid #e0e0e0;
+        }
+        .two-columns {
+            display: flex;
+            justify-content: space-between;
+            gap: 30px;
+            align-items: flex-start;
+            margin: 15px 0;
+        }
+        .two-columns > div {
+            flex: 1;
+        }
+        .two-columns > div:first-child {
+            border-right: 2px solid #e0e0e0;
+            padding-right: 20px;
+        }
+        .two-columns > div:last-child {
+            padding-left: 20px;
+        }
+        .slide-content {
+            margin-top: 10px;
+        }
+        /* Estilos específicos para slides con mucho contenido */
+        .reveal .slides section.compact {
+            padding: 10px 25px;
+        }
+        .reveal .slides section.compact h2 {
+            font-size: 1.3em;
+            margin-bottom: 0.2em;
+            margin-top: 0.1em;
+        }
+        .reveal .slides section.compact h3 {
+            font-size: 1em;
+            margin-bottom: 0.3em;
+            margin-top: 0.2em;
+        }
+        .reveal .slides section.compact table {
+            font-size: 0.6em;
+            margin: 5px auto;
+        }
+        .reveal .slides section.compact table th,
+        .reveal .slides section.compact table td {
+            padding: 4px 6px;
+        }
+        .reveal .slides section.compact .slide-content {
+            margin-top: 5px;
+        }
+        .reveal .slides section.compact p {
+            font-size: 0.8em;
+            margin: 0.3em 0;
+        }
+        .reveal .slides section.compact ul,
+        .reveal .slides section.compact ol {
+            margin: 0.3em 0;
+            padding-left: 1em;
+        }
+        .reveal .slides section.compact li {
+            font-size: 0.8em;
+            margin: 0.1em 0;
+            line-height: 1.2;
+        }
+        .reveal .slides section.compact pre {
+            font-size: 0.55em;
+            margin: 5px 0;
+        }
+        .reveal .slides section.compact pre code {
+            padding: 8px;
+            max-height: 250px;
+        }
+        /* Estilos para slide de arquitectura con diagrama grande */
+        .reveal .slides section.architecture {
+            padding: 3px 15px;
+        }
+        .reveal .slides section.architecture h2 {
+            font-size: 1.1em;
+            margin-bottom: 0.1em;
+            margin-top: 0;
+        }
+        .reveal .slides section.architecture .slide-content {
+            margin-top: 1px;
+        }
+        .reveal .slides section.architecture pre {
+            font-size: 0.58em;
+            margin: 1px 0;
+            line-height: 1.1;
+        }
+        .reveal .slides section.architecture pre code {
+            padding: 6px;
+            max-height: 580px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            white-space: pre;
+            line-height: 1.1;
+        }
+        .reveal .slides section.architecture p {
+            font-size: 0.7em;
+            margin: 2px 0 0 0;
+            line-height: 1.2;
+        }
+        .reveal .slides section.compact .two-columns {
+            gap: 20px;
+            margin: 8px 0;
+        }
+        .reveal .slides section.compact h4 {
+            font-size: 0.9em;
+            margin-bottom: 0.2em;
+            margin-top: 0.2em;
+        }
+    </style>
+</head>
+<body>
+    <div class="reveal">
+        <div class="slides">
+            <!-- Slide 1: Portada -->
+            <section class="center">
+                <h1>🚀 Airflow Market Data Pipeline</h1>
+                <h2 style="text-align: center; color: #666; font-size: 1.3em; margin-top: 30px;">
+                    Una Historia de Automatización, Datos y Mejoras Continuas
+                </h2>
+            </section>
+
+            <!-- Slide 2: El Problema -->
+            <section>
+                <h2>📖 El Problema</h2>
+                <div class="slide-content">
+                    <p><strong>6:00 PM, cierre del mercado.</strong> Un analista necesita:</p>
+                    <ul>
+                        <li>📊 Datos de precios de múltiples acciones</li>
+                        <li>📈 Calcular 12 indicadores técnicos</li>
+                        <li>💾 Guardar en diferentes formatos</li>
+                        <li>🔄 Hacerlo <strong>todos los días</strong>, sin fallar</li>
+                        <li>⏰ Listo antes de que el mercado abra al día siguiente</li>
+                    </ul>
+                    <p style="margin-top: 20px;"><strong>El desafío:</strong> ¿Cómo automatizar esto de forma confiable?</p>
+                </div>
+            </section>
+
+            <!-- Slide 3: Los Puntos de Dolor -->
+            <section class="compact">
+                <h2>💔 Los Puntos de Dolor</h2>
+                <div class="slide-content">
+                    <p style="margin-bottom: 5px;"><strong>Antes de este proyecto:</strong></p>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Problema</th>
+                                <th>Impacto</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>⏰ <strong>Trabajo Manual</strong></td>
+                                <td>2-3 horas diarias perdidas</td>
+                            </tr>
+                            <tr>
+                                <td>🐛 <strong>Errores Humanos</strong></td>
+                                <td>Decisiones basadas en datos incorrectos</td>
+                            </tr>
+                            <tr>
+                                <td>🔌 <strong>APIs Inestables</strong></td>
+                                <td>Procesos quebrados sin aviso</td>
+                            </tr>
+                            <tr>
+                                <td>📊 <strong>Sin Visibilidad</strong></td>
+                                <td>Descubrir problemas cuando ya es tarde</td>
+                            </tr>
+                            <tr>
+                                <td>🔧 <strong>Configuración Compleja</strong></td>
+                                <td>Horas perdidas en setup inicial</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <p style="margin-top: 5px; font-size: 0.75em;"><strong>Resultado:</strong> Procesos manuales, propensos a errores y difíciles de escalar.</p>
+                </div>
+            </section>
+
+            <!-- Slide 4: La Solución -->
+            <section class="compact">
+                <h2>💡 La Solución</h2>
+                <h3>Airflow Market Data Pipeline</h3>
+                <div class="slide-content">
+                    <p><strong>Un sistema que automatiza todo:</strong></p>
+                    <pre><button class="copy-button" onclick="copyCode(this)" title="Copiar código">📋</button><code>🌅 6:00 PM → 🤖 Airflow detecta → 📡 Verifica API
+    ↓
+📊 Descarga datos → 🧮 Calcula indicadores
+    ↓
+💾 Guarda en Parquet + Data Warehouse
+    ↓
+📈 Dashboard se actualiza → ✅ Todo listo</code></pre>
+                    <div style="margin-top: 10px;">
+                        <p><strong>Resultado:</strong></p>
+                        <p style="font-size: 0.9em; font-weight: bold; color: #017CEE; margin: 5px 0;">
+                            De 2-3 horas manuales → <strong>0 minutos</strong> (automático)
+                        </p>
+                        <hr style="margin: 5px 0;">
+                        <p><strong>Beneficios:</strong></p>
+                        <ul style="font-size: 0.8em; margin: 5px 0;">
+                            <li>✅ Sin intervención manual</li>
+                            <li>✅ Ejecución diaria automática</li>
+                            <li>✅ Datos siempre actualizados</li>
+                            <li>✅ Monitoreo y alertas</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Slide 5: ¿Qué Hace Este Proyecto? -->
+            <section class="compact">
+                <h2>🎯 ¿Qué Hace Este Proyecto?</h2>
+                <div class="slide-content">
+                    <div class="two-columns">
+                        <div>
+                            <p><strong>Un asistente financiero robot que:</strong></p>
+                            <ol>
+                                <li>Se despierta todos los días a las 6 PM</li>
+                                <li>Revisa el mercado y descarga información</li>
+                                <li>Hace cálculos complejos automáticamente</li>
+                                <li>Guarda todo organizadamente</li>
+                                <li>Muestra gráficos en un dashboard web</li>
+                                <li>Avisa si algo sale mal</li>
+                            </ol>
+                            <p style="margin-top: 8px;"><strong>Sin que tengas que hacer nada.</strong></p>
+                        </div>
+                        <div>
+                            <p><strong>Casos de uso:</strong></p>
+                            <ul>
+                                <li>📊 <strong>Analistas:</strong> Datos listos cada mañana</li>
+                                <li>💻 <strong>Desarrolladores:</strong> API de datos confiable</li>
+                                <li>👔 <strong>Ejecutivos:</strong> Dashboard con KPIs en tiempo real</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Slide 6: Arquitectura -->
+            <section class="architecture">
+                <h2>🏗️ Arquitectura</h2>
+                <div class="slide-content">
+                    <pre><button class="copy-button" onclick="copyCode(this)" title="Copiar código">📋</button><code>┌─────────────────────────────────────┐
+│   🌐 Yahoo Finance API              │
+└──────────────┬──────────────────────┘
+               │
+               ▼
+┌─────────────────────────────────────┐
+│   🔄 Apache Airflow 2.11            │
+│   (Orquestador - El Cerebro)         │
+└──────────────┬──────────────────────┘
+               │
+        ┌──────┴──────┐
+        ▼             ▼
+┌─────────────┐  ┌──────────────┐
+│  📊 Pandas  │  │  🧮 Calcula  │
+│  (Procesa)  │  │  Indicadores │
+└──────┬──────┘  └──────┬───────┘
+       │                 │
+       └────────┬────────┘
+                │
+        ┌───────┴───────┐
+        ▼               ▼
+┌──────────────┐  ┌──────────────┐
+│  💾 Parquet  │  │  🗄️ Warehouse│
+│  (Rápido)    │  │  (SQL)       │
+└──────────────┘  └──────┬───────┘
+                         │
+                         ▼
+                ┌──────────────┐
+                │  📈 Dashboard│
+                │  (Visualiza) │
+                └──────────────┘</code></pre>
+                    <p style="text-align: center;"><strong>Tecnologías:</strong> Airflow 2.11 • PostgreSQL/Redshift • Streamlit • Docker • Python 3.10</p>
+                </div>
+            </section>
+
+            <!-- Slide 7: El Dashboard -->
+            <section class="compact">
+                <h2>📊 El Dashboard</h2>
+                <div class="slide-content">
+                    <div class="two-columns">
+                        <div>
+                            <h3 style="font-size: 1em; margin-bottom: 0.2em; margin-top: 0.2em;">Evolución</h3>
+                            <h4 style="font-size: 0.9em; margin-bottom: 0.2em; margin-top: 0.2em;">Versión Inicial:</h4>
+                            <ul style="font-size: 0.8em; margin: 0.2em 0;">
+                                <li>📊 Gráficos básicos</li>
+                                <li>📋 Tabla de datos</li>
+                                <li>⬇️ Exportar a CSV</li>
+                            </ul>
+                            <h4 style="font-size: 0.9em; margin-bottom: 0.2em; margin-top: 0.3em;">Versión Actual:</h4>
+                            <ul style="font-size: 0.8em; margin: 0.2em 0;">
+                                <li>📊 Panel KPI mejorado</li>
+                                <li>🔀 Comparador multi-ticker</li>
+                                <li>💡 Tooltips mejorados</li>
+                                <li>📦 Exportación múltiple</li>
+                                <li>🎨 Sistema de iconos</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h3 style="font-size: 1em; margin-bottom: 0.2em; margin-top: 0.2em;">Características</h3>
+                            <ul style="font-size: 0.8em; margin: 0.2em 0;">
+                                <li>7 pestañas de visualización</li>
+                                <li>Análisis individual o comparación múltiple</li>
+                                <li>Warehouse Explorer con SQL interactivo</li>
+                                <li>Exportación en múltiples formatos</li>
+                                <li>Compartir consultas SQL y Python</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Slide 8: Requerimientos -->
+            <section>
+                <h2>🎓 Requerimientos del Proyecto</h2>
+                <h3>Estándares No Negociables</h3>
+                <div class="slide-content">
+                    <table style="font-size: 0.7em;">
+                        <thead>
+                            <tr>
+                                <th>❌ Evitar</th>
+                                <th>✅ Requerido</th>
+                                <th>⚠️ Impacto</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Airflow 1.x</td>
+                                <td><strong>Airflow 2.x</strong></td>
+                                <td>Sin soporte, bugs antiguos</td>
+                            </tr>
+                            <tr>
+                                <td>Ejemplos activos</td>
+                                <td><strong>Desactivar ejemplos</strong></td>
+                                <td>Confusión con DAGs propios</td>
+                            </tr>
+                            <tr>
+                                <td>README incompleto</td>
+                                <td><strong>README claro</strong></td>
+                                <td>Imposible entender el proyecto</td>
+                            </tr>
+                            <tr>
+                                <td>DAG sin verificar</td>
+                                <td><strong>DAG probado</strong></td>
+                                <td>Pipeline roto, datos perdidos</td>
+                            </tr>
+                            <tr>
+                                <td>Transformaciones sin validar</td>
+                                <td><strong>Transformaciones verificadas</strong></td>
+                                <td>Datos incorrectos</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <p style="margin-top: 15px; text-align: center;"><strong>Estado Actual:</strong> ✅ Todos cumplidos</p>
+                </div>
+            </section>
+
+            <!-- Slide 9: El Viaje de Mejoras -->
+            <section>
+                <section>
+                    <h2>🚀 El Viaje de Mejoras</h2>
+                    <h3>Fase 1: Fundación ✅</h3>
+                    <div class="slide-content">
+                        <ul>
+                            <li>Pipeline ETL completo</li>
+                            <li>Extracción automática</li>
+                            <li>12 indicadores técnicos</li>
+                            <li>Almacenamiento dual</li>
+                            <li>Dashboard básico</li>
+                        </ul>
+                    </div>
+                </section>
+                <section>
+                    <h2>🚀 El Viaje de Mejoras</h2>
+                    <h3>Fase 2: Dashboard Mejorado ✅</h3>
+                    <div class="slide-content">
+                        <ul>
+                            <li>Panel KPI avanzado</li>
+                            <li>Comparador multi-ticker</li>
+                            <li>Tooltips mejorados</li>
+                            <li>Exportación múltiple</li>
+                            <li>Sistema de iconos</li>
+                        </ul>
+                    </div>
+                </section>
+                <section>
+                    <h2>🚀 El Viaje de Mejoras</h2>
+                    <h3>Fase 3: Robustez ✅</h3>
+                    <div class="slide-content">
+                        <ul>
+                            <li>197 tests (92% coverage)</li>
+                            <li>Logging estructurado</li>
+                            <li>Manejo de errores robusto</li>
+                            <li>Multi-ambiente</li>
+                            <li>Documentación completa</li>
+                        </ul>
+                    </div>
+                </section>
+            </section>
+
+            <!-- Slide 10: Métricas -->
+            <section>
+                <h2>📈 Métricas de Éxito</h2>
+                <div class="slide-content">
+                    <table style="font-size: 0.8em;">
+                        <thead>
+                            <tr>
+                                <th>Métrica</th>
+                                <th>Valor</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>🧪 <strong>Tests</strong></td>
+                                <td>197 pasando</td>
+                            </tr>
+                            <tr>
+                                <td>📊 <strong>Coverage</strong></td>
+                                <td>92%</td>
+                            </tr>
+                            <tr>
+                                <td>⚡ <strong>Performance</strong></td>
+                                <td>&lt; 5 min para múltiples tickers</td>
+                            </tr>
+                            <tr>
+                                <td>💾 <strong>Compresión</strong></td>
+                                <td>80% menos espacio</td>
+                            </tr>
+                            <tr>
+                                <td>🔄 <strong>Backfill</strong></td>
+                                <td>120 días automático</td>
+                            </tr>
+                            <tr>
+                                <td>📝 <strong>Documentación</strong></td>
+                                <td>15+ guías completas</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Slide 11: Valor de Negocio -->
+            <section>
+                <h2>💼 Valor de Negocio</h2>
+                <div class="slide-content">
+                    <table style="font-size: 0.8em;">
+                        <thead>
+                            <tr>
+                                <th>Beneficio</th>
+                                <th>Impacto</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>⏰ <strong>Ahorro de Tiempo</strong></td>
+                                <td>600 horas anuales</td>
+                            </tr>
+                            <tr>
+                                <td>🐛 <strong>Reducción de Errores</strong></td>
+                                <td>Validación automática</td>
+                            </tr>
+                            <tr>
+                                <td>📈 <strong>Escalabilidad</strong></td>
+                                <td>De 1 a 100+ tickers sin esfuerzo</td>
+                            </tr>
+                            <tr>
+                                <td>🔒 <strong>Confiabilidad</strong></td>
+                                <td>92% test coverage</td>
+                            </tr>
+                            <tr>
+                                <td>📚 <strong>Documentación</strong></td>
+                                <td>15+ guías completas</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <p style="margin-top: 15px; text-align: center;"><strong>ROI:</strong> Proceso manual → Automatización completa</p>
+                </div>
+            </section>
+
+            <!-- Slide 12: Próximos Pasos -->
+            <section>
+                <h2>🎯 Próximos Pasos</h2>
+                <h3>Roadmap Futuro</h3>
+                <div class="slide-content">
+                    <div class="two-columns">
+                        <div>
+                            <h4>Fase 2 Dashboard:</h4>
+                            <ul>
+                                <li>Selector de fechas flexible</li>
+                                <li>Nuevas visualizaciones</li>
+                                <li>Sistema de alertas</li>
+                                <li>Watchlist de favoritos</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h4>Fase 3 Avanzada:</h4>
+                            <ul>
+                                <li>Análisis predictivo</li>
+                                <li>Modo oscuro</li>
+                                <li>Personalización</li>
+                                <li>Análisis de portfolio</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Slide 13: Conclusión -->
+            <section class="center">
+                <h2>🎬 Conclusión</h2>
+                <div class="slide-content">
+                    <h3>El Proyecto en 3 Frases</h3>
+                    <ol style="text-align: left; display: inline-block; font-size: 0.9em; margin: 20px 0;">
+                        <li><strong>Automatiza</strong> la extracción y procesamiento de datos financieros</li>
+                        <li><strong>Proporciona</strong> un dashboard interactivo para análisis</li>
+                        <li><strong>Garantiza</strong> calidad con tests, documentación y mejores prácticas</li>
+                    </ol>
+                    <hr style="margin: 20px 0;">
+                    <h3>¿Por Qué Este Proyecto?</h3>
+                    <p style="font-size: 0.9em; margin-top: 15px;">
+                        ✅ Ahorra tiempo | ✅ Reduce errores | ✅ Escala fácilmente<br>
+                        ✅ Es confiable | ✅ Está documentado | ✅ Listo para producción
+                    </p>
+                </div>
+            </section>
+
+            <!-- Slide 14: Call to Action -->
+            <section class="center">
+                <h2>🚀 ¿Listo para Empezar?</h2>
+                <div class="slide-content">
+                    <pre style="font-size: 0.7em; margin: 20px 0;"><button class="copy-button" onclick="copyCode(this)" title="Copiar código">📋</button><code>git clone https://github.com/avalosjuancarlos/poc_airflow.git
+cd poc_airflow
+make quickstart</code></pre>
+                    <p style="font-size: 0.85em; margin: 10px 0; text-align: center;">
+                        <a href="https://github.com/avalosjuancarlos/poc_airflow" target="_blank">🔗 Ver repositorio en GitHub</a>
+                    </p>
+                    <p style="font-size: 0.9em; margin: 15px 0;">
+                        <strong>Accede al Dashboard:</strong> <a href="http://localhost:8501" target="_blank">http://localhost:8501</a><br>
+                        <strong>Accede a Airflow:</strong> <a href="http://localhost:8080" target="_blank">http://localhost:8080</a>
+                    </p>
+                    <hr style="margin: 20px 0;">
+                    <p style="font-size: 0.9em; margin: 10px 0;"><strong>Construido con ❤️ usando Apache Airflow</strong></p>
+                    <p style="font-size: 0.85em; margin: 10px 0;"><em>"De datos manuales a automatización inteligente"</em></p>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.3.1/dist/reveal.js"></script>
+    <script>
+        Reveal.initialize({
+            hash: true,
+            controls: true,
+            progress: true,
+            center: true,
+            touch: true,
+            loop: false,
+            transition: 'slide',
+            transitionSpeed: 'default',
+            backgroundTransition: 'fade',
+            keyboard: {
+                37: 'prev', // Left arrow
+                39: 'next', // Right arrow
+                32: 'next', // Space
+                27: 'toggleOverview' // ESC
+            }
+        });
+
+        // Función para copiar código al portapapeles
+        function copyCode(button) {
+            const codeBlock = button.nextElementSibling;
+            const text = codeBlock.textContent || codeBlock.innerText;
+            
+            // Crear un elemento temporal para copiar
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            
+            try {
+                document.execCommand('copy');
+                const originalIcon = button.textContent;
+                button.textContent = '✅';
+                button.style.backgroundColor = '#28a745';
+                
+                setTimeout(() => {
+                    button.textContent = originalIcon;
+                    button.style.backgroundColor = '#017CEE';
+                }, 1500);
+            } catch (err) {
+                console.error('Error al copiar:', err);
+                button.textContent = '❌';
+                setTimeout(() => {
+                    button.textContent = '📋';
+                }, 1500);
+            }
+            
+            document.body.removeChild(textarea);
+        }
+    </script>
+</body>
+</html>
+
