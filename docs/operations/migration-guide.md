@@ -48,8 +48,9 @@ STAGING_WAREHOUSE_PASSWORD=<SECURE_PASSWORD>
 STAGING_WAREHOUSE_REGION=us-east-1
 
 # Monitoring
-SENTRY_DSN=https://key@sentry.io/staging-project
-DD_API_KEY=<DATADOG_KEY>
+# Optional: Add Sentry/Datadog (see docs/user-guide/logging.md)
+# SENTRY_DSN=https://key@sentry.io/staging-project
+# DD_API_KEY=<DATADOG_KEY>
 ```
 
 #### 3. Export Configuration
@@ -120,8 +121,7 @@ Similar to dev→staging, with production credentials.
 
 3. **Enable Monitoring**:
    - Prometheus + Grafana
-   - Datadog APM
-   - Sentry error tracking
+   - Extensible logging (can add Datadog APM, Sentry error tracking)
 
 4. **Setup Backups**:
    ```bash

@@ -201,27 +201,38 @@ Complete reference for all environment variables used in the project.
 
 ## Monitoring Integration
 
-### Sentry (Error Tracking)
+> **Note**: Sentry and Datadog are not included by default. The logging system is extensible and can be configured to use these tools. See [Logging Guide - Adding External Monitoring Integrations](../user-guide/logging.md#adding-external-monitoring-integrations) for step-by-step instructions.
+
+### Sentry (Error Tracking) - Optional
+
+If you extend the logger to support Sentry, these variables can be used:
 
 | Variable | Default | Description | Required |
 |----------|---------|-------------|----------|
 | `SENTRY_DSN` | - | Sentry project DSN | Optional |
+| `SENTRY_TRACES_SAMPLE_RATE` | `0.1` | Transaction sampling rate | Optional |
+| `SENTRY_SEND_PII` | `false` | Send personally identifiable information | Optional |
 
-**Example**:
+**Example** (after adding Sentry integration):
 ```bash
 SENTRY_DSN=https://examplePublicKey@o0.ingest.sentry.io/0
+SENTRY_TRACES_SAMPLE_RATE=0.1
+SENTRY_SEND_PII=false
 ```
 
-### Datadog (APM & Metrics)
+### Datadog (APM & Metrics) - Optional
+
+If you extend the logger to support Datadog, these variables can be used:
 
 | Variable | Default | Description | Required |
 |----------|---------|-------------|----------|
 | `DD_API_KEY` | - | Datadog API key | Optional |
+| `DD_APP_KEY` | - | Datadog application key | Optional |
 | `DD_SITE` | `datadoghq.com` | Datadog site | Optional |
 | `DD_ENV` | Same as `ENVIRONMENT` | Environment tag | Optional |
 | `DD_SERVICE` | `airflow-market-data` | Service name | Optional |
 
-**Example**:
+**Example** (after adding Datadog integration):
 ```bash
 DD_API_KEY=1234567890abcdef1234567890abcdef
 DD_SITE=datadoghq.com
@@ -331,7 +342,8 @@ MARKET_DATA_DEFAULT_TICKERS=["AAPL","MSFT","NVDA"]
 STAGING_WAREHOUSE_HOST=staging-cluster.us-east-1.redshift.amazonaws.com
 STAGING_WAREHOUSE_USER=staging_user
 STAGING_WAREHOUSE_PASSWORD=secure_staging_pass
-SENTRY_DSN=https://key@sentry.io/project
+# Optional: Add Sentry/Datadog (see docs/user-guide/logging.md)
+# SENTRY_DSN=https://key@sentry.io/project
 ```
 
 ### Production (.env)
@@ -348,8 +360,9 @@ MARKET_DATA_DEFAULT_TICKERS=["AAPL","MSFT","NVDA","TSLA"]
 PROD_WAREHOUSE_HOST=prod-cluster.us-east-1.redshift.amazonaws.com
 PROD_WAREHOUSE_USER=prod_user
 PROD_WAREHOUSE_PASSWORD=secure_prod_pass
-SENTRY_DSN=https://key@sentry.io/project
-DD_API_KEY=<DATADOG_KEY>
+# Optional: Add Sentry/Datadog (see docs/user-guide/logging.md)
+# SENTRY_DSN=https://key@sentry.io/project
+# DD_API_KEY=<DATADOG_KEY>
 AIRFLOW__SMTP__SMTP_HOST=smtp.company.com
 AIRFLOW__SMTP__SMTP_USER=airflow@company.com
 AIRFLOW__SMTP__SMTP_PASSWORD=<SMTP_PASSWORD>

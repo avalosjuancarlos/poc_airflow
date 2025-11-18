@@ -315,6 +315,8 @@ def fetch_market_data(**context):
 
 ### Option 3: Sentry (Error Tracking)
 
+> **Note**: Sentry is not integrated by default. See [Logging Guide - Adding External Monitoring Integrations](../user-guide/logging.md#adding-external-monitoring-integrations) for step-by-step instructions.
+
 **Installation**:
 
 ```bash
@@ -327,16 +329,32 @@ sentry-sdk==1.40.0
 ```bash
 # Add to .env
 SENTRY_DSN=https://your-key@sentry.io/project
+SENTRY_TRACES_SAMPLE_RATE=0.1
+SENTRY_SEND_PII=false
 ```
 
-**Integration** (already implemented):
+**Integration** (extend logger module):
 
 ```python
 # dags/market_data/utils/logger.py
-import sentry_sdk
+try:
+    import sentry_sdk
+    from sentry_sdk.integrations.logging import LoggingIntegration
+    SENTRY_AVAILABLE = True
+except ImportError:
+    SENTRY_AVAILABLE = False
 
-if SENTRY_DSN:
-    sentry_sdk.init(dsn=SENTRY_DSN, environment=ENVIRONMENT)
+# In MarketDataLogger.__init__()
+if SENTRY_AVAILABLE and os.environ.get("SENTRY_DSN"):
+    sentry_logging = LoggingIntegration(
+        level=logging.INFO, event_level=logging.ERROR
+    )
+    sentry_sdk.init(
+        dsn=os.environ.get("SENTRY_DSN"),
+        environment=os.environ.get("ENVIRONMENT", "development"),
+        traces_sample_rate=float(os.environ.get("SENTRY_TRACES_SAMPLE_RATE", "0.1")),
+        integrations=[sentry_logging],
+    )
 ```
 
 ---

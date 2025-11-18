@@ -177,8 +177,9 @@ PROD_WAREHOUSE_USER=<WAREHOUSE_USER>
 PROD_WAREHOUSE_PASSWORD=<WAREHOUSE_PASSWORD>
 
 # === MONITORING (Optional) ===
-SENTRY_DSN=https://your-key@sentry.io/project
-DD_API_KEY=<DATADOG_API_KEY>
+# Optional: Add Sentry/Datadog (see docs/user-guide/logging.md)
+# SENTRY_DSN=https://your-key@sentry.io/project
+# DD_API_KEY=<DATADOG_API_KEY>
 
 # === RESOURCES ===
 AIRFLOW__CELERY__WORKER_CONCURRENCY=16
