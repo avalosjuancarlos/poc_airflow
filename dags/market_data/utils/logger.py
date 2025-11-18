@@ -5,8 +5,10 @@ Provides:
 - Structured logging with contextual information
 - Decorators for automatic function logging
 - Metrics tracking (execution times, error rates)
-- Integration support for Sentry and Datadog
 - Audit logging capabilities
+
+Note: External monitoring integrations (Sentry, Datadog) can be added
+by extending this module. See documentation for integration guides.
 """
 
 import functools
@@ -16,23 +18,6 @@ from contextlib import contextmanager
 from typing import Any, Callable, Dict, Optional
 
 from market_data.config.logging_config import LOGGING_CONFIG
-
-# Sentry integration (optional)
-try:
-    import sentry_sdk
-    from sentry_sdk.integrations.logging import LoggingIntegration
-
-    SENTRY_AVAILABLE = True
-except ImportError:
-    SENTRY_AVAILABLE = False
-
-# Datadog integration (optional)
-try:
-    import ddtrace  # noqa: F401
-
-    DATADOG_AVAILABLE = True
-except ImportError:
-    DATADOG_AVAILABLE = False
 
 
 class MarketDataLogger:
@@ -61,10 +46,6 @@ class MarketDataLogger:
         if not self.logger.handlers:
             self._setup_handler()
 
-        # Initialize integrations
-        self._initialize_sentry()
-        self._initialize_datadog()
-
         # Context storage
         self._context: Dict[str, Any] = {}
 
@@ -75,40 +56,6 @@ class MarketDataLogger:
         formatter = logging.Formatter(LOGGING_CONFIG["format"])
         handler.setFormatter(formatter)
         self.logger.addHandler(handler)
-
-    def _initialize_sentry(self):
-        """Initialize Sentry integration if configured."""
-        if not SENTRY_AVAILABLE or not LOGGING_CONFIG["sentry"]:
-            return
-
-        try:
-            sentry_config = LOGGING_CONFIG["sentry"]
-            sentry_logging = LoggingIntegration(
-                level=logging.INFO, event_level=logging.ERROR
-            )
-
-            sentry_sdk.init(
-                dsn=sentry_config["dsn"],
-                environment=sentry_config["environment"],
-                traces_sample_rate=sentry_config["traces_sample_rate"],
-                send_default_pii=sentry_config["send_default_pii"],
-                integrations=[sentry_logging],
-            )
-            self.logger.info("Sentry integration initialized")
-        except Exception as e:
-            self.logger.warning(f"Failed to initialize Sentry: {e}")
-
-    def _initialize_datadog(self):
-        """Initialize Datadog integration if configured."""
-        if not DATADOG_AVAILABLE or not LOGGING_CONFIG["datadog"]:
-            return
-
-        try:
-            # Datadog is configured via environment variables
-            # Just log that it's available
-            self.logger.info("Datadog tracing available")
-        except Exception as e:
-            self.logger.warning(f"Failed to initialize Datadog: {e}")
 
     def set_context(self, **kwargs):
         """
@@ -160,7 +107,6 @@ class MarketDataLogger:
         message: str,
         extra: Optional[Dict] = None,
         exc_info: bool = False,
-        send_to_sentry: bool = True,
     ):
         """
         Log error message.
@@ -169,34 +115,18 @@ class MarketDataLogger:
             message: Error message
             extra: Additional context
             exc_info: Include exception info
-            send_to_sentry: Send to Sentry if available
         """
         self.logger.error(self._format_message(message, extra), exc_info=exc_info)
 
-        if send_to_sentry and SENTRY_AVAILABLE and LOGGING_CONFIG["sentry"]:
-            try:
-                sentry_sdk.capture_message(message, level="error")
-            except Exception:
-                pass  # Fail silently if Sentry is unavailable
-
-    def exception(
-        self, message: str, extra: Optional[Dict] = None, send_to_sentry: bool = True
-    ):
+    def exception(self, message: str, extra: Optional[Dict] = None):
         """
         Log exception with traceback.
 
         Args:
             message: Exception message
             extra: Additional context
-            send_to_sentry: Send to Sentry if available
         """
         self.logger.exception(self._format_message(message, extra))
-
-        if send_to_sentry and SENTRY_AVAILABLE and LOGGING_CONFIG["sentry"]:
-            try:
-                sentry_sdk.capture_exception()
-            except Exception:
-                pass  # Fail silently if Sentry is unavailable
 
     def metric(self, metric_name: str, value: Any, tags: Optional[Dict] = None):
         """

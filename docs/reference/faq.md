@@ -48,7 +48,7 @@ Yes! The project includes:
 - ✅ Comprehensive error handling
 - ✅ 142 tests with 78% coverage
 - ✅ CI/CD pipeline (GitHub Actions)
-- ✅ Centralized logging with Sentry/Datadog support
+- ✅ Centralized logging with extensible architecture
 - ✅ Multi-environment configuration
 - ✅ Complete documentation (90%)
 - ✅ Security best practices
@@ -794,28 +794,19 @@ print(f"Using: {config['type']} at {config['host']}")
 EOF
 ```
 
-### How do I enable Sentry/Datadog?
+### How do I add Sentry or Datadog monitoring?
 
-**Sentry**:
-```bash
-# .env
-SENTRY_DSN=https://your-key@sentry.io/project
+The logging system is designed to be extensible. To add external monitoring:
 
-# requirements.txt (already included)
-sentry-sdk==1.40.0
-```
+**See**: [Logging Guide - Adding External Monitoring Integrations](../user-guide/logging.md#adding-external-monitoring-integrations)
 
-**Datadog**:
-```bash
-# .env
-DD_API_KEY=your_api_key
-DD_SITE=datadoghq.com
+The guide includes step-by-step instructions for:
+- Installing required packages
+- Extending the logger module
+- Configuring environment variables
+- Testing the integration
 
-# requirements.txt
-ddtrace==2.3.0
-```
-
-**Restart services** after changes.
+**Note**: These integrations are not included by default to keep dependencies minimal. You can add them when needed by following the documentation.
 
 ### How do I add email alerts?
 
@@ -1051,9 +1042,9 @@ Red boxes indicate failures
 docker compose logs airflow-scheduler | grep -i "failed"
 ```
 
-**4. External monitoring**:
-- Sentry: Error tracking
-- Datadog: APM and metrics
+**4. External monitoring** (optional):
+- Add Sentry for error tracking (see [Logging Guide](../user-guide/logging.md))
+- Add Datadog for APM and metrics (see [Logging Guide](../user-guide/logging.md))
 - Prometheus: Alerts via Alertmanager
 
 ### What metrics should I monitor?

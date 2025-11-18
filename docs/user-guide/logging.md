@@ -96,50 +96,85 @@ AIRFLOW__LOGGING__JSON_FORMAT=false
 AIRFLOW__LOGGING__JSON_FORMAT=true
 ```
 
-### Sentry Integration
+### Adding External Monitoring Integrations
 
-Enable error tracking and monitoring with Sentry:
+The logging system is designed to be extensible. You can add external monitoring tools like Sentry or Datadog by extending the logger module.
+
+#### Adding Sentry Integration
+
+To add Sentry error tracking:
 
 1. **Install Sentry SDK**:
    ```bash
    pip install sentry-sdk==1.40.0
    ```
 
-2. **Configure environment variables**:
-   ```bash
-   SENTRY_DSN=https://your-key@sentry.io/project-id
-   SENTRY_TRACES_SAMPLE_RATE=0.1  # 10% of transactions
-   SENTRY_SEND_PII=false  # Don't send personally identifiable information
+2. **Extend `dags/market_data/utils/logger.py`**:
+   ```python
+   # Add at top of file
+   try:
+       import sentry_sdk
+       from sentry_sdk.integrations.logging import LoggingIntegration
+       SENTRY_AVAILABLE = True
+   except ImportError:
+       SENTRY_AVAILABLE = False
+
+   # In MarketDataLogger.__init__(), add:
+   if SENTRY_AVAILABLE and os.environ.get("SENTRY_DSN"):
+       sentry_logging = LoggingIntegration(
+           level=logging.INFO, event_level=logging.ERROR
+       )
+       sentry_sdk.init(
+           dsn=os.environ.get("SENTRY_DSN"),
+           environment=os.environ.get("ENVIRONMENT", "development"),
+           traces_sample_rate=float(os.environ.get("SENTRY_TRACES_SAMPLE_RATE", "0.1")),
+           integrations=[sentry_logging],
+       )
+
+   # In error() and exception() methods, add:
+   if SENTRY_AVAILABLE:
+       sentry_sdk.capture_message(message, level="error")  # or capture_exception()
    ```
 
-3. **Benefits**:
-   - Automatic error reporting
-   - Stack traces and context
-   - Performance monitoring
-   - Release tracking
+3. **Configure environment variables**:
+   ```bash
+   SENTRY_DSN=https://your-key@sentry.io/project-id
+   SENTRY_TRACES_SAMPLE_RATE=0.1
+   SENTRY_SEND_PII=false
+   ```
 
-### Datadog Integration
+#### Adding Datadog Integration
 
-Enable APM and metrics with Datadog:
+To add Datadog APM:
 
 1. **Install Datadog tracer**:
    ```bash
    pip install ddtrace==2.3.0
    ```
 
-2. **Configure environment variables**:
-   ```bash
-   DD_API_KEY=your-datadog-api-key
-   DD_APP_KEY=your-datadog-app-key
-   DD_SITE=datadoghq.com  # or datadoghq.eu
-   DD_SERVICE=airflow-market-data
+2. **Extend `dags/market_data/utils/logger.py`**:
+   ```python
+   # Add at top of file
+   try:
+       import ddtrace
+       DATADOG_AVAILABLE = True
+   except ImportError:
+       DATADOG_AVAILABLE = False
+
+   # In MarketDataLogger.__init__(), add:
+   if DATADOG_AVAILABLE and os.environ.get("DD_API_KEY"):
+       ddtrace.patch_all()  # Auto-instrument common libraries
    ```
 
-3. **Benefits**:
-   - Application performance monitoring (APM)
-   - Distributed tracing
-   - Metrics and dashboards
-   - Log correlation
+3. **Configure environment variables**:
+   ```bash
+   DD_API_KEY=your-datadog-api-key
+   DD_SITE=datadoghq.com
+   DD_SERVICE=airflow-market-data
+   DD_ENV=production
+   ```
+
+**Note**: See [Sentry Python SDK](https://docs.sentry.io/platforms/python/) and [Datadog APM](https://docs.datadoghq.com/tracing/setup_overview/setup/python/) for complete integration guides.
 
 ## Features
 
@@ -223,8 +258,7 @@ except Exception as e:
         "Operation failed",
         extra={"operation": "fetch_data", "ticker": "AAPL"}
     )
-    # Optionally send to Sentry
-    logger.error("Critical failure", send_to_sentry=True)
+    logger.error("Critical failure")
 ```
 
 ## Best Practices
@@ -387,25 +421,6 @@ with DAG('market_data', ...):
    logger.info("Test message")
    ```
 
-### Sentry Not Reporting Errors
-
-1. Verify DSN configuration:
-   ```bash
-   echo $SENTRY_DSN
-   ```
-
-2. Check Sentry SDK installation:
-   ```bash
-   python -c "import sentry_sdk; print(sentry_sdk.VERSION)"
-   ```
-
-3. Test Sentry connection:
-   ```python
-   import sentry_sdk
-   sentry_sdk.init(dsn="your-dsn")
-   sentry_sdk.capture_message("Test message")
-   ```
-
 ### Performance Issues
 
 If logging is impacting performance:
@@ -415,14 +430,16 @@ If logging is impacting performance:
    ENVIRONMENT=production  # Sets WARNING level
    ```
 
-2. Reduce Sentry sampling rate:
-   ```bash
-   SENTRY_TRACES_SAMPLE_RATE=0.01  # 1% sampling
-   ```
-
-3. Use async logging (if available):
+2. Use async logging (if available):
    ```python
    # Configure async handlers in logging config
+   ```
+
+3. Reduce log verbosity for high-frequency operations:
+   ```python
+   # Use DEBUG only when needed
+   if logger.isEnabledFor(logging.DEBUG):
+       logger.debug("Detailed diagnostic info")
    ```
 
 ## Examples
@@ -470,7 +487,7 @@ def process_market_data(tickers=DEFAULT_TICKERS, **context):
                 f"Processing failed for {ticker}",
                 extra={"ticker": ticker, "error": str(e)}
             )
-            logger.error("Critical processing failure", send_to_sentry=True)
+            logger.error("Critical processing failure")
             raise
         finally:
             logger.clear_context()
@@ -479,7 +496,7 @@ def process_market_data(tickers=DEFAULT_TICKERS, **context):
 ## Additional Resources
 
 - [Airflow Logging Documentation](https://airflow.apache.org/docs/apache-airflow/stable/logging-monitoring/logging-tasks.html)
-- [Sentry Python SDK](https://docs.sentry.io/platforms/python/)
-- [Datadog APM for Python](https://docs.datadoghq.com/tracing/setup_overview/setup/python/)
 - [Python Logging Best Practices](https://docs.python.org/3/howto/logging.html)
+- [Sentry Python SDK](https://docs.sentry.io/platforms/python/) - For adding error tracking
+- [Datadog APM for Python](https://docs.datadoghq.com/tracing/setup_overview/setup/python/) - For adding APM and metrics
 

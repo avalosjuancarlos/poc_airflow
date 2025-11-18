@@ -139,7 +139,7 @@ Enterprise-ready Apache Airflow 2.11 deployment with:
 - **🔄 CeleryExecutor** for distributed task execution
 - **📊 Market Data DAG** for fetching financial data from Yahoo Finance API
 - **🧪 Comprehensive Testing** with 82 tests and 84% coverage
-- **📝 Centralized Logging** with Sentry/Datadog integration ready
+- **📝 Centralized Logging** with extensible architecture for monitoring integrations
 - **🐳 Docker Compose** setup for local development and testing
 - **✅ CI/CD Pipeline** with automated testing and linting
 - **📚 Complete Documentation** for users, developers, and operators
@@ -209,8 +209,7 @@ Enterprise-ready Apache Airflow 2.11 deployment with:
 - ✅ **Execution Decorators** - Automatic timing and error logging
 - ✅ **Metrics Tracking** - Built-in metrics for monitoring
 - ✅ **Audit Logging** - Compliance-ready audit trail
-- ✅ **Sentry Integration** - Error tracking (optional)
-- ✅ **Datadog Integration** - APM and metrics (optional)
+- ✅ **Extensible Logging** - Architecture ready for external monitoring tools (Sentry, Datadog, etc.)
 
 ---
 
@@ -534,8 +533,7 @@ AIRFLOW__LOGGING__LEVEL=INFO
 AIRFLOW__LOGGING__JSON_FORMAT=false
 
 # Optional: Monitoring Integration
-# SENTRY_DSN=https://your-key@sentry.io/project
-# DD_API_KEY=your-datadog-api-key
+# See docs/user-guide/logging.md for adding Sentry, Datadog, or other tools
 ```
 
 > ℹ️ **Tip:** Docker Compose exports these variables to every Airflow component (scheduler, workers, triggerer, webserver). After editing `.env`, restart the stack (`make down && make up`) so the DAG UI loads the new defaults (e.g., updated `MARKET_DATA_DEFAULT_TICKERS`).
@@ -624,7 +622,7 @@ logger.audit("data_fetched", {"user": "airflow", "ticker": "AAPL"})
 - Contextual information in every log
 - Automatic execution timing
 - Metrics and audit trails
-- Sentry/Datadog integration ready
+- Extensible architecture for monitoring tools
 
 **See**: [Logging Guide](docs/user-guide/logging.md)
 
