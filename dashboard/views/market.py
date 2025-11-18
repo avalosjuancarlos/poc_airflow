@@ -3,7 +3,23 @@ from datetime import datetime
 import pandas as pd
 import streamlit as st
 
-from config import ENVIRONMENT
+from components.export import render_export_buttons
+from components.kpi_panel import render_kpi_panel
+from components.ticker_comparator import render_ticker_comparator
+from config import ENVIRONMENT, TRADING_DAYS_PER_YEAR
+from icons import (
+    ICON_BOLLINGER,
+    ICON_DATA_TABLE,
+    ICON_MACD,
+    ICON_MOVING_AVERAGES,
+    ICON_PRICE,
+    ICON_REFRESH,
+    ICON_RETURNS,
+    ICON_RSI,
+    ICON_SETTINGS,
+    ICON_SUMMARY,
+    ICON_VOLATILITY,
+)
 from charts import (
     plot_bollinger_bands,
     plot_macd,
@@ -19,17 +35,42 @@ from data import load_available_tickers, load_market_data, load_summary_stats
 def render_market_dashboard_view(sidebar, on_empty_view=None):
     tickers = load_available_tickers()
     selected_ticker = None
+    selected_tickers = []
     days = 180
 
     with sidebar:
-        st.header("⚙️ Market Configuration")
+        st.header(f"{ICON_SETTINGS} Market Configuration")
+        
+        # Mode selector: Single ticker or Comparison
+        view_mode = st.radio(
+            "View Mode",
+            options=["Single Ticker", "Compare Tickers"],
+            index=0,
+            key="view_mode_selector",
+            help="Analyze a single ticker or compare multiple tickers",
+        )
+        
         if tickers:
-            selected_ticker = st.selectbox(
-                "Select Ticker",
-                options=tickers,
-                index=0,
-                help="Choose a stock ticker to analyze",
-            )
+            if view_mode == "Single Ticker":
+                selected_ticker = st.selectbox(
+                    "Select Ticker",
+                    options=tickers,
+                    index=0,
+                    help="Choose a stock ticker to analyze",
+                    key="single_ticker_selector",
+                )
+                selected_tickers = [selected_ticker] if selected_ticker else []
+            else:
+                from config import MAX_RECOMMENDED_TICKERS
+
+                selected_tickers = st.multiselect(
+                    "Select Tickers to Compare",
+                    options=tickers,
+                    default=tickers[:2] if len(tickers) >= 2 else tickers[:1],
+                    help=f"Select 2 or more tickers to compare (up to {MAX_RECOMMENDED_TICKERS} recommended)",
+                    key="multi_ticker_selector",
+                )
+                selected_ticker = selected_tickers[0] if selected_tickers else None
         else:
             st.warning(
                 "No market data available yet. You can still explore the warehouse or "
@@ -44,6 +85,10 @@ def render_market_dashboard_view(sidebar, on_empty_view=None):
             )
             if manual_ticker.strip():
                 selected_ticker = manual_ticker.strip().upper()
+                selected_tickers = [selected_ticker]
+            else:
+                selected_ticker = None
+                selected_tickers = []
 
         days_options = {
             "1 Month": 30,
@@ -60,12 +105,12 @@ def render_market_dashboard_view(sidebar, on_empty_view=None):
         )
         days = days_options[selected_range]
 
-        if st.button("🔄 Refresh Data", key="refresh_market_data"):
+        if st.button(f"{ICON_REFRESH} Refresh Data", key="refresh_market_data"):
             st.cache_data.clear()
             st.rerun()
 
         st.markdown("---")
-        st.header("📈 Summary")
+        st.header(f"{ICON_SUMMARY} Summary")
         stats = load_summary_stats(selected_ticker) if selected_ticker else {}
 
         if stats:
@@ -101,7 +146,15 @@ def render_market_dashboard_view(sidebar, on_empty_view=None):
                 else:
                     st.metric("Avg Volatility", "N/A")
 
-    st.subheader("Market Data Dashboard")
+    # Handle comparison mode
+    if view_mode == "Compare Tickers" and len(selected_tickers) >= 2:
+        render_ticker_comparator(selected_tickers, days)
+        return
+    elif view_mode == "Compare Tickers" and len(selected_tickers) < 2:
+        st.info("👈 Select at least 2 tickers in the sidebar to compare them.")
+        if on_empty_view:
+            on_empty_view()
+        return
 
     if not selected_ticker:
         st.info(
@@ -129,20 +182,32 @@ def render_market_dashboard_view(sidebar, on_empty_view=None):
     last_update = df["updated_at"].max() if "updated_at" in df.columns else "Unknown"
     st.caption(f"Last updated: {last_update}")
 
+    # Enhanced KPI Panel
+    render_kpi_panel(selected_ticker, df)
+
     tabs = st.tabs(
         [
-            "📊 Price & Volume",
-            "📈 Moving Averages",
-            "📉 Bollinger Bands",
-            "⚡ RSI",
-            "🌊 MACD",
-            "💹 Returns & Volatility",
-            "📋 Data Table",
+            f"{ICON_PRICE} Price & Volume",
+            f"{ICON_MOVING_AVERAGES} Moving Averages",
+            f"{ICON_BOLLINGER} Bollinger Bands",
+            f"{ICON_RSI} RSI",
+            f"{ICON_MACD} MACD",
+            f"{ICON_RETURNS} Returns & Volatility",
+            f"{ICON_DATA_TABLE} Data Table",
         ]
     )
 
     with tabs[0]:
         st.plotly_chart(plot_price_chart(df, selected_ticker), use_container_width=True)
+        
+        # Export chart data
+        chart_data = df[["date", "open", "high", "low", "close", "volume"]].copy()
+        render_export_buttons(
+            chart_data,
+            f"{selected_ticker}_price_volume",
+            prefix="price_chart_export",
+        )
+        
         col1, col2, col3, col4 = st.columns([1, 1, 1, 1])
         with col1:
             st.metric(
@@ -165,6 +230,15 @@ def render_market_dashboard_view(sidebar, on_empty_view=None):
         st.plotly_chart(
             plot_moving_averages(df, selected_ticker), use_container_width=True
         )
+        
+        # Export chart data
+        ma_data = df[["date", "close", "sma_7", "sma_14", "sma_20"]].copy()
+        render_export_buttons(
+            ma_data,
+            f"{selected_ticker}_moving_averages",
+            prefix="ma_chart_export",
+        )
+        
         col1, col2, col3 = st.columns([1, 1, 1])
         with col1:
             st.metric(
@@ -194,6 +268,15 @@ def render_market_dashboard_view(sidebar, on_empty_view=None):
         st.plotly_chart(
             plot_bollinger_bands(df, selected_ticker), use_container_width=True
         )
+        
+        # Export chart data
+        bb_data = df[["date", "close", "bb_upper", "bb_middle", "bb_lower"]].copy()
+        render_export_buttons(
+            bb_data,
+            f"{selected_ticker}_bollinger_bands",
+            prefix="bb_chart_export",
+        )
+        
         col1, col2, col3 = st.columns([1, 1, 1])
         with col1:
             st.metric(
@@ -225,6 +308,15 @@ def render_market_dashboard_view(sidebar, on_empty_view=None):
 
     with tabs[3]:
         st.plotly_chart(plot_rsi(df, selected_ticker), use_container_width=True)
+        
+        # Export chart data
+        rsi_data = df[["date", "rsi"]].copy()
+        render_export_buttons(
+            rsi_data,
+            f"{selected_ticker}_rsi",
+            prefix="rsi_chart_export",
+        )
+        
         current_rsi = df["rsi"].iloc[-1] if df["rsi"].notna().any() else None
         if current_rsi:
             col1, col2 = st.columns(2)
@@ -240,6 +332,15 @@ def render_market_dashboard_view(sidebar, on_empty_view=None):
 
     with tabs[4]:
         st.plotly_chart(plot_macd(df, selected_ticker), use_container_width=True)
+        
+        # Export chart data
+        macd_data = df[["date", "macd", "macd_signal", "macd_histogram"]].copy()
+        render_export_buttons(
+            macd_data,
+            f"{selected_ticker}_macd",
+            prefix="macd_chart_export",
+        )
+        
         col1, col2, col3 = st.columns([1, 1, 1])
         with col1:
             st.metric(
@@ -271,6 +372,14 @@ def render_market_dashboard_view(sidebar, on_empty_view=None):
             st.plotly_chart(plot_returns(df, selected_ticker), use_container_width=True)
         with col2:
             st.plotly_chart(plot_volatility(df, selected_ticker), use_container_width=True)
+        
+        # Export chart data
+        returns_vol_data = df[["date", "daily_return", "volatility_20d"]].copy()
+        render_export_buttons(
+            returns_vol_data,
+            f"{selected_ticker}_returns_volatility",
+            prefix="returns_vol_chart_export",
+        )
 
         col1, col2, col3, col4 = st.columns([1, 1, 1, 1])
         with col1:
@@ -303,14 +412,16 @@ def render_market_dashboard_view(sidebar, on_empty_view=None):
             )
         with col4:
             sharpe = (
-                df["daily_return"].mean() / df["daily_return"].std() * (252**0.5)
+                df["daily_return"].mean()
+                / df["daily_return"].std()
+                * (TRADING_DAYS_PER_YEAR**0.5)
                 if df["daily_return"].notna().any() and df["daily_return"].std() > 0
                 else 0
             )
             st.metric("Sharpe Ratio", f"{sharpe:.2f}")
 
     with tabs[6]:
-        st.subheader("📋 Raw Data")
+        st.subheader(f"{ICON_DATA_TABLE} Raw Data")
         col1, _ = st.columns([1, 3])
         with col1:
             show_all_columns = st.checkbox("Show All Columns", value=False)
@@ -337,13 +448,8 @@ def render_market_dashboard_view(sidebar, on_empty_view=None):
             height=400,
         )
 
-        csv = df.to_csv(index=False)
-        st.download_button(
-            label="⬇️ Download CSV",
-            data=csv,
-            file_name=f"{selected_ticker}_market_data_{datetime.now().strftime('%Y%m%d')}.csv",
-            mime="text/csv",
-        )
+        # Enhanced Export with multiple formats
+        render_export_buttons(df, selected_ticker, prefix="market_data_table")
 
     st.markdown("---")
     st.caption(

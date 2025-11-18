@@ -5,6 +5,8 @@ import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 
+from components.export import render_export_buttons
+from icons import ICON_CODE, ICON_COPY, ICON_QUERY, ICON_REFRESH, ICON_SHARE, ICON_WAREHOUSE
 from data import (
     build_warehouse_query,
     load_distinct_values,
@@ -48,12 +50,12 @@ def _validate_custom_filter(filter_str: str) -> tuple[bool, str]:
 
 def render_warehouse_explorer(key_prefix="warehouse", show_header=True):
     if show_header:
-        st.header("🏭 Warehouse Explorer")
+        st.header(f"{ICON_WAREHOUSE} Warehouse Explorer")
         st.caption(
             "Browse any warehouse table, preview SQL, and export results for downstream use."
         )
 
-    if st.button("🔄 Refresh warehouse data", key=f"{key_prefix}_refresh_button"):
+    if st.button(f"{ICON_REFRESH} Refresh warehouse data", key=f"{key_prefix}_refresh_button"):
         st.cache_data.clear()
         st.rerun()
 
@@ -240,13 +242,44 @@ def render_warehouse_explorer(key_prefix="warehouse", show_header=True):
         height=500,
     )
 
-    download_csv = warehouse_df.to_csv(index=False)
-    st.download_button(
-        label="⬇️ Download result CSV",
-        data=download_csv,
-        file_name=f"{schema}_{table}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
-        mime="text/csv",
-    )
+    # Enhanced export with multiple formats
+    export_name = f"{schema}_{table}"
+    render_export_buttons(warehouse_df, export_name, prefix=f"{key_prefix}_warehouse")
+
+    # Share query functionality
+    st.markdown("---")
+    st.subheader(f"{ICON_SHARE} Share Query")
+    
+    share_col1, share_col2 = st.columns(2)
+    
+    with share_col1:
+        st.markdown(f"**{ICON_QUERY} Copy SQL Query**")
+        st.code(query, language="sql")
+        if st.button(f"{ICON_COPY} Copy SQL", key=f"{key_prefix}_copy_sql"):
+            st.success("SQL query copied! (Use Ctrl+C / Cmd+C)")
+    
+    with share_col2:
+        st.markdown("**Query Parameters**")
+        if params:
+            params_str = " | ".join([f"{k}={v}" for k, v in params.items()])
+            st.code(params_str, language="text")
+        else:
+            st.info("No parameters for this query")
+        
+        # Generate shareable query code
+        query_code = f"""
+# Warehouse Query
+# Table: {schema}.{table}
+# Filters: {len(ticker_filter)} tickers, date range: {date_range}, limit: {limit_rows}
+
+query = """
+        query_code += f'"""{query}"""'
+        query_code += f"\nparams = {params}"
+        
+        st.markdown(f"**{ICON_CODE} Python Code**")
+        st.code(query_code, language="python")
+        if st.button(f"{ICON_COPY} Copy Code", key=f"{key_prefix}_copy_code"):
+            st.success("Python code copied!")
 
     with st.expander("Table schema"):
         if column_metadata:

@@ -33,6 +33,12 @@ services:
     
     volumes:
       - ./app.py:/app/app.py
+      - ./config.py:/app/config.py
+      - ./charts.py:/app/charts.py
+      - ./data.py:/app/data.py
+      - ./icons.py:/app/icons.py
+      - ./components:/app/components
+      - ./views:/app/views
     
     # Connect to Airflow network to access warehouse-postgres
     networks:
