@@ -144,14 +144,15 @@ with DAG(
     - Carga a Data Warehouse (PostgreSQL dev / Redshift prod)
     
     ### Backfill Automático (Primera Ejecución)
-    - Si no existe archivo Parquet → Backfill de 20 días
+    - Si no existe archivo Parquet → Backfill de **120 días** (~6 meses)
     - Si existe archivo Parquet → Solo día actual
+    - Configurable via `MARKET_DATA_BACKFILL_DAYS` (default: 120)
     
     ## 📊 Indicadores Técnicos Calculados (12)
     
-    - **Trend**: SMA (7, 14, 20), EMA, MACD (line, signal, histogram)
+    - **Trend**: SMA (7, 14, 20), EMA (12), MACD (line, signal, histogram)
     - **Momentum**: RSI (14 días)
-    - **Volatility**: Bollinger Bands, Volatility 20d
+    - **Volatility**: Bollinger Bands (upper, middle, lower), Volatility 20d
     - **Returns**: Daily return %
     
     ## 💾 Almacenamiento Multi-Capa
@@ -160,21 +161,23 @@ with DAG(
     - **Formato**: Apache Parquet (compresión Snappy)
     - **Ubicación**: `/opt/airflow/data/{TICKER}_market_data.parquet`
     - **Uso**: Cache local, recovery, análisis local
+    - **Ventaja**: 80% menos espacio que CSV
     
     ### Layer 2: Data Warehouse
     - **Development**: PostgreSQL (mismo servidor, schema separado)
     - **Staging/Production**: Amazon Redshift (cluster dedicado)
     - **Estrategia**: UPSERT (inserta nuevos, actualiza existentes)
-    - **Schema**: fact_market_data con 25+ columnas
+    - **Schema**: `fact_market_data` con 25+ columnas
+    - **Tablas adicionales**: `dim_ticker` con metadatos (long_name, short_name)
     
     ## 🔄 Flujo de Ejecución (6 Tareas)
     
-    1. **Validate Ticker**: Valida formato del ticker symbol
-    2. **Determine Dates**: Decide backfill (20 días) o incremental (1 día)
-    3. **Check API Availability**: Sensor verifica disponibilidad de API
-    4. **Fetch Multiple Dates**: Obtiene datos de Yahoo Finance (1-20 fechas)
+    1. **Validate Ticker**: Valida formato del ticker symbol (soporta múltiples tickers)
+    2. **Determine Dates**: Decide backfill (120 días) o incremental (1 día)
+    3. **Check API Availability**: Sensor verifica disponibilidad de API con exponential backoff
+    4. **Fetch Multiple Dates**: Obtiene datos de Yahoo Finance (1-120 fechas según backfill)
     5. **Transform & Save**: Calcula indicadores y guarda en Parquet
-    6. **Load to Warehouse**: Carga desde Parquet a PostgreSQL/Redshift
+    6. **Load to Warehouse**: Carga desde Parquet a PostgreSQL/Redshift con UPSERT
     
     ## 🌍 Ambientes
     
@@ -188,18 +191,71 @@ with DAG(
     
     ```json
     {
-        "tickers": ["AAPL", "MSFT", "NVDA"]
+        "tickers": ["AAPL", "MSFT", "NVDA"],
+        "date": "2025-01-15"
     }
     ```
     
-    ## ⚙️ Variables de Entorno Principales
+    - **tickers**: Lista de tickers a procesar (soporta múltiples simultáneamente)
+    - **date**: Fecha de ejecución (default: fecha actual)
+    
+    ## ⚙️ Configuración
+    
+    **Sistema de prioridad**: Las configuraciones se resuelven en este orden:
+    1. **Airflow Variables** (prioridad más alta, se pueden cambiar desde la UI sin reiniciar)
+    2. **Variables de Entorno** (configuradas en `.env` o sistema)
+    3. **Valores por defecto** (hardcoded en el código)
+    
+    ### Variables de Airflow (Configurables desde UI)
+    
+    Estas variables pueden configurarse desde la UI de Airflow (Admin → Variables) o como variables de entorno:
+    
+    - `market_data.default_tickers`: Lista de tickers por defecto (JSON array o CSV)
+      - Variable de Entorno equivalente: `MARKET_DATA_DEFAULT_TICKERS`
+      - Default: `["AAPL"]`
+    
+    - `market_data.backfill_days`: Días de backfill en primera ejecución
+      - Variable de Entorno equivalente: `MARKET_DATA_BACKFILL_DAYS`
+      - Default: `120`
+    
+    ### Variables de Entorno
+    
+    Estas variables solo se configuran mediante variables de entorno (`.env` o sistema):
     
     - `ENVIRONMENT`: development | staging | production
-    - `MARKET_DATA_DEFAULT_TICKERS`: Lista de tickers por defecto (JSON/CSV)
-    - `MARKET_DATA_STORAGE_DIR`: Directorio Parquet (default: /opt/airflow/data)
+      - Controla qué ambiente de warehouse usar
+    
+    - `MARKET_DATA_STORAGE_DIR`: Directorio Parquet
+      - Default: `/opt/airflow/data`
+    
     - `WAREHOUSE_LOAD_STRATEGY`: upsert | append | truncate_insert
+      - Estrategia de carga al warehouse
+    
     - `DEV_WAREHOUSE_HOST`: Host PostgreSQL (development)
+      - Host del warehouse en desarrollo
+    
     - `PROD_WAREHOUSE_HOST`: Host Redshift (production)
+      - Host del warehouse en producción
+    
+    - `MARKET_DATA_API_TIMEOUT`: Timeout para llamadas API (segundos)
+      - Default: `30`
+    
+    - `MARKET_DATA_MAX_RETRIES`: Número máximo de reintentos
+      - Default: `3`
+    
+    - `MARKET_DATA_SENSOR_POKE_INTERVAL`: Intervalo del sensor (segundos)
+      - Default: `30`
+    
+    - `MARKET_DATA_SENSOR_TIMEOUT`: Timeout del sensor (segundos)
+      - Default: `600`
+    
+    ## 🚀 Características Avanzadas
+    
+    - **Multi-ticker support**: Procesa múltiples tickers en una sola ejecución
+    - **Automatic backfill**: 120 días históricos en primera ejecución
+    - **Error handling**: Retries automáticos con exponential backoff
+    - **API resilience**: Sensor verifica disponibilidad antes de ejecutar
+    - **Data validation**: Validación de formato de tickers y datos
     
     ## 📖 Documentación
     
