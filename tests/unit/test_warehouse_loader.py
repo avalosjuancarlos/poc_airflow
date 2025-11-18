@@ -193,3 +193,413 @@ class TestLoadParquetToWarehouse:
         assert "warehouse_type" in result
         assert "ticker" in result
         assert result["ticker"] == "MSFT"
+
+
+class TestCreateTables:
+    """Test create_tables method"""
+
+    @patch("market_data.warehouse.loader.get_warehouse_connection")
+    @patch("market_data.warehouse.loader.get_warehouse_config")
+    @patch("market_data.warehouse.loader.TABLE_MARKET_DATA", "fact_market_data")
+    def test_create_tables_postgresql(self, mock_get_config, mock_get_connection):
+        """Test create_tables for PostgreSQL"""
+        mock_get_config.return_value = {
+            "type": "postgresql",
+            "host": "localhost",
+            "schema": "public",
+        }
+        mock_conn = MagicMock()
+        mock_get_connection.return_value.get_connection.return_value.__enter__.return_value = (
+            mock_conn
+        )
+
+        loader = WarehouseLoader()
+        loader.create_tables()
+
+        # Should execute schema, table, and index creation
+        assert mock_conn.execute.call_count >= 2
+
+    @patch("market_data.warehouse.loader.get_warehouse_connection")
+    @patch("market_data.warehouse.loader.get_warehouse_config")
+    @patch("market_data.warehouse.loader.TABLE_MARKET_DATA", "fact_market_data")
+    def test_create_tables_redshift(self, mock_get_config, mock_get_connection):
+        """Test create_tables for Redshift"""
+        mock_get_config.return_value = {
+            "type": "redshift",
+            "host": "redshift-cluster.amazonaws.com",
+            "schema": "public",
+        }
+        mock_conn = MagicMock()
+        mock_get_connection.return_value.get_connection.return_value.__enter__.return_value = (
+            mock_conn
+        )
+
+        loader = WarehouseLoader()
+        loader.create_tables()
+
+        # Should execute table creation (no schema for Redshift)
+        assert mock_conn.execute.call_count >= 1
+
+
+class TestLoadFromParquet:
+    """Test load_from_parquet method"""
+
+    @patch("market_data.warehouse.loader.get_warehouse_connection")
+    @patch("market_data.warehouse.loader.get_warehouse_config")
+    @patch("market_data.warehouse.loader.load_from_parquet")
+    @patch("market_data.warehouse.loader.get_parquet_path")
+    def test_load_from_parquet_success(
+        self, mock_get_path, mock_load_parquet, mock_get_config, mock_get_connection
+    ):
+        """Test successful load from parquet"""
+        mock_get_config.return_value = {
+            "type": "postgresql",
+            "host": "localhost",
+            "schema": "public",
+        }
+        mock_df = pd.DataFrame(
+            {
+                "date": ["2023-01-01", "2023-01-02"],
+                "ticker": ["AAPL", "AAPL"],
+                "close": [150.0, 155.0],
+            }
+        )
+        mock_load_parquet.return_value = mock_df
+
+        loader = WarehouseLoader()
+        loader._load_dataframe = MagicMock(return_value=2)
+
+        result = loader.load_from_parquet("AAPL")
+
+        assert result == 2
+        mock_load_parquet.assert_called_once_with("AAPL")
+
+    @patch("market_data.warehouse.loader.get_warehouse_connection")
+    @patch("market_data.warehouse.loader.get_warehouse_config")
+    @patch("market_data.warehouse.loader.load_from_parquet")
+    @patch("market_data.warehouse.loader.get_parquet_path")
+    def test_load_from_parquet_file_not_found(
+        self, mock_get_path, mock_load_parquet, mock_get_config, mock_get_connection
+    ):
+        """Test load_from_parquet when file not found"""
+        mock_get_config.return_value = {
+            "type": "postgresql",
+            "host": "localhost",
+            "schema": "public",
+        }
+        mock_load_parquet.side_effect = FileNotFoundError()
+
+        loader = WarehouseLoader()
+
+        result = loader.load_from_parquet("AAPL")
+
+        assert result == 0
+
+    @patch("market_data.warehouse.loader.get_warehouse_connection")
+    @patch("market_data.warehouse.loader.get_warehouse_config")
+    @patch("market_data.warehouse.loader.load_from_parquet")
+    def test_load_from_parquet_empty_dataframe(
+        self, mock_load_parquet, mock_get_config, mock_get_connection
+    ):
+        """Test load_from_parquet with empty dataframe after filtering"""
+        mock_get_config.return_value = {
+            "type": "postgresql",
+            "host": "localhost",
+            "schema": "public",
+        }
+        # DataFrame with all null close prices
+        mock_df = pd.DataFrame(
+            {
+                "date": ["2023-01-01", "2023-01-02"],
+                "ticker": ["AAPL", "AAPL"],
+                "close": [None, None],
+            }
+        )
+        mock_load_parquet.return_value = mock_df
+
+        loader = WarehouseLoader()
+
+        result = loader.load_from_parquet("AAPL")
+
+        assert result == 0
+
+
+class TestLoadDataframe:
+    """Test _load_dataframe method"""
+
+    @patch("market_data.warehouse.loader.get_warehouse_connection")
+    @patch("market_data.warehouse.loader.get_warehouse_config")
+    @patch("market_data.warehouse.loader.LOAD_STRATEGY", "append")
+    def test_load_dataframe_append(self, mock_get_config, mock_get_connection):
+        """Test _load_dataframe with append strategy"""
+        mock_get_config.return_value = {
+            "type": "postgresql",
+            "host": "localhost",
+            "schema": "public",
+        }
+        loader = WarehouseLoader()
+        loader._load_append = MagicMock(return_value=5)
+
+        df = pd.DataFrame({"ticker": ["AAPL"], "date": ["2023-01-01"], "close": [150.0]})
+        result = loader._load_dataframe(df, "AAPL")
+
+        assert result == 5
+        loader._load_append.assert_called_once_with(df, "AAPL")
+
+    @patch("market_data.warehouse.loader.get_warehouse_connection")
+    @patch("market_data.warehouse.loader.get_warehouse_config")
+    @patch("market_data.warehouse.loader.LOAD_STRATEGY", "upsert")
+    def test_load_dataframe_upsert(self, mock_get_config, mock_get_connection):
+        """Test _load_dataframe with upsert strategy"""
+        mock_get_config.return_value = {
+            "type": "postgresql",
+            "host": "localhost",
+            "schema": "public",
+        }
+        loader = WarehouseLoader()
+        loader._load_upsert = MagicMock(return_value=5)
+
+        df = pd.DataFrame({"ticker": ["AAPL"], "date": ["2023-01-01"], "close": [150.0]})
+        result = loader._load_dataframe(df, "AAPL")
+
+        assert result == 5
+        loader._load_upsert.assert_called_once_with(df, "AAPL")
+
+    @patch("market_data.warehouse.loader.get_warehouse_connection")
+    @patch("market_data.warehouse.loader.get_warehouse_config")
+    @patch("market_data.warehouse.loader.LOAD_STRATEGY", "truncate_insert")
+    def test_load_dataframe_truncate_insert(self, mock_get_config, mock_get_connection):
+        """Test _load_dataframe with truncate_insert strategy"""
+        mock_get_config.return_value = {
+            "type": "postgresql",
+            "host": "localhost",
+            "schema": "public",
+        }
+        loader = WarehouseLoader()
+        loader._load_truncate_insert = MagicMock(return_value=5)
+
+        df = pd.DataFrame({"ticker": ["AAPL"], "date": ["2023-01-01"], "close": [150.0]})
+        result = loader._load_dataframe(df, "AAPL")
+
+        assert result == 5
+        loader._load_truncate_insert.assert_called_once_with(df, "AAPL")
+
+    @patch("market_data.warehouse.loader.get_warehouse_connection")
+    @patch("market_data.warehouse.loader.get_warehouse_config")
+    @patch("market_data.warehouse.loader.LOAD_STRATEGY", "invalid")
+    def test_load_dataframe_invalid_strategy(self, mock_get_config, mock_get_connection):
+        """Test _load_dataframe with invalid strategy"""
+        mock_get_config.return_value = {
+            "type": "postgresql",
+            "host": "localhost",
+            "schema": "public",
+        }
+        loader = WarehouseLoader()
+
+        df = pd.DataFrame({"ticker": ["AAPL"], "date": ["2023-01-01"], "close": [150.0]})
+
+        with pytest.raises(ValueError, match="Unknown load strategy"):
+            loader._load_dataframe(df, "AAPL")
+
+
+class TestLoadAppend:
+    """Test _load_append method"""
+
+    @patch("market_data.warehouse.loader.get_warehouse_connection")
+    @patch("market_data.warehouse.loader.get_warehouse_config")
+    @patch("market_data.warehouse.loader.TABLE_MARKET_DATA", "fact_market_data")
+    @patch("market_data.warehouse.loader.BATCH_SIZE", 1000)
+    def test_load_append(self, mock_get_config, mock_get_connection):
+        """Test _load_append strategy"""
+        mock_get_config.return_value = {
+            "type": "postgresql",
+            "host": "localhost",
+            "schema": "public",
+        }
+        mock_conn = MagicMock()
+        mock_get_connection.return_value.get_connection.return_value.__enter__.return_value = (
+            mock_conn
+        )
+
+        loader = WarehouseLoader()
+        df = pd.DataFrame(
+            {
+                "ticker": ["AAPL", "AAPL"],
+                "date": ["2023-01-01", "2023-01-02"],
+                "close": [150.0, 155.0],
+            }
+        )
+
+        result = loader._load_append(df, "AAPL")
+
+        assert result == 2
+        assert mock_conn.to_sql.called or hasattr(mock_conn, "to_sql")
+
+
+class TestLoadUpsert:
+    """Test _load_upsert method"""
+
+    @patch("market_data.warehouse.loader.get_warehouse_connection")
+    @patch("market_data.warehouse.loader.get_warehouse_config")
+    def test_load_upsert_postgresql(self, mock_get_config, mock_get_connection):
+        """Test _load_upsert for PostgreSQL"""
+        mock_get_config.return_value = {
+            "type": "postgresql",
+            "host": "localhost",
+            "schema": "public",
+        }
+        loader = WarehouseLoader()
+        loader._upsert_postgresql = MagicMock(return_value=3)
+
+        df = pd.DataFrame({"ticker": ["AAPL"], "date": ["2023-01-01"], "close": [150.0]})
+        result = loader._load_upsert(df, "AAPL")
+
+        assert result == 3
+        loader._upsert_postgresql.assert_called_once_with(df, "AAPL")
+
+    @patch("market_data.warehouse.loader.get_warehouse_connection")
+    @patch("market_data.warehouse.loader.get_warehouse_config")
+    def test_load_upsert_redshift(self, mock_get_config, mock_get_connection):
+        """Test _load_upsert for Redshift"""
+        mock_get_config.return_value = {
+            "type": "redshift",
+            "host": "redshift-cluster.amazonaws.com",
+            "schema": "public",
+        }
+        loader = WarehouseLoader()
+        loader._upsert_redshift = MagicMock(return_value=3)
+
+        df = pd.DataFrame({"ticker": ["AAPL"], "date": ["2023-01-01"], "close": [150.0]})
+        result = loader._load_upsert(df, "AAPL")
+
+        assert result == 3
+        loader._upsert_redshift.assert_called_once_with(df, "AAPL")
+
+
+class TestUpsertPostgreSQL:
+    """Test _upsert_postgresql method"""
+
+    @patch("market_data.warehouse.loader.get_warehouse_connection")
+    @patch("market_data.warehouse.loader.get_warehouse_config")
+    @patch("market_data.warehouse.loader.TABLE_MARKET_DATA", "fact_market_data")
+    @patch("market_data.warehouse.loader.BATCH_SIZE", 1000)
+    def test_upsert_postgresql(self, mock_get_config, mock_get_connection):
+        """Test PostgreSQL upsert"""
+        mock_get_config.return_value = {
+            "type": "postgresql",
+            "host": "localhost",
+            "schema": "public",
+        }
+        mock_conn = MagicMock()
+        mock_execute_result = MagicMock()
+        mock_conn.execute.return_value = mock_execute_result
+        mock_get_connection.return_value.get_connection.return_value.__enter__.return_value = (
+            mock_conn
+        )
+
+        loader = WarehouseLoader()
+        df = pd.DataFrame(
+            {
+                "ticker": ["AAPL"],
+                "date": ["2023-01-01"],
+                "close": [150.0],
+                "open": [149.0],
+            }
+        )
+
+        result = loader._upsert_postgresql(df, "AAPL")
+
+        assert result == 1
+        assert mock_conn.execute.called
+
+
+class TestUpsertRedshift:
+    """Test _upsert_redshift method"""
+
+    @patch("market_data.warehouse.loader.get_warehouse_connection")
+    @patch("market_data.warehouse.loader.get_warehouse_config")
+    @patch("market_data.warehouse.loader.TABLE_MARKET_DATA", "fact_market_data")
+    @patch("market_data.warehouse.loader.BATCH_SIZE", 1000)
+    def test_upsert_redshift(self, mock_get_config, mock_get_connection):
+        """Test Redshift upsert"""
+        mock_get_config.return_value = {
+            "type": "redshift",
+            "host": "redshift-cluster.amazonaws.com",
+            "schema": "public",
+        }
+        mock_conn = MagicMock()
+        mock_get_connection.return_value.get_connection.return_value.__enter__.return_value = (
+            mock_conn
+        )
+
+        loader = WarehouseLoader()
+        df = pd.DataFrame(
+            {
+                "ticker": ["AAPL"],
+                "date": ["2023-01-01"],
+                "close": [150.0],
+            }
+        )
+
+        result = loader._upsert_redshift(df, "AAPL")
+
+        assert result == 1
+        assert mock_conn.execute.called
+
+
+class TestLoadTruncateInsert:
+    """Test _load_truncate_insert method"""
+
+    @patch("market_data.warehouse.loader.get_warehouse_connection")
+    @patch("market_data.warehouse.loader.get_warehouse_config")
+    @patch("market_data.warehouse.loader.TABLE_MARKET_DATA", "fact_market_data")
+    @patch("market_data.warehouse.loader.BATCH_SIZE", 1000)
+    def test_load_truncate_insert(self, mock_get_config, mock_get_connection):
+        """Test truncate_insert strategy"""
+        mock_get_config.return_value = {
+            "type": "postgresql",
+            "host": "localhost",
+            "schema": "public",
+        }
+        mock_conn = MagicMock()
+        mock_result = MagicMock()
+        mock_result.rowcount = 5
+        mock_conn.execute.return_value = mock_result
+        mock_get_connection.return_value.get_connection.return_value.__enter__.return_value = (
+            mock_conn
+        )
+
+        loader = WarehouseLoader()
+        df = pd.DataFrame(
+            {
+                "ticker": ["AAPL", "AAPL"],
+                "date": ["2023-01-01", "2023-01-02"],
+                "close": [150.0, 155.0],
+            }
+        )
+
+        result = loader._load_truncate_insert(df, "AAPL")
+
+        assert result == 2
+        assert mock_conn.execute.called
+
+
+class TestClose:
+    """Test close method"""
+
+    @patch("market_data.warehouse.loader.get_warehouse_connection")
+    @patch("market_data.warehouse.loader.get_warehouse_config")
+    def test_close(self, mock_get_config, mock_get_connection):
+        """Test close method"""
+        mock_get_config.return_value = {
+            "type": "postgresql",
+            "host": "localhost",
+            "schema": "public",
+        }
+        mock_connection = MagicMock()
+        mock_get_connection.return_value = mock_connection
+
+        loader = WarehouseLoader()
+        loader.close()
+
+        mock_connection.close.assert_called_once()

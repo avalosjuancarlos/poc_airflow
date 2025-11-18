@@ -2,15 +2,10 @@
 Unit tests for Yahoo Finance API Client
 """
 
-import os
-import sys
 from datetime import datetime
 from unittest.mock import Mock, patch
 
 import pytest
-
-# Add dags directory to path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../dags"))
 
 from market_data.utils.api_client import YahooFinanceClient
 
@@ -232,3 +227,93 @@ class TestYahooFinanceClient:
         assert result["quote"]["close"] == 182.41
         assert result["quote"]["volume"] == 53763500
         assert result["metadata"]["long_name"] == "Apple Inc."
+
+    @patch("market_data.utils.api_client.requests.get")
+    def test_fetch_market_data_timeout(self, mock_get, client):
+        """Test timeout handling in fetch_market_data"""
+        import requests
+
+        mock_get.side_effect = requests.exceptions.Timeout("Request timed out")
+
+        with pytest.raises(requests.exceptions.Timeout):
+            client.fetch_market_data("AAPL", "2023-11-09", max_retries=1)
+
+    @patch("market_data.utils.api_client.requests.get")
+    @patch("market_data.utils.api_client.time.sleep")
+    def test_fetch_market_data_max_retries_exceeded(
+        self, mock_sleep, mock_get, client
+    ):
+        """Test max retries exceeded raises exception"""
+        import requests
+
+        mock_get.side_effect = requests.exceptions.RequestException("Connection error")
+
+        with pytest.raises(requests.exceptions.RequestException):
+            client.fetch_market_data("AAPL", "2023-11-09", max_retries=2)
+
+    @patch("market_data.utils.api_client.requests.get")
+    def test_fetch_market_data_empty_response(self, mock_get, client):
+        """Test handling of empty response"""
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {"chart": {"result": None, "error": None}}
+        mock_get.return_value = mock_response
+
+        # Empty result should raise IndexError when trying to access result[0]
+        with pytest.raises((IndexError, TypeError)):
+            client.fetch_market_data("AAPL", "2023-11-09")
+
+    @patch("market_data.utils.api_client.requests.get")
+    def test_fetch_market_data_malformed_json(self, mock_get, client):
+        """Test handling of malformed JSON response"""
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.json.side_effect = ValueError("Invalid JSON")
+        mock_get.return_value = mock_response
+
+        with pytest.raises(ValueError, match="Invalid JSON"):
+            client.fetch_market_data("AAPL", "2023-11-09")
+
+    @patch("market_data.utils.api_client.requests.get")
+    def test_fetch_market_data_500_error(self, mock_get, client):
+        """Test handling of 500 server error"""
+        mock_response = Mock()
+        mock_response.status_code = 500
+        mock_response.raise_for_status.side_effect = Exception("Server Error")
+        mock_get.return_value = mock_response
+
+        with pytest.raises(Exception):
+            client.fetch_market_data("AAPL", "2023-11-09", max_retries=1)
+
+    @patch("market_data.utils.api_client.requests.get")
+    def test_fetch_market_data_connection_error(self, mock_get, client):
+        """Test handling of connection error"""
+        import requests
+
+        mock_get.side_effect = requests.exceptions.ConnectionError("Connection refused")
+
+        with pytest.raises(requests.exceptions.ConnectionError):
+            client.fetch_market_data("AAPL", "2023-11-09", max_retries=1)
+
+    @patch("market_data.utils.api_client.requests.get")
+    def test_check_availability_connection_error(self, mock_get, client):
+        """Test check_availability returns False on connection error"""
+        import requests
+
+        mock_get.side_effect = requests.exceptions.ConnectionError("Connection refused")
+
+        result = client.check_availability("AAPL")
+
+        assert result is False
+
+    @patch("market_data.utils.api_client.requests.get")
+    def test_check_availability_empty_result(self, mock_get, client):
+        """Test check_availability with empty result"""
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {"chart": {"result": None, "error": None}}
+        mock_get.return_value = mock_response
+
+        result = client.check_availability("AAPL")
+
+        assert result is False

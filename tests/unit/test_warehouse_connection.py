@@ -56,8 +56,11 @@ class TestWarehouseConnection:
         assert conn.warehouse_type == "postgresql"
 
     @patch("market_data.warehouse.connection.get_warehouse_config")
+    @patch("market_data.warehouse.connection.get_connection_string")
     @patch("market_data.warehouse.connection.create_engine")
-    def test_create_engine_for_postgresql(self, mock_create_engine, mock_get_config):
+    def test_create_engine_for_postgresql(
+        self, mock_create_engine, mock_get_conn_string, mock_get_config
+    ):
         """Test create_engine for PostgreSQL"""
         mock_get_config.return_value = {
             "type": "postgresql",
@@ -68,6 +71,9 @@ class TestWarehouseConnection:
             "password": "testpass",
             "schema": "public",
         }
+        mock_get_conn_string.return_value = (
+            "postgresql://testuser:testpass@localhost:5432/testdb"
+        )
 
         mock_engine = MagicMock()
         mock_engine.connect.return_value.__enter__.return_value.execute.return_value.scalar.return_value = (

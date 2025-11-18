@@ -4,17 +4,9 @@ Integration tests for DAG validation
 Tests that the DAG structure and configuration are valid
 """
 
-import os
-import sys
 from datetime import datetime, timedelta
 
 import pytest
-
-# Add dags directory to path
-DAGS_DIR = os.path.join(os.path.dirname(__file__), "../../dags")
-if DAGS_DIR not in sys.path:
-    sys.path.insert(0, DAGS_DIR)
-
 from airflow.models import DagBag
 
 

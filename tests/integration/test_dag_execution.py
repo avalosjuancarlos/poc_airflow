@@ -4,18 +4,10 @@ Integration tests for DAG execution
 Tests end-to-end execution of the DAG
 """
 
-import os
-import sys
 from datetime import datetime
 from unittest.mock import Mock, patch
 
 import pytest
-
-# Add dags directory to path
-DAGS_DIR = os.path.join(os.path.dirname(__file__), "../../dags")
-if DAGS_DIR not in sys.path:
-    sys.path.insert(0, DAGS_DIR)
-
 from airflow.models import DagBag
 
 

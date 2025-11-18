@@ -10,8 +10,11 @@ from unittest.mock import Mock
 import pytest
 
 # Add dags directory to Python path
+# Note: pytest.ini also configures pythonpath=dags, but we keep this
+# as a fallback for cases where pytest.ini might not be loaded
 DAGS_DIR = os.path.join(os.path.dirname(__file__), "../dags")
-sys.path.insert(0, DAGS_DIR)
+if DAGS_DIR not in sys.path:
+    sys.path.insert(0, DAGS_DIR)
 
 # Set Airflow home for testing
 os.environ["AIRFLOW_HOME"] = os.path.join(os.path.dirname(__file__), "../")

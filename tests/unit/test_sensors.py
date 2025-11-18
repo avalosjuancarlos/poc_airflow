@@ -2,14 +2,9 @@
 Unit tests for market data sensors
 """
 
-import os
-import sys
 from unittest.mock import Mock, patch
 
 import pytest
-
-# Add dags directory to path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../dags"))
 
 from market_data.sensors.api_sensor import check_api_availability
 
