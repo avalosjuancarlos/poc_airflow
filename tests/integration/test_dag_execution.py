@@ -61,10 +61,14 @@ class TestDAGExecution:
         dag = dagbag.get_dag("get_market_data")
         task = dag.get_task("validate_ticker")
 
-        # Create mock context
+        # Create mock context with proper structure
+        mock_task_instance = Mock()
+        mock_task_instance.xcom_push = Mock()
+
         mock_context = {
-            "dag_run": Mock(conf={"tickers": ["AAPL"], "ticker": "AAPL"}),
-            "task_instance": Mock(),
+            "dag_run": Mock(conf={"tickers": ["AAPL"]}, params={"tickers": ["AAPL"]}),
+            "task_instance": mock_task_instance,
+            "params": {"tickers": ["AAPL"]},
         }
 
         # Execute task
@@ -72,20 +76,161 @@ class TestDAGExecution:
 
         # Verify result
         assert result == ["AAPL"]
+        # Verify XCom push
+        mock_task_instance.xcom_push.assert_called_once_with(
+            key="validated_tickers", value=["AAPL"]
+        )
 
     def test_validate_ticker_lowercase(self, dagbag):
         """Test validate_ticker converts to uppercase"""
         dag = dagbag.get_dag("get_market_data")
         task = dag.get_task("validate_ticker")
 
+        mock_task_instance = Mock()
+        mock_task_instance.xcom_push = Mock()
+
         mock_context = {
-            "dag_run": Mock(conf={"tickers": ["aapl"], "ticker": "aapl"}),
-            "task_instance": Mock(),
+            "dag_run": Mock(conf={"tickers": ["aapl"]}, params={"tickers": ["aapl"]}),
+            "task_instance": mock_task_instance,
+            "params": {"tickers": ["aapl"]},
         }
 
         result = task.python_callable(**mock_context)
 
         assert result == ["AAPL"]
+
+    def test_validate_ticker_list_format(self, dagbag):
+        """Test validate_ticker accepts list format"""
+        dag = dagbag.get_dag("get_market_data")
+        task = dag.get_task("validate_ticker")
+
+        mock_task_instance = Mock()
+        mock_task_instance.xcom_push = Mock()
+
+        mock_context = {
+            "dag_run": Mock(conf={"tickers": ["AAPL", "MSFT", "NVDA"]}),
+            "task_instance": mock_task_instance,
+            "params": {},
+        }
+
+        result = task.python_callable(**mock_context)
+
+        assert result == ["AAPL", "MSFT", "NVDA"]
+        mock_task_instance.xcom_push.assert_called_once_with(
+            key="validated_tickers", value=["AAPL", "MSFT", "NVDA"]
+        )
+
+    def test_validate_ticker_csv_format(self, dagbag):
+        """Test validate_ticker accepts CSV string format"""
+        dag = dagbag.get_dag("get_market_data")
+        task = dag.get_task("validate_ticker")
+
+        mock_task_instance = Mock()
+        mock_task_instance.xcom_push = Mock()
+
+        mock_context = {
+            "dag_run": Mock(conf={"tickers": "AAPL,MSFT,NVDA"}),
+            "task_instance": mock_task_instance,
+            "params": {},
+        }
+
+        result = task.python_callable(**mock_context)
+
+        assert result == ["AAPL", "MSFT", "NVDA"]
+        mock_task_instance.xcom_push.assert_called_once_with(
+            key="validated_tickers", value=["AAPL", "MSFT", "NVDA"]
+        )
+
+    def test_validate_ticker_csv_format_with_spaces(self, dagbag):
+        """Test validate_ticker accepts CSV string with spaces"""
+        dag = dagbag.get_dag("get_market_data")
+        task = dag.get_task("validate_ticker")
+
+        mock_task_instance = Mock()
+        mock_task_instance.xcom_push = Mock()
+
+        mock_context = {
+            "dag_run": Mock(conf={"tickers": "AAPL, MSFT, NVDA"}),
+            "task_instance": mock_task_instance,
+            "params": {},
+        }
+
+        result = task.python_callable(**mock_context)
+
+        assert result == ["AAPL", "MSFT", "NVDA"]
+
+    def test_validate_ticker_json_string_format(self, dagbag):
+        """Test validate_ticker accepts JSON string format"""
+        dag = dagbag.get_dag("get_market_data")
+        task = dag.get_task("validate_ticker")
+
+        mock_task_instance = Mock()
+        mock_task_instance.xcom_push = Mock()
+
+        mock_context = {
+            "dag_run": Mock(conf={"tickers": '["AAPL","MSFT","NVDA"]'}),
+            "task_instance": mock_task_instance,
+            "params": {},
+        }
+
+        result = task.python_callable(**mock_context)
+
+        assert result == ["AAPL", "MSFT", "NVDA"]
+
+    def test_validate_ticker_from_params_list(self, dagbag):
+        """Test validate_ticker accepts list from params"""
+        dag = dagbag.get_dag("get_market_data")
+        task = dag.get_task("validate_ticker")
+
+        mock_task_instance = Mock()
+        mock_task_instance.xcom_push = Mock()
+
+        mock_context = {
+            "dag_run": Mock(conf={}, params={"tickers": ["AAPL", "MSFT"]}),
+            "task_instance": mock_task_instance,
+            "params": {"tickers": ["AAPL", "MSFT"]},
+        }
+
+        result = task.python_callable(**mock_context)
+
+        assert result == ["AAPL", "MSFT"]
+
+    def test_validate_ticker_from_params_csv(self, dagbag):
+        """Test validate_ticker accepts CSV from params"""
+        dag = dagbag.get_dag("get_market_data")
+        task = dag.get_task("validate_ticker")
+
+        mock_task_instance = Mock()
+        mock_task_instance.xcom_push = Mock()
+
+        mock_context = {
+            "dag_run": Mock(conf={}, params={"tickers": "AAPL,MSFT"}),
+            "task_instance": mock_task_instance,
+            "params": {"tickers": "AAPL,MSFT"},
+        }
+
+        result = task.python_callable(**mock_context)
+
+        assert result == ["AAPL", "MSFT"]
+
+    def test_validate_ticker_removes_duplicates(self, dagbag):
+        """Test validate_ticker removes duplicate tickers"""
+        dag = dagbag.get_dag("get_market_data")
+        task = dag.get_task("validate_ticker")
+
+        mock_task_instance = Mock()
+        mock_task_instance.xcom_push = Mock()
+
+        mock_context = {
+            "dag_run": Mock(conf={"tickers": ["AAPL", "MSFT", "AAPL", "NVDA", "MSFT"]}),
+            "task_instance": mock_task_instance,
+            "params": {},
+        }
+
+        result = task.python_callable(**mock_context)
+
+        assert result == ["AAPL", "MSFT", "NVDA"]
+        assert len(result) == 3
 
     @patch("market_data.utils.api_client.requests.get")
     def test_check_api_availability_task(self, mock_get, dagbag, mock_api_response):
