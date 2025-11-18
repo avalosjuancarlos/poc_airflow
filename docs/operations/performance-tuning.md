@@ -525,9 +525,13 @@ echo "Duration: $((end - start))s"
 echo ""
 echo "Test 2: Parallel Execution (3 tickers)"
 start=$(date +%s)
-docker compose exec airflow-scheduler airflow dags trigger get_market_data --conf '{"ticker": "AAPL"}' &
-docker compose exec airflow-scheduler airflow dags trigger get_market_data --conf '{"ticker": "GOOGL"}' &
-docker compose exec airflow-scheduler airflow dags trigger get_market_data --conf '{"ticker": "MSFT"}' &
+# Option 1: Single command with multiple tickers
+docker compose exec airflow-scheduler airflow dags trigger get_market_data --conf '{"tickers": ["AAPL", "GOOGL", "MSFT"]}' &
+
+# Option 2: Separate commands for each ticker (parallel execution)
+docker compose exec airflow-scheduler airflow dags trigger get_market_data --conf '{"tickers": ["AAPL"]}' &
+docker compose exec airflow-scheduler airflow dags trigger get_market_data --conf '{"tickers": ["GOOGL"]}' &
+docker compose exec airflow-scheduler airflow dags trigger get_market_data --conf '{"tickers": ["MSFT"]}' &
 wait
 end=$(date +%s)
 echo "Duration: $((end - start))s"

@@ -65,18 +65,26 @@ Open your browser at: **http://localhost:8080**
 4. Click **▶️ Trigger DAG**
 5. Optionally, click **▶️ with config** and use:
    ```json
-   {"ticker": "AAPL"}
+   {"tickers": ["AAPL"]}
+   ```
+   Or for multiple tickers:
+   ```json
+   {"tickers": ["AAPL", "MSFT", "NVDA"]}
    ```
 
 ### From CLI:
 
 ```bash
-# Trigger with default ticker
+# Trigger with default tickers (from MARKET_DATA_DEFAULT_TICKERS)
 docker compose exec airflow-scheduler airflow dags trigger get_market_data
 
-# Or with custom ticker
+# Or with custom ticker(s)
 docker compose exec airflow-scheduler airflow dags trigger get_market_data \
-  --conf '{"ticker": "TSLA"}'
+  --conf '{"tickers": ["TSLA"]}'
+
+# Multiple tickers
+docker compose exec airflow-scheduler airflow dags trigger get_market_data \
+  --conf '{"tickers": ["AAPL", "MSFT", "NVDA"]}'
 ```
 
 ---
@@ -173,10 +181,13 @@ docker compose restart airflow-webserver airflow-scheduler
 ### Add More Tickers
 
 ```bash
-# Trigger for multiple tickers
-docker compose exec airflow-scheduler airflow dags trigger get_market_data --conf '{"ticker": "GOOGL"}'
-docker compose exec airflow-scheduler airflow dags trigger get_market_data --conf '{"ticker": "MSFT"}'
-docker compose exec airflow-scheduler airflow dags trigger get_market_data --conf '{"ticker": "AMZN"}'
+# Option 1: Single command with multiple tickers
+docker compose exec airflow-scheduler airflow dags trigger get_market_data --conf '{"tickers": ["GOOGL", "MSFT", "AMZN"]}'
+
+# Option 2: Separate commands for each ticker
+docker compose exec airflow-scheduler airflow dags trigger get_market_data --conf '{"tickers": ["GOOGL"]}'
+docker compose exec airflow-scheduler airflow dags trigger get_market_data --conf '{"tickers": ["MSFT"]}'
+docker compose exec airflow-scheduler airflow dags trigger get_market_data --conf '{"tickers": ["AMZN"]}'
 ```
 
 ### Enable Daily Automation
