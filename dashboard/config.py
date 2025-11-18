@@ -91,3 +91,52 @@ def get_database_config():
         "type": "redshift",
     }
 
+
+def _get_int_config(env_key: str, default: int) -> int:
+    """Get integer configuration from environment variable"""
+    value = os.environ.get(env_key)
+    if value is None:
+        return default
+    try:
+        return int(value)
+    except ValueError:
+        return default
+
+
+def _get_float_config(env_key: str, default: float) -> float:
+    """Get float configuration from environment variable"""
+    value = os.environ.get(env_key)
+    if value is None:
+        return default
+    try:
+        return float(value)
+    except ValueError:
+        return default
+
+
+# Dashboard UI Configuration
+# RSI thresholds
+RSI_OVERBOUGHT_THRESHOLD = _get_float_config("DASHBOARD_RSI_OVERBOUGHT", 70.0)
+RSI_OVERSOLD_THRESHOLD = _get_float_config("DASHBOARD_RSI_OVERSOLD", 30.0)
+RSI_NEUTRAL_THRESHOLD = _get_float_config("DASHBOARD_RSI_NEUTRAL", 50.0)
+
+# Volatility thresholds (multipliers)
+VOLATILITY_HIGH_MULTIPLIER = _get_float_config("DASHBOARD_VOLATILITY_HIGH_MULT", 1.5)
+VOLATILITY_LOW_MULTIPLIER = _get_float_config("DASHBOARD_VOLATILITY_LOW_MULT", 0.5)
+
+# Chart dimensions
+CHART_HEIGHT_PRICE = _get_int_config("DASHBOARD_CHART_HEIGHT_PRICE", 600)
+CHART_HEIGHT_STANDARD = _get_int_config("DASHBOARD_CHART_HEIGHT_STANDARD", 500)
+CHART_HEIGHT_COMPACT = _get_int_config("DASHBOARD_CHART_HEIGHT_COMPACT", 400)
+
+# Financial calculations
+TRADING_DAYS_PER_YEAR = _get_int_config("DASHBOARD_TRADING_DAYS_YEAR", 252)
+NORMALIZATION_BASE = _get_int_config("DASHBOARD_NORMALIZATION_BASE", 100)
+
+# Comparison limits
+MAX_RECOMMENDED_TICKERS = _get_int_config("DASHBOARD_MAX_TICKERS_COMPARE", 5)
+
+# Export configuration
+EXCEL_SHEET_NAME = os.environ.get("DASHBOARD_EXCEL_SHEET_NAME", "Market Data")
+EXPORT_DATE_FORMAT = os.environ.get("DASHBOARD_EXPORT_DATE_FORMAT", "%Y%m%d_%H%M%S")
+

@@ -42,8 +42,10 @@ The pipeline performs the following operations **automatically** every day at 6:
 ### 🌟 What is it useful for?
 
 - **Technical Analysis**: All indicators calculated and ready to use
+- **Interactive Dashboard**: Built-in Streamlit dashboard with KPI panel, multi-ticker comparison, and seven visualization tabs
 - **Backtesting**: Historical data to test trading strategies
-- **Dashboards**: Data source for visualizations (Tableau, Power BI, Grafana)
+- **Data Export**: Export data in multiple formats (CSV, Excel, JSON, Parquet) for external analysis
+- **BI Integration**: Data source for visualizations (Tableau, Power BI, Grafana)
 - **Machine Learning**: Clean dataset for predictive models
 - **Reports**: Consolidated data for financial reporting
 
@@ -197,9 +199,11 @@ Enterprise-ready Apache Airflow 2.11 deployment with:
 - ✅ **CI/CD Pipeline** - GitHub Actions automated testing
 - ✅ **Local Testing** - Docker Compose test environment
 - ✅ **Makefile** - 40+ commands for common tasks
-- ✅ **Interactive Dashboard** - Streamlit market view with seven analytic tabs & metrics
-- ✅ **Modular Dashboard Code** - Streamlit split into `config`, `data`, `charts`, and `views/*` modules for easier reuse and testing
-- ✅ **Warehouse Explorer GUI** - Read-only SQL explorer with filters, download, refresh button, and guard rails against injections or DDL/DML operations
+- ✅ **Interactive Dashboard** - Streamlit market view with seven analytic tabs, enhanced KPI panel, and multi-ticker comparison
+- ✅ **Modular Dashboard Code** - Streamlit split into `config`, `data`, `charts`, `views/*`, and `components/*` modules for easier reuse and testing
+- ✅ **Enhanced Dashboard Features** - KPI panel with percentage changes, multi-ticker comparator with correlation analysis, enhanced tooltips, and multi-format export (CSV, Excel, JSON, Parquet)
+- ✅ **Centralized Icon System** - Consistent UI/UX across all dashboard components
+- ✅ **Warehouse Explorer GUI** - Read-only SQL explorer with filters, multi-format downloads, query sharing, refresh button, and guard rails against injections or DDL/DML operations
 - ✅ **Configurable Views** - Enable/disable each experience or set the default landing page per environment
 
 ### 📊 Logging & Monitoring
@@ -278,8 +282,19 @@ The **`get_market_data`** DAG is ready to use:
 
 The dashboard ships with two Streamlit experiences that share the same deployment:
 
-- **Market Data Dashboard** – seven responsive tabs (Price & Volume, Moving Averages, Bollinger Bands, RSI, MACD, Returns & Volatility, Raw Data) plus KPI tiles and CSV export.
-- **Warehouse Explorer** – schema-aware, read-only SQL browser with ticker/date filters, validated custom predicates, Plotly summaries, CSV downloads, and a `🔄 Refresh warehouse data` button that clears caches before re-running the query.
+- **Market Data Dashboard** – Enhanced analytics with:
+  - **Enhanced KPI Panel**: Percentage changes (1D, 7D, 30D, YTD), volatility status, and indicator alerts (RSI, MACD)
+  - **Multi-Ticker Comparator**: Compare multiple tickers with normalized charts, comparative metrics table, and correlation analysis
+  - **Seven Responsive Tabs**: Price & Volume, Moving Averages, Bollinger Bands, RSI, MACD, Returns & Volatility, Raw Data
+  - **Enhanced Tooltips**: Comprehensive hover information in all charts
+  - **Multi-Format Export**: CSV, Excel, JSON, Parquet with batch export support
+  - **View Modes**: Single ticker analysis or multi-ticker comparison
+- **Warehouse Explorer** – Schema-aware, read-only SQL browser with:
+  - Ticker/date filters and validated custom predicates
+  - Plotly summaries and visualizations
+  - Multi-format downloads (CSV, Excel, JSON, Parquet)
+  - Query sharing (SQL and Python code)
+  - `🔄 Refresh warehouse data` button that clears caches before re-running the query
 
 Start it with:
 
@@ -299,7 +314,11 @@ ENABLE_WAREHOUSE_VIEW=true
 DEFAULT_DASHBOARD_VIEW=market  # or "warehouse"
 ```
 
-Toggle the navigation radio in the sidebar to jump between views at runtime. When new data is loaded into the warehouse, use the refresh button inside the Warehouse Explorer view to rerun the SQL without restarting Streamlit. All explorer queries are enforced as read-only (`SELECT` only) and custom filters are sanitized to prevent SQL injection or destructive statements.
+Toggle the navigation radio in the sidebar to jump between views at runtime. The Market Dashboard supports two view modes:
+- **Single Ticker**: Analyze one ticker in detail with comprehensive KPIs and seven visualization tabs
+- **Compare Tickers**: Compare multiple tickers side-by-side with normalized charts, metrics table, and correlation analysis
+
+When new data is loaded into the warehouse, use the refresh button inside the Warehouse Explorer view to rerun the SQL without restarting Streamlit. All explorer queries are enforced as read-only (`SELECT` only) and custom filters are sanitized to prevent SQL injection or destructive statements.
 
 ```mermaid
 flowchart LR
@@ -465,8 +484,13 @@ poc_airflow/
 ├── dashboard/                    # Streamlit dashboard (modular)
 │   ├── app.py                    # Entry point (view selector only)
 │   ├── config.py                 # Environment + UI configuration helpers
+│   ├── icons.py                  # Centralized icon system
 │   ├── data.py                   # Cached DB engine + query helpers
-│   ├── charts.py                 # Plotly chart builders
+│   ├── charts.py                 # Plotly chart builders with enhanced tooltips
+│   ├── components/               # Reusable UI components
+│   │   ├── kpi_panel.py          # Enhanced KPI panel component
+│   │   ├── ticker_comparator.py  # Multi-ticker comparison component
+│   │   └── export.py             # Multi-format export component
 │   └── views/                    # Independent Streamlit views
 │       ├── __init__.py
 │       ├── market.py             # Market analytics tabs

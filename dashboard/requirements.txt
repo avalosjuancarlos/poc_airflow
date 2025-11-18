@@ -5,4 +5,6 @@ pandas==2.1.4
 sqlalchemy==1.4.54
 psycopg2-binary==2.9.9
 redshift-connector==2.0.918
+openpyxl==3.1.2  # For Excel export
+pyarrow==14.0.1  # For Parquet export
 

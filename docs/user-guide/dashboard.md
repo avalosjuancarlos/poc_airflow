@@ -9,13 +9,17 @@ Interactive web dashboard for visualizing market data and technical indicators.
 The Market Data Dashboard is a **Streamlit-based web application** that provides interactive visualizations of market data stored in your Data Warehouse.
 
 **Key Features**:
-- 📊 Interactive charts with Plotly
+- 📊 Interactive charts with Plotly and enhanced tooltips
 - 🔄 Real-time data from warehouse
 - 🌍 Multi-environment support (dev/staging/prod)
 - 🎛️ View switcher for Market Dashboard or Warehouse Explorer
 - 📈 7 visualization tabs for market analytics
+- 📊 Enhanced KPI Panel with percentage changes and indicator alerts
+- 🔀 Multi-Ticker Comparator with correlation analysis
 - 🏭 Warehouse explorer with SQL preview and filters
-- ⬇️ CSV export functionality
+- ⬇️ Enhanced data export (CSV, Excel, JSON, Parquet)
+- 📋 Query sharing (SQL and Python code)
+- 🎨 Centralized icon system for consistent UI/UX
 - 🚀 Dockerized deployment
 
 **Access**: http://localhost:8501 (default)
@@ -28,9 +32,14 @@ The dashboard codebase is split into reusable modules:
 
 - `app.py` — lightweight entry point that sets Streamlit config and routes between experiences.
 - `config.py` — environment-aware settings, view toggles, and sidebar navigation helpers.
+- `icons.py` — centralized icon system for consistent UI/UX across all components.
 - `data.py` — cached SQLAlchemy engine plus all warehouse query helpers (parameterized + sanitized).
-- `charts.py` — Plotly chart builders for each analytic tab.
+- `charts.py` — Plotly chart builders for each analytic tab with enhanced tooltips.
 - `views/market.py` & `views/warehouse.py` — isolated Streamlit views so each experience can evolve independently or be reused in other apps.
+- `components/` — reusable UI components:
+  - `kpi_panel.py` — Enhanced KPI panel with percentage changes and indicator status
+  - `ticker_comparator.py` — Multi-ticker comparison with normalized charts and correlation
+  - `export.py` — Multi-format data export (CSV, Excel, JSON, Parquet)
 
 This structure keeps the UI flexible (new tabs/views are simple Python modules) and makes it easier to test or lint individual layers.
 
@@ -109,15 +118,72 @@ or the Warehouse Explorer experience.
 
 ## Features
 
-### 1. Ticker Selection
+### 1. View Mode Selection
 
-**Sidebar** → Select Ticker dropdown
+**Sidebar** → View Mode radio button
 
+Choose between:
+- **Single Ticker**: Analyze one ticker in detail
+- **Compare Tickers**: Compare multiple tickers side-by-side
+
+### 2. Ticker Selection
+
+**Single Ticker Mode**:
+- Select one ticker from dropdown
 - Dynamically loads available tickers from warehouse
 - Automatically updates when new tickers are added
-- Shows only tickers with data
 
-### 2. Date Range Selection
+**Compare Tickers Mode**:
+- Select multiple tickers (2 or more) from multiselect
+- Maximum recommended: 5 tickers for optimal performance
+- Compare normalized price charts, metrics, and correlations
+
+### 3. Enhanced KPI Panel
+
+At the top of the Market Data Dashboard, view comprehensive key performance indicators:
+
+**Percentage Changes**:
+- **1D**: 1-day change
+- **7D**: 7-day change
+- **30D**: 30-day change
+- **YTD**: Year-to-date change
+
+**Volatility Status**:
+- Current volatility vs. historical average
+- Visual alerts for high/low volatility conditions
+
+**Indicator Status**:
+- **RSI**: 
+  - 🔴 Overbought (>70)
+  - 🟢 Oversold (<30)
+  - ➡️ Neutral (30-70)
+- **MACD**:
+  - 🟢 Bullish (MACD > Signal)
+  - 🔴 Bearish (MACD < Signal)
+
+### 4. Multi-Ticker Comparison
+
+When in "Compare Tickers" mode with 2+ tickers selected:
+
+**Normalized Price Chart**:
+- All prices normalized to start at the same base value
+- Easy visual comparison of relative performance
+
+**Comparative Metrics Table**:
+- Current price, 7D change, 30D change
+- Volatility, Sharpe ratio
+- RSI and MACD status
+- Side-by-side comparison
+
+**Correlation Analysis**:
+- Returns correlation matrix heatmap
+- Identify tickers that move together or independently
+
+**Batch Export**:
+- Export data for multiple selected tickers
+- Available formats: CSV, Excel, JSON, Parquet
+
+### 5. Date Range Selection
 
 Choose from predefined ranges:
 - **1 Month**: Last 30 days
@@ -126,12 +192,19 @@ Choose from predefined ranges:
 - **1 Year**: Last 365 days
 - **All Data**: All available data
 
-### 3. Visualization Tabs
+### 6. Visualization Tabs
+
+All charts feature **enhanced tooltips** with comprehensive information:
+- Date and time
+- OHLCV values
+- All relevant technical indicators
+- Consistent formatting (currency, percentages)
 
 #### Tab 1: Price & Volume
 
 **Candlestick Chart**:
 - Open, High, Low, Close (OHLC)
+- Enhanced tooltips with comprehensive OHLCV information
 - Interactive hover for details
 - Zoom and pan
 
@@ -245,8 +318,10 @@ Choose from predefined ranges:
 - Filterable
 - Toggle to show all columns or key columns only
 
-**Features**:
-- Download as CSV
+**Enhanced Export Features**:
+- Multiple export formats: CSV, Excel, JSON, Parquet
+- Export current view/chart data from any tab
+- Batch export for multiple tickers (in Compare mode)
 - Includes all OHLCV data
 - All technical indicators
 - Timestamps
@@ -262,7 +337,8 @@ view lives outside the market tabs and is ideal when you need raw SQL visibility
 - Apply ticker/date filters or add custom SQL predicates
 - Review live SQL statements with bound parameters before execution
 - Visualize record distribution by date or ticker when columns exist
-- Preview the full result set, export CSV downloads, and inspect column metadata
+- Preview the full result set, export in multiple formats (CSV, Excel, JSON, Parquet), and inspect column metadata
+- **Share Query** functionality: Copy SQL query and Python code to reproduce queries
 - Click **🔄 Refresh warehouse data** whenever new records land or you adjust filters; the button clears cached queries and reruns the explorer instantly.
 - Built-in guard rails enforce **read-only access**: only `SELECT` statements are executed, custom predicates are validated against a deny-list of DDL/DML keywords, and bound parameters are used for ticker/date filters to avoid SQL injection.
 
@@ -583,7 +659,18 @@ make health            # Check all services
 
 ---
 
-**Last Updated**: 2025-11-14  
-**Version**: 1.0.0  
+**Last Updated**: 2025-11-18  
+**Version**: 2.0.0  
 **Technology**: Streamlit + Plotly + SQLAlchemy
+
+### Recent Updates (Phase 1 Improvements - 2025-11-18)
+
+- ✅ **Enhanced KPI Panel**: Percentage changes (1D, 7D, 30D, YTD), volatility status, indicator alerts
+- ✅ **Multi-Ticker Comparator**: Normalized charts, comparative metrics table, correlation analysis
+- ✅ **Enhanced Tooltips**: Comprehensive hover information in all charts
+- ✅ **Enhanced Data Export**: Multiple formats (CSV, Excel, JSON, Parquet), batch export, query sharing
+- ✅ **Centralized Icon System**: Consistent UI/UX across all components
+- ✅ **Configurable Thresholds**: RSI and volatility thresholds via environment variables
+
+For detailed improvement plan, see [Dashboard Improvements Plan](../../developer-guide/dashboard-improvements.md).
 
