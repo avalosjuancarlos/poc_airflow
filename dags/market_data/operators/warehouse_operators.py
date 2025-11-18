@@ -7,7 +7,8 @@ Operators for loading data to data warehouse.
 from typing import Dict, List
 
 from market_data.utils import get_logger, log_execution
-from market_data.warehouse import load_parquet_to_warehouse as warehouse_load_function
+from market_data.warehouse import \
+    load_parquet_to_warehouse as warehouse_load_function
 
 logger = get_logger(__name__)
 

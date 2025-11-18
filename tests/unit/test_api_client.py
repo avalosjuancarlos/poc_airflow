@@ -6,7 +6,6 @@ from datetime import datetime
 from unittest.mock import Mock, patch
 
 import pytest
-
 from market_data.utils.api_client import YahooFinanceClient
 
 

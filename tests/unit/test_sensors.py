@@ -5,7 +5,6 @@ Unit tests for market data sensors
 from unittest.mock import Mock, patch
 
 import pytest
-
 from market_data.sensors.api_sensor import check_api_availability
 
 

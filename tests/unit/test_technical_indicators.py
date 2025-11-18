@@ -6,13 +6,8 @@ import pandas as pd
 import pytest
 
 from dags.market_data.transformers.technical_indicators import (
-    calculate_bollinger_bands,
-    calculate_ema,
-    calculate_macd,
-    calculate_moving_averages,
-    calculate_rsi,
-    calculate_technical_indicators,
-)
+    calculate_bollinger_bands, calculate_ema, calculate_macd,
+    calculate_moving_averages, calculate_rsi, calculate_technical_indicators)
 
 
 class TestCalculateMovingAverages:

@@ -8,12 +8,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from dags.market_data.utils.logger import (
-    MarketDataLogger,
-    get_logger,
-    log_errors,
-    log_execution,
-)
+from dags.market_data.utils.logger import (MarketDataLogger, get_logger,
+                                           log_errors, log_execution)
 
 
 class TestMarketDataLogger:

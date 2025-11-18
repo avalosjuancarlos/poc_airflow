@@ -9,11 +9,8 @@ from typing import List
 
 import pandas as pd
 from market_data.config import BACKFILL_DAYS
-from market_data.storage import (
-    check_parquet_exists,
-    load_from_parquet,
-    save_to_parquet,
-)
+from market_data.storage import (check_parquet_exists, load_from_parquet,
+                                 save_to_parquet)
 from market_data.transformers import calculate_technical_indicators
 from market_data.utils import get_logger, log_execution
 
@@ -111,13 +108,8 @@ def fetch_multiple_dates(**context) -> List[dict]:
     Returns:
         List of market data dictionaries
     """
-    from market_data.config import (
-        API_TIMEOUT,
-        HEADERS,
-        MAX_RETRIES,
-        RETRY_DELAY,
-        YAHOO_FINANCE_API_BASE_URL,
-    )
+    from market_data.config import (API_TIMEOUT, HEADERS, MAX_RETRIES,
+                                    RETRY_DELAY, YAHOO_FINANCE_API_BASE_URL)
     from market_data.utils import YahooFinanceClient
 
     # Get dates to process from previous task

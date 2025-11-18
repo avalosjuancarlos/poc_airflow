@@ -7,12 +7,9 @@ Loads data from Parquet files to Data Warehouse (PostgreSQL/Redshift).
 from typing import Dict
 
 import pandas as pd
-from market_data.config.warehouse_config import (
-    BATCH_SIZE,
-    LOAD_STRATEGY,
-    TABLE_MARKET_DATA,
-    get_warehouse_config,
-)
+from market_data.config.warehouse_config import (BATCH_SIZE, LOAD_STRATEGY,
+                                                 TABLE_MARKET_DATA,
+                                                 get_warehouse_config)
 from market_data.storage import get_parquet_path, load_from_parquet
 from market_data.utils import get_logger, log_execution
 from market_data.warehouse.connection import get_warehouse_connection

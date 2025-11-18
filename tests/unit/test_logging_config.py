@@ -8,10 +8,8 @@ from unittest.mock import patch
 
 import pytest
 
-from dags.market_data.config.logging_config import (
-    get_log_format,
-    get_log_level,
-)
+from dags.market_data.config.logging_config import (get_log_format,
+                                                    get_log_level)
 
 
 class TestGetLogLevel:

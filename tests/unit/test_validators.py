@@ -3,8 +3,8 @@ Unit tests for validators module
 """
 
 import pytest
-
-from market_data.utils.validators import validate_date_format, validate_ticker_format
+from market_data.utils.validators import (validate_date_format,
+                                          validate_ticker_format)
 
 
 class TestValidateTickerFormat:

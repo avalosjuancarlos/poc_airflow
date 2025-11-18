@@ -7,7 +7,8 @@ from unittest.mock import MagicMock, patch
 
 import pandas as pd
 import pytest
-from market_data.warehouse.loader import WarehouseLoader, load_parquet_to_warehouse
+from market_data.warehouse.loader import (WarehouseLoader,
+                                          load_parquet_to_warehouse)
 
 
 class TestWarehouseLoaderInit:

@@ -7,13 +7,10 @@ Manages database connections for PostgreSQL (dev) and Redshift (staging/prod).
 from contextlib import contextmanager
 from typing import Dict, Generator
 
-from market_data.config.warehouse_config import (
-    MAX_OVERFLOW,
-    POOL_SIZE,
-    POOL_TIMEOUT,
-    get_connection_string,
-    get_warehouse_config,
-)
+from market_data.config.warehouse_config import (MAX_OVERFLOW, POOL_SIZE,
+                                                 POOL_TIMEOUT,
+                                                 get_connection_string,
+                                                 get_warehouse_config)
 from market_data.utils import get_logger, log_execution
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
